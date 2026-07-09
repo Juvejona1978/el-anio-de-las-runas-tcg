@@ -10,8 +10,8 @@
     --alderium:#c9a24b; --qashir:#c65b3a; --brasshaven:#b8863f;
     --koren:#4faa86; --caelum:#6f7fd8; --nomadas:#9b6fc4;
     /* tamaños de carta escalables: se ajustan por viewport, el interior usa cqw */
-    --handW: clamp(104px, 29vw, 162px);   /* mano ~40% más grande, en carrusel */
-    --fieldW: clamp(60px, 16vw, 115px);   /* mesa ~20% más grande */
+    --handW: clamp(125px, 35vw, 194px);   /* mano en carrusel, grande y legible */
+    --fieldW: clamp(78px, 21vw, 150px);   /* mesa grande */
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%}
@@ -60,7 +60,8 @@
   .hname{font-weight:800;font-size:13px;color:var(--fc,var(--ink));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .hlife{display:flex;align-items:center;gap:4px;font-weight:800;font-size:16px}
   .heart{color:var(--vida)}
-  .deckn{font-size:11px;color:var(--dim);display:flex;gap:8px;margin-left:auto}
+  .deckn{font-size:21px;color:var(--dim);display:flex;gap:12px;margin-left:auto;font-weight:700;align-items:center}
+  .deckn span{display:inline-flex;align-items:center;gap:3px}
   .manabar{display:flex;gap:2.5px;flex-wrap:wrap}
   .crys{width:12px;height:12px;border-radius:3px;transform:rotate(45deg);border:1px solid #2a5f8a;background:#16202c}
   .crys.on{background:radial-gradient(circle at 40% 30%,#8fd0f7,#2f86c8);border-color:#9fd4f7;box-shadow:0 0 5px #4aa3e0}
@@ -146,13 +147,15 @@
   #cancel{position:fixed;right:10px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:22;background:var(--panel2);border:1px solid var(--line);
     color:var(--ink);border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer;font-family:inherit;display:none;min-height:44px}
 
-  #log{position:fixed;left:8px;top:calc(58px + env(safe-area-inset-top));width:min(150px,40vw);overflow:visible;
-    z-index:15;pointer-events:none;display:flex;flex-direction:column;gap:3px}
-  .logline{font-size:10px;color:var(--dim);background:rgba(20,17,28,.6);border:1px solid var(--line);
-    border-radius:6px;padding:4px 7px;line-height:1.22;animation:fade .3s;
-    transition:opacity .4s, transform .4s;backdrop-filter:blur(2px)}
-  .logline.out{opacity:0;transform:translateX(-10px)}
-  @keyframes fade{from{opacity:0;transform:translateX(-8px)}}
+  /* Log como anuncio centrado sobre la línea divisoria */
+  #log{position:fixed;left:8px;right:104px;top:50%;transform:translateY(-50%);overflow:visible;
+    z-index:15;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .logline{font-size:12.5px;font-weight:600;color:var(--gold2);background:rgba(22,18,30,.85);border:1px solid var(--gold);
+    border-radius:999px;padding:6px 15px;line-height:1.2;text-align:center;max-width:100%;
+    animation:fade .3s;transition:opacity .4s, transform .4s;backdrop-filter:blur(3px);
+    box-shadow:0 4px 16px rgba(0,0,0,.55)}
+  .logline.out{opacity:0;transform:translateY(-6px)}
+  @keyframes fade{from{opacity:0;transform:translateY(8px) scale(.96)}}
 
   #banner{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
     background:rgba(8,7,12,.85);flex-direction:column;gap:8px;padding:20px;text-align:center}
@@ -161,6 +164,8 @@
   #toast{position:fixed;top:calc(60px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:35;
     background:rgba(30,26,40,.96);border:1px solid var(--gold);border-radius:10px;padding:9px 16px;
     font-weight:700;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:80vw;text-align:center;font-size:13px}
+  #toast.rule{border-color:#e6b23c;background:rgba(38,29,20,.97);color:#f4dca0;max-width:88vw;
+    font-weight:600;line-height:1.35;padding:11px 18px}
 
   /* ---------- Modal ---------- */
   #modal{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:rgba(8,7,12,.72);padding:16px}
@@ -304,6 +309,7 @@ const RECUERDOS = {
 const S = {
   players:{}, turn:"p", turnNum:0, phase:"menu", busy:false,
   selected:null, targeting:null, // targeting = {resolve, filter}
+  hints:{}, // conteo de veces que se explicó cada regla (guía interactiva)
 };
 function P(){ return S.players[S.turn]; }
 function foeOf(id){ return id==="p"?"a":"p"; }
@@ -831,8 +837,15 @@ async function aiAttacks(p){
 // ============================================================
 function onHandClick(c){
   const p=S.players.p;
-  if(S.turn!=="p"||S.busy||S.targeting) return;
-  if(!canPlay(p,c)){ toast("Maná insuficiente"); return; }
+  if(S.turn!=="p"){ guide("turno-rival","Es el turno del rival. Vas a poder jugar cuando termine.", cardEl(c)); return; }
+  if(S.busy||S.targeting) return;
+  const cost=effectiveCost(p,c);
+  if(c.type==="criatura" && p.field.length>=7){
+    guide("campo-lleno","Tu campo está lleno: podés tener hasta 7 criaturas a la vez. Dejá lugar antes de invocar otra.", cardEl(c)); return;
+  }
+  if(cost>availMana(p)){
+    guide("mana","Te falta maná: «"+c.name+"» cuesta "+cost+" y tenés "+availMana(p)+". Tu tope de maná sube +1 al empezar cada turno.", cardEl(c)); return;
+  }
   playCard(p,c);
 }
 function onFieldClick(c, owner){
@@ -841,7 +854,9 @@ function onFieldClick(c, owner){
   if(owner!=="p") return;
   // seleccionar atacante
   if(c.type!=="criatura") return;
-  if(c.sick || c.attacked || effAtk(c)<=0){ toast(c.sick?"No puede atacar este turno":"Ya atacó"); return; }
+  if(effAtk(c)<=0){ guide("atk0","«"+c.name+"» tiene 0 de ataque: no puede atacar (pero sí puede defender o bloquear como Guardián).", cardEl(c)); return; }
+  if(c.sick){ guide("sick","«"+c.name+"» entró este turno. Una criatura no puede atacar el mismo turno en que se juega, salvo que tenga Prisa.", cardEl(c)); return; }
+  if(c.attacked){ guide("ataco","«"+c.name+"» ya atacó este turno. Cada criatura ataca una sola vez por turno.", cardEl(c)); return; }
   if(S.selected===c){ clearSelection(); return; }
   S.selected=c; render();
 }
@@ -850,7 +865,7 @@ function onHeroClick(heroP){
   if(S.targeting){ tryTarget({isHero:true, p:heroP}); return; }
   if(S.selected && heroP.id==="a"){
     const tg=legalTargets(S.players.p);
-    if(!tg.hero){ toast("Hay un Guardián: atacá primero al Guardián"); return; }
+    if(!tg.hero){ guide("guardian","El rival tiene un Guardián en juego. Tenés que derrotar a los Guardianes antes de poder atacar al jugador.", document.getElementById("enemyHero")); return; }
     const atk=S.selected; clearSelection(); attack(atk, S.players.p, {isHero:true,p:heroP});
   }
 }
@@ -859,7 +874,11 @@ function trySelectTargetForAttack(targetCreature, targetOwner){
   const p=S.players.p;
   const tg=legalTargets(p);
   const legal = tg.creatures.includes(targetCreature);
-  if(!legal){ toast(hasGuardian(S.players.a)?"Debés atacar a un Guardián primero":"Objetivo inválido"); return; }
+  if(!legal){
+    if(hasGuardian(S.players.a)) guide("guardian","El rival tiene un Guardián: mientras siga en juego, tus ataques deben dirigirse a los Guardianes primero.", cardEl(targetCreature));
+    else guide("objetivo","No podés atacar ahí. Elegí una criatura rival o, si no hay Guardianes, al jugador.", cardEl(targetCreature));
+    return;
+  }
   const atk=S.selected; clearSelection(); attack(atk,p,targetCreature);
 }
 
@@ -983,7 +1002,7 @@ function renderHero(elid, p, enemy){
       <div class="hrow1">
         <span class="hname">${FACTIONS[p.fac].name}</span>
         <span class="hlife"><span class="heart">❤</span>${p.life}</span>
-        <span class="deckn"><span>🂠 ${p.deck.length}</span><span>✋ ${p.hand.length}</span></span>
+        <span class="deckn"><span title="Cartas en el mazo">🃏 ${p.deck.length}</span><span title="Cartas en la mano">✋ ${p.hand.length}</span></span>
       </div>
       <div class="manabar" title="Maná ${p.mana+p.tempMana}/${p.manaMax}">${crys.join("")}</div>
     </div>`;
@@ -1085,14 +1104,23 @@ function log(m){
   const l=document.getElementById("log");
   const d=document.createElement("div"); d.className="logline"; d.innerHTML=m;
   l.prepend(d);
-  while(l.children.length>3) l.removeChild(l.lastChild);
-  // se desvanece sola para no tapar el tablero en móvil
-  setTimeout(()=>{ d.classList.add("out"); setTimeout(()=>d.remove(),400); }, 4500);
+  while(l.children.length>1) l.removeChild(l.lastChild);
+  // se desvanece sola: queda como anuncio del último evento en el centro
+  setTimeout(()=>{ d.classList.add("out"); setTimeout(()=>d.remove(),400); }, 4200);
 }
 let toastT;
-function toast(m){
-  const t=document.getElementById("toast"); t.innerHTML=m; t.style.display="block";
-  clearTimeout(toastT); toastT=setTimeout(()=>t.style.display="none",1600);
+function toast(m, kind){
+  const t=document.getElementById("toast");
+  t.innerHTML=(kind==="rule"?"💡 ":"")+m;
+  t.className = kind==="rule" ? "rule" : "";
+  t.style.display="block";
+  clearTimeout(toastT); toastT=setTimeout(()=>t.style.display="none", kind==="rule"?2800:1600);
+}
+// Guía interactiva: explica una regla las primeras veces; luego solo sacude la carta.
+function guide(key, msg, el){
+  const n = S.hints[key]||0;
+  if(n<3){ toast(msg,"rule"); S.hints[key]=n+1; }
+  else if(el){ el.classList.remove("struck"); void el.offsetWidth; el.classList.add("struck"); }
 }
 function floatDmg(el, n){
   if(!el||n<=0) return;
