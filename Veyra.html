@@ -69,13 +69,13 @@
   .side{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;padding:4px 6px;position:relative;min-height:0}
   .side.enemy{background:linear-gradient(#161220,#131019)}
   .mid{height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.35;flex:0 0 auto}
-  .field{display:flex;gap:5px;justify-content:center;align-items:center;overflow-x:auto;overflow-y:visible;
-    padding:12px 6px;min-height:0;scrollbar-width:none}
+  .field{display:flex;gap:5px;justify-content:safe center;align-items:center;overflow-x:auto;overflow-y:visible;
+    padding:12px 6px;min-height:0;scrollbar-width:none;scroll-padding:0 6px}
   .field::-webkit-scrollbar{display:none}
   .field.empty{padding:8px 6px}
   .field.empty::after{content:"— campo vacío —";color:#3a3550;font-size:12px;letter-spacing:1px}
 
-  .hand{display:flex;gap:4px;justify-content:center;align-items:flex-end;overflow-x:auto;overflow-y:visible;
+  .hand{display:flex;gap:4px;justify-content:safe center;align-items:flex-end;overflow-x:auto;overflow-y:visible;
     padding:8px 6px 10px;flex:0 0 auto;scrollbar-width:none}
   .hand::-webkit-scrollbar{display:none}
 
@@ -107,7 +107,7 @@
   .facbar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:9px 9px 0 0}
 
   /* mano: base = ancho de mano, se encoge para que entren todas sin cortarse */
-  .card.inhand{flex:0 1 var(--handW);min-width:62px}
+  .card.inhand{flex:0 1 var(--handW);min-width:54px}
   /* field cards = compact tokens (sin texto, para que entren varios en móvil) */
   .card.onfield{flex:0 1 var(--fieldW);min-width:44px}
   .card.onfield .txt,.card.onfield .type{display:none}
