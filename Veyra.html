@@ -146,10 +146,12 @@
   #cancel{position:fixed;right:10px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:22;background:var(--panel2);border:1px solid var(--line);
     color:var(--ink);border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer;font-family:inherit;display:none;min-height:44px}
 
-  #log{position:fixed;left:8px;top:calc(58px + env(safe-area-inset-top));width:min(160px,42vw);max-height:34vh;overflow:hidden;
+  #log{position:fixed;left:8px;top:calc(58px + env(safe-area-inset-top));width:min(150px,40vw);overflow:visible;
     z-index:15;pointer-events:none;display:flex;flex-direction:column;gap:3px}
-  .logline{font-size:10px;color:var(--dim);background:rgba(20,17,28,.72);border:1px solid var(--line);
-    border-radius:6px;padding:4px 7px;animation:fade .3s;line-height:1.25}
+  .logline{font-size:10px;color:var(--dim);background:rgba(20,17,28,.6);border:1px solid var(--line);
+    border-radius:6px;padding:4px 7px;line-height:1.22;animation:fade .3s;
+    transition:opacity .4s, transform .4s;backdrop-filter:blur(2px)}
+  .logline.out{opacity:0;transform:translateX(-10px)}
   @keyframes fade{from{opacity:0;transform:translateX(-8px)}}
 
   #banner{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
@@ -1083,7 +1085,9 @@ function log(m){
   const l=document.getElementById("log");
   const d=document.createElement("div"); d.className="logline"; d.innerHTML=m;
   l.prepend(d);
-  while(l.children.length>9) l.removeChild(l.lastChild);
+  while(l.children.length>3) l.removeChild(l.lastChild);
+  // se desvanece sola para no tapar el tablero en móvil
+  setTimeout(()=>{ d.classList.add("out"); setTimeout(()=>d.remove(),400); }, 4500);
 }
 let toastT;
 function toast(m){
