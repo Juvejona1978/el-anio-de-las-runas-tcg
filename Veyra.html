@@ -82,9 +82,9 @@
   /* ---------- Card ---------- */
   .card{width:var(--handW);aspect-ratio:5/7;border-radius:9px;background:linear-gradient(#211d2d,#17141f);
     border:1px solid var(--line);position:relative;transition:transform .12s, box-shadow .12s;
-    box-shadow:0 4px 12px rgba(0,0,0,.45);flex:0 0 auto;container-type:inline-size;
-    display:flex;flex-direction:column;overflow:hidden}
-  .card.onfield{overflow:visible}
+    box-shadow:0 4px 12px rgba(0,0,0,.45);flex:0 1 auto;container-type:inline-size;
+    display:flex;flex-direction:column;overflow:visible}
+  .card>.name{overflow:hidden}
   .card .top{display:flex;justify-content:flex-start;padding:4cqw 4cqw 0}
   .card .name{font-size:10cqw;font-weight:800;line-height:1.02;padding:2cqw 5cqw 0;min-height:20cqw;color:var(--gold2);
     overflow:hidden}
@@ -106,8 +106,10 @@
   .badge.hurt{background:radial-gradient(circle at 35% 30%,#f2b0a6,#9c2418)}
   .facbar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:9px 9px 0 0}
 
+  /* mano: base = ancho de mano, se encoge para que entren todas sin cortarse */
+  .card.inhand{flex:0 1 var(--handW);min-width:62px}
   /* field cards = compact tokens (sin texto, para que entren varios en móvil) */
-  .card.onfield{width:var(--fieldW)}
+  .card.onfield{flex:0 1 var(--fieldW);min-width:44px}
   .card.onfield .txt,.card.onfield .type{display:none}
   .card.onfield .name{font-size:11cqw;min-height:22cqw;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical}
   .card.onfield .art{height:44cqw;font-size:30cqw}
@@ -376,7 +378,9 @@ function initMenu(){
 }
 
 function start(){
-  const rf = rivalFac==="random" ? Object.keys(FACTIONS)[(Math.random()*6)|0] : rivalFac;
+  let rf;
+  if(rivalFac==="random"){ const opts=Object.keys(FACTIONS).filter(k=>k!==chosenFac); rf=opts[(Math.random()*opts.length)|0]; }
+  else rf=rivalFac;
   S.players.p=newPlayer("p",chosenFac);
   S.players.a=newPlayer("a",rf);
   S.players.p.deck=buildDeck(chosenFac);
