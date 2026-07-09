@@ -1,0 +1,24 @@
+graph TD
+    A["Entrada"] --> B["El Jardín Oscuro<br/>(nodo con nombre propio)"]
+    A --> C["Los Pasos Quebrados<br/>(nodo con nombre propio)"]
+
+    B -->|"posible encuentro"| B2{{"Emboscada de Ladrones"}}
+    B2 -->|"éxito"| D
+    B2 -->|"fallo: pierde la carta superior del mazo"| D
+    C --> D["El Cruce del Río Seco<br/>(los caminos se reencuentran)"]
+
+    D --> G["La Cámara Sellada"]
+    D -->|"posible encuentro"| H2{{"Bestias Salvajes"}}
+    H2 --> H["El Corredor Hundido"]
+
+    G --> I(("FINAL A: Jefe de Facción"))
+    H --> J(("FINAL B: Tesoro Oculto"))
+    B -.->|"solo si evitó la emboscada con éxito"| K(("FINAL C: Recuerdo Especial"))
+
+    style A fill:#4a4a6a,color:#fff
+    style D fill:#6a4a4a,color:#fff
+    style B2 fill:#7a2a2a,color:#fff
+    style H2 fill:#7a2a2a,color:#fff
+    style I fill:#8a2a2a,color:#fff
+    style J fill:#2a6a2a,color:#fff
+    style K fill:#2a4a8a,color:#fff
