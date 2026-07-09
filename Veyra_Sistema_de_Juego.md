@@ -540,9 +540,31 @@ ponerla en el fondo del mazo.
 
 ---
 
-## 18. Próximos pasos sugeridos
+## 18. Registro de Playtest #1 (mesa simulada)
+
+Partida simulada Alderium (control) vs Qashir (agro/sacrificio), usando mazos reducidos de 12 cartas (las cartas reales de sección 17 + rellenos genéricos "vainilla" solo para completar la curva de maná — no forman parte del set final). Vida inicial 20 cada uno. Objetivo: probar Guardián, combate cuerpo a cuerpo, Prisa y el combo de sacrificio de Zahra antes de tocar arte o motor.
+
+**Resumen de las primeras 6 rondas:**
+- T1-T2: Qashir sale agresivo con Explorador Temerario y Chacal de las Dunas (Prisa) — Alderium baja a 16 de vida sin Guardián todavía en juego.
+- T3: Alderium juega Muralla Viviente (Guardián) — a partir de acá Qashir queda obligado a dirigir sus ataques contra los Guardianes, no contra el jugador.
+- T4: Alderium suma Rhaen, Escudo del Trono — dos Guardianes en juego a la vez, Qashir tiene que elegir a cuál de los dos golpear.
+- T5-T6: los Guardianes de Alderium terminan muriendo en combate (trades sucesivos), pero absorbieron varios turnos de ataques que si no hubieran ido a la cara. Al caer el último Guardián, Qashir vuelve a pegarle directo al jugador.
+- **Estado final simulado (ronda 6):** Alderium 13 de vida / 3 criaturas en juego. Qashir 11 de vida / 1 criatura grande en juego (Verdugo de Caravanas, 6/4). Partida pareja, ninguno con ventaja aplastante.
+
+**Hallazgos:**
+1. La regla de Guardián funciona como se esperaba: le compra tiempo a Alderium sin necesitar bloqueo libre, tal como buscaba la sección 1.
+2. El combo de sacrificio de Zahra (Qashir) **no llegó a activarse** en 6 rondas — nunca hubo, en el momento justo, una criatura barata y prescindible para sacrificar. Puede ser demasiado situacional; revisar si vale la pena relajar la condición (ej. permitir sacrificar cualquier criatura propia, incluida una recién jugada el mismo turno).
+3. Ninguna de las 18 cartas usa **Silencio** ni **Vínculo** — quedaron sin probar. Falta al menos un ejemplo de cada una en el próximo lote.
+4. La curva se sintió razonable: para el turno 6 ambos lados ya tenían 3-4 cuerpos en juego sin sensación de tablero saturado ni vacío.
+5. Al simular turno a turno aparecieron reglas que el documento no cerraba todavía (combate mutuo vs. unidireccional, persistencia del daño, elección de objetivo entre Guardianes múltiples, aplicación de buffs sobre daño existente, vida inicial). Se resolvieron con rulings provisionales, ya incorporados directamente a la sección 1 — quedan marcados ahí como "a validar en mesa real".
+
+---
+
+## 19. Próximos pasos sugeridos
 
 1. ~~Definir números reales de ATK/VIDA para Eratiel~~ — **hecho**: 4/2, alto riesgo/alto impacto (sección 5).
 2. ~~Elegir 2-3 personajes más por facción para un primer set jugable~~ — **hecho**: 18 cartas de prueba (sección 17).
-3. **Próximo paso real:** probar el combate en una partida de mesa simulada (papel) con estas 18 cartas + Eratiel/Sigrun, antes de digitalizar nada.
-4. Definir el "costo de fallo" en encuentros de mazmorra (ej. la Emboscada de Ladrones del grafo) — por ahora se fijó como propuesta "pierde la carta superior del mazo", a validar en la partida de mesa del punto 3.
+3. ~~Probar el combate en una partida de mesa simulada~~ — **hecho**: Playtest #1 (sección 18). Falta repetirlo en mesa física con otra persona para confirmar que las reglas provisionales de combate (sección 1) se sienten bien.
+4. Definir el "costo de fallo" en encuentros de mazmorra (ej. la Emboscada de Ladrones del grafo) — por ahora se fijó como propuesta "pierde la carta superior del mazo", a validar junto con el punto 3.
+5. Revisar el combo de sacrificio de Zahra (Qashir) a la luz del hallazgo #2 del Playtest #1 — puede necesitar un ajuste de texto.
+6. Agregar al menos una carta con Silencio y una con Vínculo al set de prueba, para completar la cobertura de palabras clave antes del segundo playtest.
