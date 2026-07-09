@@ -1,0 +1,1116 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Veyrá — Duelo</title>
+<style>
+  :root{
+    --bg:#0e0d13; --panel:#17151f; --panel2:#1e1b28; --line:#2c2838;
+    --ink:#e9e6f2; --dim:#9a93ad; --gold:#d8b46a; --gold2:#f0d59a;
+    --atk:#e6b23c; --vida:#e05a4d; --mana:#4aa3e0; --shield:#7fd8ff;
+    --good:#5bc46a; --bad:#e05a4d;
+    --alderium:#c9a24b; --qashir:#c65b3a; --brasshaven:#b8863f;
+    --koren:#4faa86; --caelum:#6f7fd8; --nomadas:#9b6fc4;
+    /* tamaños de carta escalables: se ajustan por viewport, el interior usa cqw */
+    --handW: clamp(72px, 21vw, 116px);
+    --fieldW: clamp(50px, 13.5vw, 96px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 700px at 50% -10%, #201b2e 0%, var(--bg) 60%);
+    color:var(--ink); font-family:"Trebuchet MS",Segoe UI,system-ui,sans-serif;
+    overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:manipulation;
+  }
+  #app{height:100dvh;display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+  /* ---------- Menu ---------- */
+  #menu{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;overflow:auto;
+    background:radial-gradient(900px 600px at 50% 20%, #241d33, #0b0a10);padding:16px}
+  .menucard{width:min(680px,100%);background:linear-gradient(#1b1826,#141220);
+    border:1px solid var(--line);border-radius:18px;padding:22px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  .brand{font-size:clamp(40px,12vw,54px);letter-spacing:6px;font-weight:800;text-align:center;
+    background:linear-gradient(#f6e6b8,#c99b46);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{text-align:center;color:var(--dim);margin:2px 0 18px;letter-spacing:3px;font-size:11px;text-transform:uppercase}
+  .pick-h{color:var(--gold);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:14px 2px 8px}
+  .factions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .fac{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:11px 12px;
+    transition:.15s;position:relative;overflow:hidden}
+  .fac:active{transform:scale(.98)}
+  .fac.sel{border-color:var(--fc);box-shadow:0 0 0 2px var(--fc) inset, 0 8px 24px rgba(0,0,0,.4)}
+  .fac .fn{font-weight:800;font-size:15px;color:var(--fc);letter-spacing:.5px}
+  .fac .fd{color:var(--dim);font-size:11.5px;margin-top:3px;line-height:1.3}
+  .fac .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--fc)}
+  .row{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  .btn{cursor:pointer;border:none;border-radius:10px;padding:14px 20px;font-weight:800;letter-spacing:1px;
+    font-family:inherit;font-size:15px;min-height:48px}
+  .btn.play{background:linear-gradient(#e9c877,#c99b46);color:#2a2110;flex:1;min-width:160px}
+  .btn.play:active{filter:brightness(1.08)}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);flex:1;min-width:140px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ---------- Board layout (mobile-first, vertical) ---------- */
+  .herobar{display:flex;align-items:center;gap:10px;padding:6px 12px;flex:0 0 auto;
+    background:linear-gradient(#1a1626,#141120);border-bottom:1px solid var(--line);position:relative;z-index:5}
+  .herobar.player{border-bottom:none;border-top:1px solid var(--line)}
+  .herobar.targetable{box-shadow:inset 0 0 0 2px var(--bad),0 0 22px rgba(224,90,77,.5);cursor:crosshair}
+  .portrait{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;
+    border:2px solid var(--fc,var(--gold));background:radial-gradient(circle at 40% 30%,#2c2740,#141020);flex:0 0 auto}
+  .hblock{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+  .hrow1{display:flex;align-items:center;gap:10px}
+  .hname{font-weight:800;font-size:13px;color:var(--fc,var(--ink));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hlife{display:flex;align-items:center;gap:4px;font-weight:800;font-size:16px}
+  .heart{color:var(--vida)}
+  .deckn{font-size:11px;color:var(--dim);display:flex;gap:8px;margin-left:auto}
+  .manabar{display:flex;gap:2.5px;flex-wrap:wrap}
+  .crys{width:12px;height:12px;border-radius:3px;transform:rotate(45deg);border:1px solid #2a5f8a;background:#16202c}
+  .crys.on{background:radial-gradient(circle at 40% 30%,#8fd0f7,#2f86c8);border-color:#9fd4f7;box-shadow:0 0 5px #4aa3e0}
+  .crys.temp{background:radial-gradient(circle at 40% 30%,#c8f7c0,#3fb84a);border-color:#9df7a0;box-shadow:0 0 5px #5bc46a}
+
+  .side{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;padding:4px 6px;position:relative;min-height:0}
+  .side.enemy{background:linear-gradient(#161220,#131019)}
+  .mid{height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.35;flex:0 0 auto}
+  .field{display:flex;gap:5px;justify-content:center;align-items:center;overflow-x:auto;overflow-y:visible;
+    padding:12px 6px;min-height:0;scrollbar-width:none}
+  .field::-webkit-scrollbar{display:none}
+  .field.empty{padding:8px 6px}
+  .field.empty::after{content:"— campo vacío —";color:#3a3550;font-size:12px;letter-spacing:1px}
+
+  .hand{display:flex;gap:4px;justify-content:center;align-items:flex-end;overflow-x:auto;overflow-y:visible;
+    padding:8px 6px 10px;flex:0 0 auto;scrollbar-width:none}
+  .hand::-webkit-scrollbar{display:none}
+
+  /* ---------- Card ---------- */
+  .card{width:var(--handW);aspect-ratio:5/7;border-radius:9px;background:linear-gradient(#211d2d,#17141f);
+    border:1px solid var(--line);position:relative;transition:transform .12s, box-shadow .12s;
+    box-shadow:0 4px 12px rgba(0,0,0,.45);flex:0 0 auto;container-type:inline-size;
+    display:flex;flex-direction:column;overflow:hidden}
+  .card.onfield{overflow:visible}
+  .card .top{display:flex;justify-content:flex-start;padding:4cqw 4cqw 0}
+  .card .name{font-size:10cqw;font-weight:800;line-height:1.02;padding:2cqw 5cqw 0;min-height:20cqw;color:var(--gold2);
+    overflow:hidden}
+  .card .art{margin:3cqw 5cqw;height:38cqw;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    font-size:24cqw;background:radial-gradient(circle at 50% 35%, #2c2740, #151220);border:1px solid #2c2838}
+  .card .type{font-size:8cqw;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);text-align:center}
+  .card .txt{font-size:8.4cqw;line-height:1.2;color:#cfc9dc;padding:3cqw 6cqw;overflow:hidden;flex:1}
+  .card .kw{display:flex;gap:3cqw;flex-wrap:wrap;padding:1cqw 6cqw;justify-content:center}
+  .card .kw span{font-size:7.5cqw;background:#2a2540;color:var(--gold2);border:1px solid #3a3455;border-radius:4px;padding:0 4cqw}
+  .pip{width:20cqw;height:20cqw;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:12cqw;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.5)}
+  .pip.mana{background:radial-gradient(circle at 35% 30%,#7cc3f2,#2f7fc0);border:1px solid #9fd4f7}
+  .stats{position:absolute;bottom:-6cqw;left:0;right:0;display:flex;justify-content:space-between;padding:0 4cqw}
+  .badge{width:24cqw;height:24cqw;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13cqw;color:#fff;border:2px solid rgba(0,0,0,.4)}
+  .badge.atk{background:radial-gradient(circle at 35% 30%,#f2cd6a,#c48f28)}
+  .badge.vida{background:radial-gradient(circle at 35% 30%,#f07a6a,#b23429)}
+  .badge.buffed{box-shadow:0 0 0 2px var(--good)}
+  .badge.hurt{background:radial-gradient(circle at 35% 30%,#f2b0a6,#9c2418)}
+  .facbar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:9px 9px 0 0}
+
+  /* field cards = compact tokens (sin texto, para que entren varios en móvil) */
+  .card.onfield{width:var(--fieldW)}
+  .card.onfield .txt,.card.onfield .type{display:none}
+  .card.onfield .name{font-size:11cqw;min-height:22cqw;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical}
+  .card.onfield .art{height:44cqw;font-size:30cqw}
+
+  /* interactive states */
+  .card.inhand.playable{cursor:pointer}
+  .card.inhand.playable:active{transform:translateY(-10px)}
+  @media(hover:hover){.card.inhand.playable:hover{transform:translateY(-14px);box-shadow:0 16px 30px rgba(0,0,0,.6);border-color:var(--gold)}}
+  .card.inhand.unplayable{opacity:.5;filter:grayscale(.4)}
+  .card.canattack{cursor:pointer;box-shadow:0 0 0 2px var(--good), 0 4px 12px rgba(0,0,0,.5)}
+  .card.selected{box-shadow:0 0 0 3px var(--gold2), 0 0 22px var(--gold);transform:translateY(-6px)}
+  .card.targetable{cursor:crosshair;box-shadow:0 0 0 2px var(--bad), 0 0 18px rgba(224,90,77,.6)}
+  .card.targetable.friendly{box-shadow:0 0 0 2px var(--good), 0 0 18px rgba(91,196,106,.6)}
+  .card.summonsick{filter:saturate(.6) brightness(.9)}
+  .card .zzz{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;z-index:2}
+  .shieldring{position:absolute;inset:-3px;border-radius:11px;border:2px solid var(--shield);box-shadow:0 0 12px var(--shield);pointer-events:none;animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.5}}
+  .card.dead{animation:die .4s forwards}
+  @keyframes die{to{transform:scale(.6) rotate(8deg);opacity:0}}
+  .card.attacking{animation:lunge .35s;z-index:10}
+  @keyframes lunge{50%{transform:translateY(-22px) scale(1.06)}}
+  .card.struck{animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .fltd{position:fixed;font-weight:800;font-size:22px;pointer-events:none;animation:flt 1s forwards;z-index:60;text-shadow:0 2px 4px #000}
+  @keyframes flt{to{transform:translateY(-40px);opacity:0}}
+
+  /* ---------- Buttons / overlays ---------- */
+  #endturn{position:fixed;right:10px;top:50%;transform:translateY(-50%);z-index:20;
+    background:linear-gradient(#e9c877,#c99b46);color:#2a2110;border:none;border-radius:50px;
+    padding:12px 14px;font-weight:800;letter-spacing:.5px;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(0,0,0,.5);
+    max-width:96px;line-height:1.1;font-size:13px}
+  #endturn:active{filter:brightness(1.08)}
+  #endturn.enemy{background:linear-gradient(#332e48,#252036);color:var(--dim);cursor:default;filter:none;box-shadow:none}
+  #cancel{position:fixed;right:10px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:22;background:var(--panel2);border:1px solid var(--line);
+    color:var(--ink);border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer;font-family:inherit;display:none;min-height:44px}
+
+  #log{position:fixed;left:8px;top:calc(58px + env(safe-area-inset-top));width:min(160px,42vw);max-height:34vh;overflow:hidden;
+    z-index:15;pointer-events:none;display:flex;flex-direction:column;gap:3px}
+  .logline{font-size:10px;color:var(--dim);background:rgba(20,17,28,.72);border:1px solid var(--line);
+    border-radius:6px;padding:4px 7px;animation:fade .3s;line-height:1.25}
+  @keyframes fade{from{opacity:0;transform:translateX(-8px)}}
+
+  #banner{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:rgba(8,7,12,.85);flex-direction:column;gap:8px;padding:20px;text-align:center}
+  #banner .big{font-size:clamp(42px,13vw,60px);font-weight:800;letter-spacing:4px}
+  #banner .sub{color:var(--dim);letter-spacing:1px;font-size:14px}
+  #toast{position:fixed;top:calc(60px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:35;
+    background:rgba(30,26,40,.96);border:1px solid var(--gold);border-radius:10px;padding:9px 16px;
+    font-weight:700;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:80vw;text-align:center;font-size:13px}
+
+  /* ---------- Modal ---------- */
+  #modal{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:rgba(8,7,12,.72);padding:16px}
+  .mbox{width:min(440px,100%);max-height:88vh;overflow:auto;background:linear-gradient(#1c1826,#141120);border:1px solid var(--gold);
+    border-radius:14px;padding:20px 20px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  .mbox h3{margin:0 0 4px;color:var(--gold2);font-size:18px}
+  .mbox .mq{color:var(--dim);font-size:13px;margin-bottom:14px;line-height:1.4}
+  .mopt{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    border-radius:9px;padding:13px 14px;margin-bottom:8px;cursor:pointer;font-family:inherit;font-size:14px;min-height:48px}
+  .mopt:active{border-color:var(--gold);background:var(--panel2)}
+  .hint{display:none}
+
+  /* Pantallas anchas: centrar el tablero como columna tipo teléfono */
+  @media(min-width:820px){
+    #app{max-width:560px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+    .hint{display:block;position:fixed;bottom:8px;left:50%;transform:translateX(-50%);color:#4a4560;font-size:11px;letter-spacing:1px}
+  }
+</style>
+
+<div id="app">
+  <div class="herobar enemy" id="enemyHero"></div>
+  <div class="side enemy">
+    <div class="field" id="enemyField"></div>
+  </div>
+  <div class="mid"></div>
+  <div class="side player">
+    <div class="field" id="playerField"></div>
+  </div>
+  <div class="hand" id="playerHand"></div>
+  <div class="herobar player" id="playerHero"></div>
+</div>
+<button id="endturn">Terminar<br>turno</button>
+<button id="cancel">Cancelar</button>
+<div id="log"></div>
+<div class="hint">Tocá una carta de la mano para jugarla · tocá tu criatura y luego el objetivo para atacar · Espacio termina turno</div>
+
+<div id="toast"></div>
+<div id="banner"><div class="big"></div><div class="sub"></div><button class="btn play" style="max-width:220px;margin-top:14px" onclick="location.reload()">Jugar otra vez</button></div>
+<div id="modal"><div class="mbox" id="mbox"></div></div>
+
+<!-- ===================== MENU ===================== -->
+<div id="menu">
+  <div class="menucard">
+    <div class="brand">VEYRÁ</div>
+    <div class="tag">Duelo · Prototipo jugable v1</div>
+    <div class="pick-h">Elegí tu facción</div>
+    <div class="factions" id="facPick"></div>
+    <div class="row">
+      <button class="btn ghost" id="rivalBtn">Rival: aleatorio</button>
+      <button class="btn play" id="startBtn" disabled>Comenzar duelo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   VEYRÁ — motor de duelo (implementa la sección 1 del diseño)
+   ============================================================ */
+
+const FACTIONS = {
+  alderium:{name:"Alderium", color:"var(--alderium)", art:"🛡️", desc:"Control y orden. Guardianes fuertes y escudos."},
+  qashir:{name:"Qashir", color:"var(--qashir)", art:"🗡️", desc:"Recursos y riesgo. Sacrificio y agresión."},
+  brasshaven:{name:"Brasshaven", color:"var(--brasshaven)", art:"⚙️", desc:"Ingeniería. Reanimar y artefactos."},
+  koren:{name:"Kóren", color:"var(--koren)", art:"🌿", desc:"Memoria antigua. Recuerdos y curación."},
+  caelum:{name:"Caelum", color:"var(--caelum)", art:"✦", desc:"Runas oficiales. Alteran las reglas."},
+  nomadas:{name:"Nómadas", color:"var(--nomadas)", art:"🌀", desc:"Impredecibles. Cartas Ocultas."},
+};
+
+// ---- Definición de las 18 cartas reales (sección 17) + vainillas de relleno ----
+// tipo: criatura|hechizo|runa|reliquia|recuerdo
+let UID = 1;
+function mk(o){ return Object.assign({uid:UID++}, o); }
+
+const LIB = {
+  // ---------------- Alderium ----------------
+  rhaen:{fac:"alderium",name:"Rhaen, Escudo del Trono",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🛡️",
+    txt:"Tus otros Guardianes ganan +0/+1.",aura:true},
+  muralla:{fac:"alderium",name:"Muralla Viviente",cost:3,type:"criatura",atk:1,vida:5,kw:["Guardián"],art:"🧱",
+    txt:"Al entrar: da Escudo a otro Guardián que controlás.",etb:"muralla"},
+  decreto_cont:{fac:"alderium",name:"Decreto de Contención",cost:2,type:"hechizo",art:"📜",
+    txt:"Da Escudo a una criatura. Si es Guardián, a dos en vez de una.",target:"criatura",cast:"decreto_cont"},
+  // ---------------- Qashir ----------------
+  zahra:{fac:"qashir",name:"Zahra, la Apostadora",cost:3,type:"criatura",atk:4,vida:2,kw:[],art:"🎲",
+    txt:"Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.",etb:"zahra"},
+  chacal:{fac:"qashir",name:"Chacal de las Dunas",cost:2,type:"criatura",atk:3,vida:1,kw:["Prisa"],art:"🐺",
+    txt:"Al morir: inflige 1 de daño al rival.",death:"chacal"},
+  pacto:{fac:"qashir",name:"Pacto de Sangre",cost:1,type:"hechizo",art:"🩸",
+    txt:"Sacrificá una criatura tuya. Ganás maná igual a su costo este turno.",target:"criatura_propia",cast:"pacto"},
+  // ---------------- Brasshaven ----------------
+  lyra:{fac:"brasshaven",name:"Lyra Vale, la Inventora",cost:4,type:"criatura",atk:3,vida:3,kw:[],art:"🔧",
+    txt:"Al entrar: devolvé una criatura de tu cementerio al campo con -1/-1.",etb:"lyra"},
+  automata:{fac:"brasshaven",name:"Autómata de Repuestos",cost:3,type:"criatura",atk:2,vida:4,kw:[],art:"🤖",
+    txt:"Al morir: pagá 1 maná para devolverla con sus stats actuales (una vez).",death:"automata"},
+  cristal:{fac:"brasshaven",name:"Cristal de Sobrecarga",cost:2,type:"reliquia",art:"💎",
+    txt:"Ligá a una criatura: +2/+0. Al morir esa criatura, ganás +1 maná este turno.",target:"criatura_propia",cast:"cristal"},
+  // ---------------- Kóren ----------------
+  anciana:{fac:"koren",name:"Anciana del Río Callado",cost:3,type:"criatura",atk:2,vida:4,kw:[],art:"👵",
+    txt:"Al entrar: curá 2 al jugador. Recuerdo: cura 4.",etb:"anciana"},
+  eco:{fac:"koren",name:"Eco del Primer Templo",cost:1,type:"recuerdo",art:"🏛️",
+    txt:"La próxima criatura este turno cuesta 1 menos. Recuerdo para activar.",cast:"eco"},
+  vendaje:{fac:"koren",name:"Vendaje de Musgo Antiguo",cost:1,type:"hechizo",art:"🌿",
+    txt:"Curá 3 a una criatura o al jugador.",target:"cualquiera_amistoso",cast:"vendaje"},
+  // ---------------- Caelum ----------------
+  ley:{fac:"caelum",name:"Ley de Terra Caelum",cost:5,type:"runa",art:"✦",
+    txt:"Mientras esté en juego, tu tope de maná máximo pasa a 12.",cast:"ley"},
+  guardiana:{fac:"caelum",name:"Guardiana de las Alturas",cost:4,type:"criatura",atk:3,vida:5,kw:["Guardián"],art:"🕊️",
+    txt:"Si es atacada como Guardián y sobrevive, gana +1/+1 permanente.",flag:"guardiana"},
+  equilibrio:{fac:"caelum",name:"Decreto de Equilibrio",cost:3,type:"hechizo",art:"⚖️",
+    txt:"El maná disponible de ambos se iguala al menor de los dos.",cast:"equilibrio"},
+  // ---------------- Nómadas ----------------
+  eratiel:{fac:"nomadas",name:"Eratiel, el Guerrero sin Historia",cost:3,type:"criatura",atk:4,vida:2,kw:["Oculto"],art:"👤",
+    txt:"Oculto. Sus stats reales se revelan al atacar o ser atacada."},
+  forastero:{fac:"nomadas",name:"Forastero sin Nombre",cost:2,type:"criatura",atk:3,vida:3,kw:["Oculto"],art:"🎭",
+    txt:"Oculto. Al entrar, sus stats se fijan en secreto: 1/1, 3/3 o 5/1.",etb:"forastero"},
+  rumor:{fac:"nomadas",name:"Rumor del Camino",cost:1,type:"hechizo",art:"🗺️",
+    txt:"Mirá la próxima carta de tu mazo. Dejala arriba o mandala al fondo.",cast:"rumor"},
+};
+
+// Vainillas de relleno por facción (curva de maná) — no son del set final (ver Playtest #1)
+const VANILLA = [
+  {name:"Recluta",cost:1,atk:1,vida:2,art:"🙂"},
+  {name:"Escudero",cost:2,atk:2,vida:2,art:"🧑"},
+  {name:"Guerrero",cost:3,atk:3,vida:3,art:"💪"},
+  {name:"Veterano",cost:4,atk:4,vida:4,art:"🧔"},
+  {name:"Campeón",cost:5,atk:5,vida:5,art:"🦁"},
+  {name:"Coloso",cost:6,atk:6,vida:6,art:"🗿"},
+];
+
+// Preguntas de "Recuerdo" — honran la filosofía de recompensa intelectual del diseño.
+const RECUERDOS = {
+  anciana:{q:"Recuerdo de Kóren — ¿con qué se asocia esta facción?",
+    opts:[["La memoria antigua y la curación",true],["La ingeniería y los autómatas",false],["El sacrificio y el riesgo",false]]},
+  eco:{q:"Recuerdo — El 'Primer Templo' pertenece a la facción de…",
+    opts:[["Kóren",true],["Alderium",false],["Caelum",false]]},
+};
+
+// ============================================================
+//  Estado
+// ============================================================
+const S = {
+  players:{}, turn:"p", turnNum:0, phase:"menu", busy:false,
+  selected:null, targeting:null, // targeting = {resolve, filter}
+};
+function P(){ return S.players[S.turn]; }
+function foeOf(id){ return id==="p"?"a":"p"; }
+
+function newPlayer(id, fac){
+  return {id, fac, life:20, manaMax:0, mana:0, tempMana:0, manaCapMax:10,
+    hand:[], deck:[], field:[], grave:[], ecoDiscount:0};
+}
+
+function buildDeck(fac){
+  const deck=[];
+  // 2 copias de cada carta de diseño de la facción
+  for(const k in LIB){ if(LIB[k].fac===fac){ for(let i=0;i<2;i++) deck.push(instantiate(k)); } }
+  // relleno vainilla hasta 20 cartas, coloreado por facción
+  let vi=0;
+  while(deck.length<20){
+    const v=VANILLA[vi%VANILLA.length]; vi++;
+    deck.push(instantiate(null, {fac, name:v.name, cost:v.cost, type:"criatura", atk:v.atk, vida:v.vida, kw:[], art:v.art, txt:"", vanilla:true}));
+  }
+  return shuffle(deck);
+}
+
+function instantiate(libKey, override){
+  const base = libKey ? LIB[libKey] : override;
+  const c = mk({
+    key: libKey, fac: base.fac, name: base.name, cost: base.cost, type: base.type,
+    art: base.art, txt: base.txt||"", kw:(base.kw||[]).slice(),
+    baseAtk: base.atk||0, baseVida: base.vida||0,
+    plusAtk:0, plusVida:0, damage:0,
+    shield:false, sick:true, hidden:(base.kw||[]).includes("Oculto"),
+    aura: base.aura||false, etb: base.etb, death: base.death, cast: base.cast,
+    target: base.target, flag: base.flag, vanilla: base.vanilla||false,
+    automataUsed:false, cristalHost:false,
+  });
+  return c;
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+// ---- Stats efectivas (auras + buffs) ----
+function auraBonusVida(p, c){
+  // Rhaen: otros Guardianes +0/+1
+  let b=0;
+  for(const o of p.field){ if(o.aura && o!==c && c.kw.includes("Guardián")) b+=1; }
+  return b;
+}
+function effAtk(c){ return Math.max(0, c.baseAtk + c.plusAtk); }
+function effMaxVida(p,c){ return c.baseVida + c.plusVida + auraBonusVida(p,c); }
+function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
+
+// ============================================================
+//  Arranque
+// ============================================================
+let chosenFac=null, rivalFac="random";
+function initMenu(){
+  const pick=document.getElementById("facPick");
+  for(const k in FACTIONS){
+    const f=FACTIONS[k];
+    const d=document.createElement("div");
+    d.className="fac"; d.style.setProperty("--fc",f.color);
+    d.innerHTML=`<div class="bar"></div><div class="fn">${f.name}</div><div class="fd">${f.desc}</div>`;
+    d.onclick=()=>{ chosenFac=k; [...pick.children].forEach(c=>c.classList.remove("sel")); d.classList.add("sel");
+      document.getElementById("startBtn").disabled=false; };
+    pick.appendChild(d);
+  }
+  const rb=document.getElementById("rivalBtn");
+  const keys=Object.keys(FACTIONS);
+  rb.onclick=()=>{
+    if(rivalFac==="random"){ rivalFac=keys[0]; }
+    else { const i=keys.indexOf(rivalFac); rivalFac = i>=keys.length-1 ? "random" : keys[i+1]; }
+    rb.textContent = "Rival: " + (rivalFac==="random"?"aleatorio":FACTIONS[rivalFac].name);
+  };
+  document.getElementById("startBtn").onclick=start;
+}
+
+function start(){
+  const rf = rivalFac==="random" ? Object.keys(FACTIONS)[(Math.random()*6)|0] : rivalFac;
+  S.players.p=newPlayer("p",chosenFac);
+  S.players.a=newPlayer("a",rf);
+  S.players.p.deck=buildDeck(chosenFac);
+  S.players.a.deck=buildDeck(rf);
+  for(let i=0;i<3;i++) drawCard(S.players.p);
+  for(let i=0;i<4;i++) drawCard(S.players.a); // el segundo compensa con una carta extra
+  document.getElementById("menu").style.display="none";
+  S.phase="play"; S.turn="p"; S.turnNum=0;
+  log(`Duelo: ${FACTIONS[chosenFac].name} vs ${FACTIONS[rf].name}`);
+  startTurn();
+}
+
+function drawCard(p){
+  if(p.deck.length===0){ // fatiga
+    p.life -= 1; log(`${who(p)} no tiene cartas: pierde 1 de vida por fatiga.`);
+    checkWin(); return;
+  }
+  p.hand.push(p.deck.pop());
+}
+
+// ============================================================
+//  Ciclo de turno
+// ============================================================
+function startTurn(){
+  const p=P();
+  S.turnNum++;
+  // maná
+  const cap = runaActive(p)?12:10;
+  p.manaCapMax=cap;
+  p.manaMax=Math.min(p.manaMax+1, cap);
+  p.mana=p.manaMax; p.tempMana=0; p.ecoDiscount=0;
+  // resetear cansancio de invocación
+  for(const c of p.field) c.sick=false;
+  if(S.turnNum>2 || S.turn==="a") {} // (nada extra)
+  drawCard(p);
+  render();
+  if(S.turn==="p"){ toast(`Tu turno`); }
+  else { setTimeout(aiTurn, 650); }
+  checkWin();
+}
+
+function runaActive(p){ return p.field.some(c=>c.type==="runa" && c.key==="ley"); }
+
+function endTurn(){
+  if(S.turn!=="p"||S.busy) return;
+  clearSelection();
+  S.turn="a"; startTurn();
+}
+function endAiTurn(){
+  S.turn="p"; startTurn();
+}
+
+// ============================================================
+//  Jugar cartas
+// ============================================================
+function canPlay(p,c){
+  return effectiveCost(p,c) <= availMana(p) && !(c.type==="criatura" && p.field.length>=7);
+}
+function availMana(p){ return p.mana + p.tempMana; }
+function effectiveCost(p,c){
+  let cost=c.cost;
+  if(c.type==="criatura") cost=Math.max(0, cost - p.ecoDiscount);
+  return cost;
+}
+function spendMana(p,n){
+  const fromTemp=Math.min(p.tempMana,n); p.tempMana-=fromTemp; p.mana-=(n-fromTemp);
+}
+
+async function playCard(p,c){
+  if(!canPlay(p,c)) return;
+  const cost=effectiveCost(p,c);
+
+  // cartas con objetivo: pedir objetivo antes de gastar
+  if(c.target){
+    const tgt=await requestTarget(p,c);
+    if(tgt===null){ return; } // cancelado
+    spendMana(p,cost);
+    removeFromHand(p,c);
+    if(c.type==="criatura"){ /* n/a */ }
+    log(`${who(p)} juega ${c.name}.`);
+    if(c.type==="criatura"){ enterField(p,c); }
+    await resolveTargeted(p,c,tgt);
+    if(c.type!=="criatura" && c.type!=="reliquia" && c.type!=="runa") p.grave.push(c);
+    afterPlay(p,c);
+    render(); checkWin(); return;
+  }
+
+  spendMana(p,cost);
+  removeFromHand(p,c);
+  log(`${who(p)} juega ${c.name}.`);
+
+  if(c.type==="criatura"){
+    enterField(p,c);
+    await runEtb(p,c);
+  } else if(c.type==="runa"){
+    p.field.push(c); // permanece en juego
+    if(c.cast) await runCast(p,c,null);
+  } else if(c.type==="reliquia"){
+    // reliquias sin target: (ninguna hoy) — al cementerio
+    p.grave.push(c);
+  } else {
+    // hechizo / recuerdo sin target
+    if(c.cast){ const ok=await runCast(p,c,null); if(ok===false){ /* recuerdo fallido igual se descarta */ } }
+    p.grave.push(c);
+  }
+  afterPlay(p,c);
+  render(); checkWin();
+}
+
+function afterPlay(p,c){
+  if(c.type==="criatura" && p.ecoDiscount>0){ p.ecoDiscount=0; } // el descuento aplica a la próxima criatura
+}
+
+function enterField(p,c){
+  c.sick = !c.kw.includes("Prisa");
+  p.field.push(c);
+}
+function removeFromHand(p,c){ const i=p.hand.indexOf(c); if(i>=0) p.hand.splice(i,1); }
+
+// ---- ETB (al entrar) ----
+async function runEtb(p,c){
+  switch(c.etb){
+    case "muralla":{
+      const other=p.field.find(x=>x!==c && x.kw.includes("Guardián"));
+      if(other){ other.shield=true; log(`Muralla Viviente da Escudo a ${other.name}.`); }
+      break;
+    }
+    case "zahra":{
+      const others=p.field.filter(x=>x!==c && x.type==="criatura");
+      if(others.length){
+        const pick = await chooseCreature(p, others, "Zahra: ¿sacrificar una criatura por +1 maná?", true);
+        if(pick){ killCreature(p,pick,"sacrificada por Zahra"); p.tempMana+=1; toast("+1 maná este turno"); }
+      }
+      break;
+    }
+    case "lyra":{
+      const deadCreat=p.grave.filter(x=>x.type==="criatura");
+      if(deadCreat.length){
+        const pick = await chooseFromList(p, deadCreat, "Lyra: elegí una criatura del cementerio para revivir (-1/-1).");
+        if(pick){
+          const i=p.grave.indexOf(pick); p.grave.splice(i,1);
+          const rev=instantiate(pick.key, pick.vanilla?{fac:pick.fac,name:pick.name,cost:pick.cost,type:"criatura",atk:pick.baseAtk,vida:pick.baseVida,kw:[],art:pick.art,txt:"",vanilla:true}:undefined);
+          rev.plusAtk=-1; rev.plusVida=-1; rev.sick=true;
+          if(effMaxVida(p,rev)<=0){ log(`${rev.name} vuelve pero se desmorona (0 de vida).`); p.grave.push(rev); }
+          else { p.field.push(rev); log(`Lyra revive a ${rev.name} con -1/-1.`); }
+        }
+      }
+      break;
+    }
+    case "anciana":{
+      let heal=2;
+      const ok = await askRecuerdo("anciana");
+      if(ok){ heal=4; toast("¡Recuerdo correcto! Cura 4"); } else { toast("Cura 2"); }
+      p.life=Math.min(30,p.life+heal); log(`${who(p)} cura ${heal} de vida.`);
+      break;
+    }
+    case "forastero":{
+      const rolls=[[1,1],[3,3],[5,1]];
+      const r=rolls[(Math.random()*3)|0];
+      c.baseAtk=r[0]; c.baseVida=r[1]; c.damage=0;
+      // permanece Oculto hasta atacar/ser atacada
+      break;
+    }
+  }
+  render();
+}
+
+// ---- Cartas con objetivo ----
+async function resolveTargeted(p,c,tgt){
+  switch(c.cast){
+    case "decreto_cont":{
+      tgt.shield=true;
+      if(tgt.kw.includes("Guardián")){
+        const others=p.field.concat(other(p).field).filter(x=>x!==tgt);
+        if(others.length){ const t2=others.find(x=>!x.shield)||others[0]; t2.shield=true; log(`Decreto: Escudo a ${tgt.name} y ${t2.name}.`);}
+      } else log(`Decreto: Escudo a ${tgt.name}.`);
+      break;
+    }
+    case "pacto":{
+      const cost=tgt.cost;
+      killCreature(p,tgt,"sacrificada por Pacto de Sangre");
+      p.tempMana+=cost; toast(`+${cost} maná este turno`);
+      break;
+    }
+    case "cristal":{
+      tgt.plusAtk+=2; tgt.cristalHost=true;
+      log(`Cristal de Sobrecarga: ${tgt.name} gana +2/+0.`);
+      break;
+    }
+    case "vendaje":{
+      if(tgt.isHero){ tgt.p.life=Math.min(30,tgt.p.life+3); log(`Vendaje: cura 3 a ${who(tgt.p)}.`); }
+      else { tgt.damage=Math.max(0,tgt.damage-3); log(`Vendaje: cura 3 a ${tgt.name}.`); }
+      break;
+    }
+  }
+  render();
+}
+
+// ---- Cast sin objetivo ----
+async function runCast(p,c,_){
+  switch(c.cast){
+    case "eco":{
+      const ok=await askRecuerdo("eco");
+      if(ok){ p.ecoDiscount=1; toast("La próxima criatura cuesta 1 menos"); }
+      else { toast("Recuerdo fallido: sin efecto"); return false; }
+      break;
+    }
+    case "ley":{ p.manaMax=Math.min(p.manaMax,12); log(`Ley de Terra Caelum: tope de maná ahora 12.`); break; }
+    case "equilibrio":{
+      const o=other(p); const lo=Math.min(availMana(p),availMana(o));
+      p.mana=Math.max(0,lo-p.tempMana>0?lo-p.tempMana:0); p.tempMana=Math.min(p.tempMana,lo); p.mana=Math.max(0,lo-p.tempMana);
+      o.mana=Math.max(0,lo-o.tempMana); o.tempMana=Math.min(o.tempMana,lo); o.mana=Math.max(0,lo-o.tempMana);
+      log(`Decreto de Equilibrio: maná disponible igualado a ${lo}.`);
+      break;
+    }
+    case "rumor":{
+      if(p.deck.length){
+        const top=p.deck[p.deck.length-1];
+        if(p.id==="p"){
+          const keep=await choose2(`Rumor del Camino`, `Próxima carta: <b>${top.name}</b> (${top.cost}⬢). ¿Qué hacés?`, "Dejarla arriba","Mandarla al fondo");
+          if(!keep){ p.deck.unshift(p.deck.pop()); toast("Carta al fondo del mazo"); }
+          else toast("La dejás arriba");
+        } else {
+          // IA: si es cara y sin maná, al fondo
+          if(top.cost > P().manaMax+1) p.deck.unshift(p.deck.pop());
+        }
+      }
+      break;
+    }
+  }
+  return true;
+}
+
+function other(p){ return S.players[foeOf(p.id)]; }
+
+// ============================================================
+//  Combate
+// ============================================================
+function hasGuardian(p){ return p.field.some(c=>c.kw.includes("Guardián")); }
+
+function legalTargets(attackerOwner){
+  const foe=other(attackerOwner);
+  const guardians=foe.field.filter(c=>c.kw.includes("Guardián"));
+  if(guardians.length) return {creatures:guardians, hero:false};
+  return {creatures:foe.field.slice(), hero:true};
+}
+
+async function attack(attacker, ownerP, target){
+  S.busy=true;
+  const foe=other(ownerP);
+  const el=cardEl(attacker); if(el){ el.classList.add("attacking"); }
+  reveal(attacker);
+  await sleep(180);
+
+  if(target.isHero){
+    dealToHero(foe, effAtk(attacker), attacker.name);
+    floatDmg(document.getElementById(foe.id==="p"?"playerHero":"enemyHero"), effAtk(attacker));
+  } else {
+    reveal(target);
+    const tel=cardEl(target); if(tel) tel.classList.add("struck");
+    const aAtk=effAtk(attacker), tAtk=effAtk(target);
+    // daño simultáneo (combate mutuo, sección 1)
+    applyDamage(foe, target, aAtk, attacker);
+    applyDamage(ownerP, attacker, tAtk, target);
+    floatDmg(cardEl(target), aAtk); floatDmg(cardEl(attacker), tAtk);
+    // Guardiana de las Alturas: sobrevive como Guardián -> +1/+1
+    if(target.flag==="guardiana" && effVida(foe,target)>0 && target.kw.includes("Guardián")){
+      target.plusAtk+=1; target.plusVida+=1; log(`Guardiana de las Alturas crece a +1/+1.`);
+    }
+  }
+  attacker.attacked=true;
+  attacker.sick=true; // ya atacó este turno
+  await sleep(260);
+  cleanupDeaths();
+  render();
+  S.busy=false;
+  checkWin();
+}
+
+function applyDamage(ownerP, c, dmg, source){
+  if(dmg<=0) return;
+  if(c.shield){ c.shield=false; log(`Escudo de ${c.name} absorbe el daño.`); return; }
+  c.damage+=dmg;
+}
+function dealToHero(p, dmg, srcName){
+  p.life-=dmg; log(`${srcName} inflige ${dmg} a ${who(p)}.`);
+}
+
+function cleanupDeaths(){
+  for(const id of ["p","a"]){
+    const p=S.players[id];
+    const dead=p.field.filter(c=> c.type==="criatura" && effVida(p,c)<=0);
+    for(const c of dead){ killCreature(p,c,"muere en combate", true); }
+  }
+}
+
+function killCreature(p, c, reason, fromCombat){
+  const i=p.field.indexOf(c); if(i<0) return;
+  const el=cardEl(c); if(el) el.classList.add("dead");
+  p.field.splice(i,1);
+  log(`${c.name} ${reason}.`);
+  // muerte de host de cristal
+  if(c.cristalHost){ p.tempMana+=1; toast("+1 maná (Cristal de Sobrecarga)"); }
+  // deathrattles
+  runDeath(p,c);
+  if(!c.deathReturned) p.grave.push(c);
+}
+
+async function runDeath(p,c){
+  switch(c.death){
+    case "chacal":{
+      const foe=other(p); foe.life-=1; log(`Chacal de las Dunas inflige 1 a ${who(foe)}.`);
+      break;
+    }
+    case "automata":{
+      if(!c.automataUsed && availMana(p)>=1){
+        let doIt=true;
+        if(p.id==="p") doIt = await choose2("Autómata de Repuestos","¿Pagar 1 maná para devolverla al campo?","Sí, pagar 1","No");
+        if(doIt){
+          spendMana(p,1);
+          const rev=instantiate("automata"); rev.automataUsed=true; rev.plusAtk=c.plusAtk; rev.plusVida=c.plusVida; rev.sick=true;
+          if(p.field.length<7){ p.field.push(rev); c.deathReturned=true; log(`Autómata de Repuestos vuelve al campo.`); }
+        }
+      }
+      break;
+    }
+  }
+  render();
+}
+
+// ============================================================
+//  IA
+// ============================================================
+async function aiTurn(){
+  if(S.phase!=="play") return;
+  const p=S.players.a;
+  S.busy=true;
+  // fase de juego: intentar bajar cartas por valor
+  let played=true; let guard=0;
+  while(played && guard++<20){
+    played=false;
+    const playable=p.hand.filter(c=>canPlay(p,c)).sort((a,b)=>effectiveCost(p,b)-effectiveCost(p,a));
+    for(const c of playable){
+      // evitar hechizos sin buen objetivo
+      if(c.cast==="vendaje" && p.life>25 && !p.field.some(x=>x.damage>0)) continue;
+      if(c.cast==="pacto" && !p.field.length) continue;
+      await aiPlay(p,c);
+      played=true;
+      await sleep(420);
+      break;
+    }
+  }
+  await sleep(300);
+  // fase de ataque
+  await aiAttacks(p);
+  await sleep(300);
+  S.busy=false;
+  if(S.phase==="play") endAiTurn();
+}
+
+async function aiPlay(p,c){
+  const cost=effectiveCost(p,c);
+  if(c.target){
+    const tgt=aiPickTarget(p,c);
+    if(tgt===null && c.type!=="criatura") return;
+    spendMana(p,cost); removeFromHand(p,c);
+    log(`${who(p)} juega ${c.name}.`);
+    if(tgt!==null) await resolveTargeted(p,c,tgt);
+    if(c.type==="hechizo"||c.type==="recuerdo") p.grave.push(c);
+    render(); checkWin(); return;
+  }
+  spendMana(p,cost); removeFromHand(p,c);
+  log(`${who(p)} juega ${c.name}.`);
+  if(c.type==="criatura"){ enterField(p,c); await aiEtb(p,c); }
+  else if(c.type==="runa"){ p.field.push(c); if(c.cast) await runCast(p,c,null); }
+  else if(c.type==="reliquia"){ p.grave.push(c); }
+  else { if(c.cast) await runCast(p,c,null); p.grave.push(c); }
+  render(); checkWin();
+}
+
+async function aiEtb(p,c){
+  // versión IA de ETB (sin prompts)
+  switch(c.etb){
+    case "muralla":{ const o=p.field.find(x=>x!==c&&x.kw.includes("Guardián")); if(o)o.shield=true; break; }
+    case "zahra":{
+      const junk=p.field.filter(x=>x!==c&&x.type==="criatura"&&effVida(p,x)<=1 && !x.kw.includes("Guardián"));
+      if(junk.length){ killCreature(p,junk[0],"sacrificada por Zahra"); p.tempMana+=1; }
+      break;
+    }
+    case "lyra":{
+      const dead=p.grave.filter(x=>x.type==="criatura").sort((a,b)=>b.baseAtk-a.baseAtk);
+      if(dead.length){ const pick=dead[0]; p.grave.splice(p.grave.indexOf(pick),1);
+        const rev=instantiate(pick.key, pick.vanilla?{fac:pick.fac,name:pick.name,cost:pick.cost,type:"criatura",atk:pick.baseAtk,vida:pick.baseVida,kw:[],art:pick.art,txt:"",vanilla:true}:undefined);
+        rev.plusAtk=-1; rev.plusVida=-1; rev.sick=true;
+        if(effMaxVida(p,rev)>0) p.field.push(rev); else p.grave.push(rev); }
+      break;
+    }
+    case "anciana":{ const ok=Math.random()<0.6; p.life=Math.min(30,p.life+(ok?4:2)); break; }
+    case "forastero":{ const r=[[1,1],[3,3],[5,1]][(Math.random()*3)|0]; c.baseAtk=r[0]; c.baseVida=r[1]; break; }
+  }
+  render();
+}
+
+function aiPickTarget(p,c){
+  const foe=other(p);
+  switch(c.cast){
+    case "decreto_cont":{ return p.field.find(x=>x.kw.includes("Guardián")) || p.field.find(x=>x.type==="criatura") || null; }
+    case "pacto":{ const j=p.field.filter(x=>x.type==="criatura").sort((a,b)=>a.cost-b.cost); // sacrifica lo más barato... pero conviene lo más caro? mantener simple
+      return j.length? j.sort((a,b)=>b.cost-a.cost)[0] : null; }
+    case "cristal":{ return p.field.filter(x=>x.type==="criatura").sort((a,b)=>effVida(p,b)-effVida(p,a))[0]||null; }
+    case "vendaje":{ const hurt=p.field.filter(x=>x.damage>0).sort((a,b)=>b.damage-a.damage); return hurt[0]||{isHero:true,p}; }
+  }
+  return null;
+}
+
+async function aiAttacks(p){
+  const foe=other(p);
+  const attackers=()=>p.field.filter(c=>c.type==="criatura" && !c.sick && effAtk(c)>0 && !c.attacked);
+  let guard=0;
+  let list=attackers();
+  for(const atk of list){
+    if(S.phase!=="play") return;
+    const tg=legalTargets(p);
+    let target;
+    if(!tg.creatures.length && tg.hero){ target={isHero:true,p:foe}; }
+    else {
+      // hay guardianes o criaturas: preferir matar sin morir, o ir a la cara si no hay guardián
+      if(tg.hero){
+        // no hay guardián enemigo -> priorizar cara salvo trade muy bueno
+        const lethal = tg.creatures.find(t=> effAtk(atk)>=effVida(foe,t) && effAtk(t)<effVida(p,atk));
+        target = lethal ? lethal : {isHero:true,p:foe};
+      } else {
+        // hay guardián: hay que romperlo. elegir el que pueda matar, si no el más débil
+        const kill=tg.creatures.find(t=>effAtk(atk)>=effVida(foe,t));
+        target = kill || tg.creatures.slice().sort((a,b)=>effVida(foe,a)-effVida(foe,b))[0];
+      }
+    }
+    if(!target) continue;
+    await attack(atk, p, target);
+    await sleep(360);
+  }
+}
+
+// ============================================================
+//  Interacción del jugador
+// ============================================================
+function onHandClick(c){
+  const p=S.players.p;
+  if(S.turn!=="p"||S.busy||S.targeting) return;
+  if(!canPlay(p,c)){ toast("Maná insuficiente"); return; }
+  playCard(p,c);
+}
+function onFieldClick(c, owner){
+  if(S.turn!=="p"||S.busy) return;
+  if(S.targeting){ tryTarget({creature:c, owner}); return; }
+  if(owner!=="p") return;
+  // seleccionar atacante
+  if(c.type!=="criatura") return;
+  if(c.sick || c.attacked || effAtk(c)<=0){ toast(c.sick?"No puede atacar este turno":"Ya atacó"); return; }
+  if(S.selected===c){ clearSelection(); return; }
+  S.selected=c; render();
+}
+function onHeroClick(heroP){
+  if(S.turn!=="p"||S.busy) return;
+  if(S.targeting){ tryTarget({isHero:true, p:heroP}); return; }
+  if(S.selected && heroP.id==="a"){
+    const tg=legalTargets(S.players.p);
+    if(!tg.hero){ toast("Hay un Guardián: atacá primero al Guardián"); return; }
+    const atk=S.selected; clearSelection(); attack(atk, S.players.p, {isHero:true,p:heroP});
+  }
+}
+
+function trySelectTargetForAttack(targetCreature, targetOwner){
+  const p=S.players.p;
+  const tg=legalTargets(p);
+  const legal = tg.creatures.includes(targetCreature);
+  if(!legal){ toast(hasGuardian(S.players.a)?"Debés atacar a un Guardián primero":"Objetivo inválido"); return; }
+  const atk=S.selected; clearSelection(); attack(atk,p,targetCreature);
+}
+
+function clearSelection(){ S.selected=null; render(); }
+
+// ---- targeting para hechizos ----
+function requestTarget(p,c){
+  return new Promise(res=>{
+    if(p.id==="a"){ res(aiPickTarget(p,c)); return; }
+    const filter=c.target;
+    const cands=targetCandidates(p,filter);
+    if(!cands.length){ res(undefined); return; } // sin objetivos válidos: se juega igual (o nada)
+    S.targeting={resolve:res, filter, card:c, cands};
+    document.getElementById("cancel").style.display="block";
+    toast("Elegí un objetivo");
+    render();
+  });
+}
+function targetCandidates(p,filter){
+  const foe=other(p);
+  let list=[];
+  if(filter==="criatura"){ list=[...p.field,...foe.field].filter(x=>x.type==="criatura"); }
+  else if(filter==="criatura_propia"){ list=p.field.filter(x=>x.type==="criatura"); }
+  else if(filter==="cualquiera_amistoso"){ list=[...p.field.filter(x=>x.type==="criatura"), {isHero:true,p}]; }
+  return list;
+}
+function tryTarget(sel){
+  const t=S.targeting; if(!t) return;
+  let obj;
+  if(sel.isHero){ obj = t.cands.find(x=>x.isHero); }
+  else { obj = t.cands.includes(sel.creature)? sel.creature : null; }
+  if(!obj){ toast("Objetivo inválido"); return; }
+  const res=t.resolve; S.targeting=null; document.getElementById("cancel").style.display="none";
+  res(obj);
+}
+document.getElementById("cancel").onclick=()=>{
+  if(S.targeting){ const r=S.targeting.resolve; S.targeting=null; document.getElementById("cancel").style.display="none"; render(); r(null); }
+};
+
+// ---- choose helpers (modales) ----
+function choose2(title,q,a,b){
+  return new Promise(res=>{
+    const box=document.getElementById("mbox");
+    box.innerHTML=`<h3>${title}</h3><div class="mq">${q}</div>`;
+    const ba=document.createElement("button"); ba.className="mopt"; ba.textContent=a; ba.onclick=()=>{closeModal();res(true)};
+    const bb=document.createElement("button"); bb.className="mopt"; bb.textContent=b; bb.onclick=()=>{closeModal();res(false)};
+    box.appendChild(ba); box.appendChild(bb); openModal();
+  });
+}
+function chooseFromList(p,list,title){
+  return new Promise(res=>{
+    const box=document.getElementById("mbox");
+    box.innerHTML=`<h3>${title}</h3><div class="mq">Elegí una carta.</div>`;
+    for(const it of list){
+      const b=document.createElement("button"); b.className="mopt";
+      b.textContent=`${it.name} — ${it.baseAtk}/${it.baseVida} (coste ${it.cost})`;
+      b.onclick=()=>{closeModal();res(it)}; box.appendChild(b);
+    }
+    const sk=document.createElement("button"); sk.className="mopt"; sk.textContent="Cancelar"; sk.onclick=()=>{closeModal();res(null)};
+    box.appendChild(sk); openModal();
+  });
+}
+async function chooseCreature(p,list,title,optional){
+  const box=document.getElementById("mbox");
+  return new Promise(res=>{
+    box.innerHTML=`<h3>${title}</h3><div class="mq">&nbsp;</div>`;
+    for(const it of list){
+      const b=document.createElement("button"); b.className="mopt";
+      b.textContent=`${it.name} — ${effAtk(it)}/${effVida(p,it)}`;
+      b.onclick=()=>{closeModal();res(it)}; box.appendChild(b);
+    }
+    if(optional){ const sk=document.createElement("button"); sk.className="mopt"; sk.textContent="No sacrificar"; sk.onclick=()=>{closeModal();res(null)}; box.appendChild(sk); }
+    openModal();
+  });
+}
+function askRecuerdo(key){
+  const r=RECUERDOS[key]; if(!r) return Promise.resolve(false);
+  return new Promise(res=>{
+    const box=document.getElementById("mbox");
+    box.innerHTML=`<h3>✦ Recuerdo</h3><div class="mq">${r.q}</div>`;
+    const opts=r.opts.slice(); shuffle(opts);
+    for(const [txt,ok] of opts){
+      const b=document.createElement("button"); b.className="mopt"; b.textContent=txt;
+      b.onclick=()=>{closeModal();res(ok)}; box.appendChild(b);
+    }
+    openModal();
+  });
+}
+function openModal(){ document.getElementById("modal").style.display="flex"; }
+function closeModal(){ document.getElementById("modal").style.display="none"; document.getElementById("mbox").innerHTML=""; }
+
+// ============================================================
+//  Render
+// ============================================================
+function render(){
+  const p=S.players.p, a=S.players.a;
+  // heroes
+  renderHero("enemyHero", a, true);
+  renderHero("playerHero", p, false);
+  // fields
+  renderField("enemyField", a, "a");
+  renderField("playerField", p, "p");
+  // hand (solo la del jugador; la del rival nunca se ve)
+  renderHand(p);
+  // end turn btn
+  const et=document.getElementById("endturn");
+  if(S.turn==="p"){ et.classList.remove("enemy"); et.innerHTML="Terminar<br>turno"; et.disabled=false; }
+  else { et.classList.add("enemy"); et.innerHTML="Turno<br>rival…"; }
+}
+
+function renderHero(elid, p, enemy){
+  const el=document.getElementById(elid);
+  el.style.setProperty("--fc", FACTIONS[p.fac].color);
+  const crys=[];
+  const slots=Math.max(p.manaMax,1);
+  for(let i=0;i<slots;i++){ crys.push(`<div class="crys ${i<p.mana?'on':''}"></div>`); }
+  for(let i=0;i<p.tempMana;i++){ crys.push(`<div class="crys temp"></div>`); }
+  el.innerHTML=`
+    <div class="portrait">${FACTIONS[p.fac].art}</div>
+    <div class="hblock">
+      <div class="hrow1">
+        <span class="hname">${FACTIONS[p.fac].name}</span>
+        <span class="hlife"><span class="heart">❤</span>${p.life}</span>
+        <span class="deckn"><span>🂠 ${p.deck.length}</span><span>✋ ${p.hand.length}</span></span>
+      </div>
+      <div class="manabar" title="Maná ${p.mana+p.tempMana}/${p.manaMax}">${crys.join("")}</div>
+    </div>`;
+  // targetable como héroe (rival: por ataque; propio: por hechizo de curación)
+  const asAttack = !!(S.selected && enemy && legalTargets(S.players.p).hero);
+  const asHeal = !!(S.targeting && !enemy && S.targeting.cands.some(x=>x.isHero));
+  el.classList.toggle("targetable", asAttack || asHeal);
+  el.onclick=()=>onHeroClick(p);
+}
+
+function renderField(elid, p, owner){
+  const el=document.getElementById(elid);
+  el.innerHTML="";
+  el.classList.toggle("empty", p.field.length===0);
+  for(const c of p.field){
+    el.appendChild(makeCardEl(c, p, owner==="p"?"field-p":"field-a"));
+  }
+}
+function renderHand(p){
+  const el=document.getElementById("playerHand");
+  el.innerHTML="";
+  for(const c of p.hand){ el.appendChild(makeCardEl(c,p,"hand")); }
+}
+function makeCardEl(c, owner, mode){
+  const el=document.createElement("div");
+  el.className="card"; el.dataset.uid=c.uid;
+  const fac=FACTIONS[c.fac];
+  const isMine = owner.id==="p";
+  const hideStats = c.hidden && !isMine; // el rival no ve stats de tus Ocultas… acá: vos no ves las de la IA
+  const showA = hideStats? "?" : effAtk(c);
+  const showV = hideStats? "?" : effVida(owner,c);
+
+  let kwHtml = c.kw.length? `<div class="kw">${c.kw.map(k=>`<span>${k}</span>`).join("")}</div>` : "";
+  const typeLabel = c.type.toUpperCase();
+
+  el.innerHTML=`
+    <div class="facbar" style="background:${fac.color}"></div>
+    <div class="top">
+      <div class="pip mana">${c.cost}</div>
+    </div>
+    <div class="name">${c.name}</div>
+    <div class="art">${c.art||"✦"}</div>
+    <div class="type">${typeLabel}${c.fac?" · "+fac.name:""}</div>
+    ${kwHtml}
+    <div class="txt">${c.txt||""}</div>
+  `;
+  if(c.type==="criatura"){
+    const maxV=effMaxVida(owner,c);
+    const buffed = (effAtk(c)>c.baseAtk)?" buffed":"";
+    const vbuff = (maxV>c.baseVida)?" buffed":"";
+    const hurt = (!hideStats && effVida(owner,c) < maxV)?" hurt":"";
+    el.insertAdjacentHTML("beforeend",
+      `<div class="stats">
+        <div class="badge atk${buffed}">${showA}</div>
+        <div class="badge vida${vbuff}${hurt}">${showV}</div>
+      </div>`);
+  }
+  if(c.shield) el.insertAdjacentHTML("beforeend",`<div class="shieldring"></div>`);
+
+  // estados de interacción
+  if(mode==="hand"){
+    el.classList.add("inhand");
+    if(S.turn==="p" && canPlay(owner,c)) el.classList.add("playable"); else el.classList.add("unplayable");
+    el.onclick=()=>onHandClick(c);
+  } else {
+    el.classList.add("onfield");
+    if(c.type==="criatura" && c.sick && !c.attacked){ el.classList.add("summonsick"); el.insertAdjacentHTML("beforeend",`<div class="zzz">💤</div>`); }
+    if(owner.id==="p" && S.turn==="p" && c.type==="criatura" && !c.sick && !c.attacked && effAtk(c)>0 && !S.targeting){
+      el.classList.add("canattack");
+    }
+    if(S.selected===c) el.classList.add("selected");
+    // targetable por ataque
+    if(S.selected && owner.id==="a"){
+      const legal=legalTargets(S.players.p).creatures.includes(c);
+      if(legal) el.classList.add("targetable");
+    }
+    // targetable por hechizo
+    if(S.targeting){
+      const cand = S.targeting.cands.includes(c);
+      if(cand){ el.classList.add("targetable"); if(owner.id==="p") el.classList.add("friendly"); }
+    }
+    el.onclick=()=>{
+      if(S.targeting){ tryTarget({creature:c, owner:owner.id}); return; }
+      if(owner.id==="a" && S.selected){ trySelectTargetForAttack(c, "a"); return; }
+      onFieldClick(c, owner.id);
+    };
+  }
+  return el;
+}
+
+function cardEl(c){ return document.querySelector(`.card[data-uid="${c.uid}"]`); }
+function reveal(c){ if(c.hidden){ c.hidden=false; render(); } }
+
+// ============================================================
+//  Util UI
+// ============================================================
+function who(p){ return p.id==="p"?"Vos":"Rival"; }
+function log(m){
+  const l=document.getElementById("log");
+  const d=document.createElement("div"); d.className="logline"; d.innerHTML=m;
+  l.prepend(d);
+  while(l.children.length>9) l.removeChild(l.lastChild);
+}
+let toastT;
+function toast(m){
+  const t=document.getElementById("toast"); t.innerHTML=m; t.style.display="block";
+  clearTimeout(toastT); toastT=setTimeout(()=>t.style.display="none",1600);
+}
+function floatDmg(el, n){
+  if(!el||n<=0) return;
+  const r=el.getBoundingClientRect();
+  const f=document.createElement("div"); f.className="fltd"; f.textContent="-"+n; f.style.color="var(--vida)";
+  f.style.left=(r.left+r.width/2-8)+"px"; f.style.top=(r.top+8)+"px";
+  document.body.appendChild(f); setTimeout(()=>f.remove(),1000);
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function checkWin(){
+  if(S.phase!=="play") return;
+  const p=S.players.p, a=S.players.a;
+  if(p.life<=0 || a.life<=0){
+    S.phase="over"; render();
+    const win = a.life<=0 && p.life>0 ? true : (p.life<=0 && a.life>0 ? false : (p.life>a.life));
+    const b=document.getElementById("banner");
+    b.querySelector(".big").textContent = win? "VICTORIA" : "DERROTA";
+    b.querySelector(".big").style.color = win? "var(--gold2)":"var(--vida)";
+    b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
+    b.style.display="flex";
+  }
+}
+
+document.getElementById("endturn").onclick=endTurn;
+window.addEventListener("keydown",e=>{ if(e.key===" "&&S.turn==="p"&&!S.busy&&!S.targeting){e.preventDefault();endTurn();} });
+
+initMenu();
+</script>
