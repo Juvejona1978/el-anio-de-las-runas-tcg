@@ -10,8 +10,8 @@
     --alderium:#c9a24b; --qashir:#c65b3a; --brasshaven:#b8863f;
     --koren:#4faa86; --caelum:#6f7fd8; --nomadas:#9b6fc4;
     /* tamaños de carta escalables: se ajustan por viewport, el interior usa cqw */
-    --handW: clamp(72px, 21vw, 116px);
-    --fieldW: clamp(50px, 13.5vw, 96px);
+    --handW: clamp(104px, 29vw, 162px);   /* mano ~40% más grande, en carrusel */
+    --fieldW: clamp(60px, 16vw, 115px);   /* mesa ~20% más grande */
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%}
@@ -75,8 +75,8 @@
   .field.empty{padding:8px 6px}
   .field.empty::after{content:"— campo vacío —";color:#3a3550;font-size:12px;letter-spacing:1px}
 
-  .hand{display:flex;gap:4px;justify-content:safe center;align-items:flex-end;overflow-x:auto;overflow-y:visible;
-    padding:8px 6px 10px;flex:0 0 auto;scrollbar-width:none}
+  .hand{display:flex;gap:6px;justify-content:safe center;align-items:flex-end;overflow-x:auto;overflow-y:visible;
+    padding:8px 10px 10px;flex:0 0 auto;scrollbar-width:none;scroll-snap-type:x proximity}
   .hand::-webkit-scrollbar{display:none}
 
   /* ---------- Card ---------- */
@@ -106,10 +106,10 @@
   .badge.hurt{background:radial-gradient(circle at 35% 30%,#f2b0a6,#9c2418)}
   .facbar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:9px 9px 0 0}
 
-  /* mano: base = ancho de mano, se encoge para que entren todas sin cortarse */
-  .card.inhand{flex:0 1 var(--handW);min-width:54px}
-  /* field cards = compact tokens (sin texto, para que entren varios en móvil) */
-  .card.onfield{flex:0 1 var(--fieldW);min-width:44px}
+  /* mano: tamaño fijo grande y legible; se desliza en carrusel (no se encoge) */
+  .card.inhand{flex:0 0 var(--handW);scroll-snap-align:center}
+  /* field cards = compact tokens; se encogen un poco si hay muchos, pero más grandes */
+  .card.onfield{flex:0 1 var(--fieldW);min-width:52px}
   .card.onfield .txt,.card.onfield .type{display:none}
   .card.onfield .name{font-size:11cqw;min-height:22cqw;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical}
   .card.onfield .art{height:44cqw;font-size:30cqw}
