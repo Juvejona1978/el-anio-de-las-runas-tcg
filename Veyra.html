@@ -85,8 +85,10 @@
   .hand::-webkit-scrollbar{display:none}
 
   /* ---------- Card ---------- */
-  .card{width:var(--handW);aspect-ratio:5/7;border-radius:9px;background:linear-gradient(#211d2d,#17141f);
-    border:1px solid var(--line);position:relative;transition:transform .12s, box-shadow .12s;
+  .card{width:var(--handW);aspect-ratio:5/7;border-radius:9px;
+    background:linear-gradient(#211d2d,#17141f);
+    background:linear-gradient(165deg, color-mix(in srgb, var(--fc,#2c2838) 20%, #211d2d), #17141f 65%);
+    border:1.5px solid var(--fc,var(--line));position:relative;transition:transform .12s, box-shadow .12s;
     box-shadow:0 4px 12px rgba(0,0,0,.45);flex:0 1 auto;container-type:inline-size;
     display:flex;flex-direction:column;overflow:visible}
   .card>.name{overflow:hidden}
@@ -110,6 +112,30 @@
   .badge.buffed{box-shadow:0 0 0 2px var(--good)}
   .badge.hurt{background:radial-gradient(circle at 35% 30%,#f2b0a6,#9c2418)}
   .facbar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:9px 9px 0 0}
+
+  /* Sello de facción (esquina superior derecha, solo en mano: en mesa las cartas son chicas) */
+  .facsig{position:absolute;top:5px;right:5px;width:16cqw;height:16cqw;min-width:15px;min-height:15px;
+    border-radius:50%;background:var(--fc,var(--gold));display:flex;align-items:center;justify-content:center;
+    font-size:10cqw;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.6);z-index:4}
+  .card.onfield .facsig{display:none}
+
+  /* Marcos por facción: cada casa deja una marca propia en el borde de sus cartas */
+  .card.fac-alderium{border-radius:4px}
+  .card.fac-alderium .facbar{border-radius:3px 3px 0 0}
+  .card.fac-koren{border-radius:16px}
+  .card.fac-koren .facbar{border-radius:15px 15px 0 0}
+  .card.fac-qashir{box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 0 1px rgba(198,91,58,.4), inset 0 0 16px rgba(198,91,58,.2)}
+  .card.fac-qashir .facbar{background:repeating-linear-gradient(115deg, var(--fc) 0 6px, #1a1420 6px 10px)!important}
+  .card.fac-nomadas{border-style:dashed}
+  .card.fac-brasshaven::before,.card.fac-brasshaven::after{
+    content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--fc);
+    box-shadow:0 0 3px rgba(0,0,0,.6);z-index:4}
+  .card.fac-brasshaven::before{bottom:4px;left:4px}
+  .card.fac-brasshaven::after{bottom:4px;right:4px}
+  .card.fac-caelum{background-image:radial-gradient(circle at 14% 10%, rgba(240,213,154,.35) 1px, transparent 1.6px),
+    radial-gradient(circle at 32% 16%, rgba(240,213,154,.25) 1px, transparent 1.6px),
+    radial-gradient(circle at 22% 24%, rgba(240,213,154,.2) 1px, transparent 1.6px);
+    background-repeat:no-repeat}
 
   /* mano: tamaño fijo grande y legible; se desliza en carrusel (no se encoge) */
   .card.inhand{flex:0 0 var(--handW);scroll-snap-align:center}
@@ -1076,8 +1102,9 @@ function renderHand(p){
 }
 function makeCardEl(c, owner, mode){
   const el=document.createElement("div");
-  el.className="card"; el.dataset.uid=c.uid;
+  el.className="card fac-"+c.fac; el.dataset.uid=c.uid;
   const fac=FACTIONS[c.fac];
+  el.style.setProperty("--fc", fac.color);
   const isMine = owner.id==="p";
   const hideStats = c.hidden && !isMine; // el rival no ve stats de tus Ocultas… acá: vos no ves las de la IA
   const showA = hideStats? "?" : effAtk(c);
@@ -1088,6 +1115,7 @@ function makeCardEl(c, owner, mode){
 
   el.innerHTML=`
     <div class="facbar" style="background:${fac.color}"></div>
+    <div class="facsig" title="${fac.name}">${fac.art}</div>
     <div class="top">
       <div class="pip mana">${c.cost}</div>
     </div>
