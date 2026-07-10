@@ -132,14 +132,41 @@
   .card .zzz{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;z-index:2}
   .shieldring{position:absolute;inset:-3px;border-radius:11px;border:2px solid var(--shield);box-shadow:0 0 12px var(--shield);pointer-events:none;animation:pulse 1.6s infinite}
   @keyframes pulse{50%{opacity:.5}}
-  .card.dead{animation:die .4s forwards}
+  .card.dead{animation:die .45s forwards}
   @keyframes die{to{transform:scale(.6) rotate(8deg);opacity:0}}
-  .card.attacking{animation:lunge .35s;z-index:10}
-  @keyframes lunge{50%{transform:translateY(-22px) scale(1.06)}}
+  .card.attacking{z-index:10}
+  .card.attacking.up{animation:lungeUp .35s}
+  .card.attacking.down{animation:lungeDown .35s}
+  @keyframes lungeUp{50%{transform:translateY(-22px) scale(1.06)}}
+  @keyframes lungeDown{50%{transform:translateY(22px) scale(1.06)}}
   .card.struck{animation:shake .3s}
   @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
   .fltd{position:fixed;font-weight:800;font-size:22px;pointer-events:none;animation:flt 1s forwards;z-index:60;text-shadow:0 2px 4px #000}
   @keyframes flt{to{transform:translateY(-40px);opacity:0}}
+
+  /* ---------- Combat VFX ---------- */
+  .impactflash{position:fixed;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;pointer-events:none;z-index:60;
+    background:radial-gradient(circle,#fff,var(--fc,var(--atk)) 45%,transparent 72%);
+    animation:impactpop .3s ease-out forwards}
+  @keyframes impactpop{0%{transform:scale(.2);opacity:1}60%{opacity:.9}100%{transform:scale(3.6);opacity:0}}
+  .spark{position:fixed;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:61;
+    transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0);
+    animation:sparkfly .52s ease-out forwards}
+  @keyframes sparkfly{
+    0%{transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0);opacity:1}
+    100%{transform:translate(-50%,-50%) rotate(var(--ang)) translateX(var(--dist));opacity:0}
+  }
+  .card.summonIn{animation:summonIn .38s ease-out}
+  @keyframes summonIn{0%{transform:scale(.35);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+  .summonring{position:absolute;inset:-8px;border-radius:14px;pointer-events:none;z-index:5;
+    border:2px solid var(--sc,var(--gold));opacity:.95;animation:summonringpop .5s ease-out forwards}
+  @keyframes summonringpop{0%{transform:scale(.6);opacity:.95}100%{transform:scale(1.5);opacity:0}}
+  .herobar.hit .portrait{animation:heroHit .4s}
+  @keyframes heroHit{20%{box-shadow:0 0 0 5px var(--bad),0 0 16px var(--bad);transform:scale(1.1)}100%{box-shadow:none;transform:scale(1)}}
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:16;opacity:0;
+    background:radial-gradient(ellipse at 50% 100%, rgba(224,90,77,.4), transparent 65%)}
+  #vignette.show{animation:vigpulse .55s ease-out}
+  @keyframes vigpulse{25%{opacity:1}100%{opacity:0}}
 
   /* ---------- Buttons / overlays ---------- */
   /* botón anclado a la línea divisoria (misma horizontal que el log), a la derecha */
@@ -204,6 +231,7 @@
   <div class="hand" id="playerHand"></div>
   <div class="herobar player" id="playerHero"></div>
 </div>
+<div id="vignette"></div>
 <button id="cancel">Cancelar</button>
 <div id="log"></div>
 <div class="hint">Tocá una carta de la mano para jugarla · tocá tu criatura y luego el objetivo para atacar · Espacio termina turno</div>
@@ -510,6 +538,7 @@ function afterPlay(p,c){
 
 function enterField(p,c){
   c.sick = !c.kw.includes("Prisa");
+  c.justSummoned = true;
   p.field.push(c);
 }
 function removeFromHand(p,c){ const i=p.hand.indexOf(c); if(i>=0) p.hand.splice(i,1); }
@@ -539,7 +568,7 @@ async function runEtb(p,c){
           const rev=instantiate(pick.key, pick.vanilla?{fac:pick.fac,name:pick.name,cost:pick.cost,type:"criatura",atk:pick.baseAtk,vida:pick.baseVida,kw:[],art:pick.art,txt:"",vanilla:true}:undefined);
           rev.plusAtk=-1; rev.plusVida=-1; rev.sick=true;
           if(effMaxVida(p,rev)<=0){ log(`${rev.name} vuelve pero se desmorona (0 de vida).`); p.grave.push(rev); }
-          else { p.field.push(rev); log(`Lyra revive a ${rev.name} con -1/-1.`); }
+          else { rev.justSummoned=true; p.field.push(rev); log(`Lyra revive a ${rev.name} con -1/-1.`); }
         }
       }
       break;
@@ -645,20 +674,29 @@ function legalTargets(attackerOwner){
 async function attack(attacker, ownerP, target){
   S.busy=true;
   const foe=other(ownerP);
-  const el=cardEl(attacker); if(el){ el.classList.add("attacking"); }
+  const dir = ownerP.id==="p" ? "up" : "down";
+  const el=cardEl(attacker); if(el){ el.classList.add("attacking", dir); }
   reveal(attacker);
   await sleep(180);
 
   if(target.isHero){
     dealToHero(foe, effAtk(attacker), attacker.name);
-    floatDmg(document.getElementById(foe.id==="p"?"playerHero":"enemyHero"), effAtk(attacker));
+    const heroElId = foe.id==="p"?"playerHero":"enemyHero";
+    impactFlash(document.getElementById(heroElId), "var(--vida)");
+    heroHitFx(foe, heroElId);
+    floatDmg(document.getElementById(heroElId), effAtk(attacker));
   } else {
     reveal(target);
-    const tel=cardEl(target); if(tel) tel.classList.add("struck");
+    const tel=cardEl(target), ael=cardEl(attacker);
     const aAtk=effAtk(attacker), tAtk=effAtk(target);
+    const targetHadShield=target.shield, attackerHadShield=attacker.shield;
+    if(tel) tel.classList.add("struck");
+    if(ael && tAtk>0) ael.classList.add("struck");
     // daño simultáneo (combate mutuo, sección 1)
     applyDamage(foe, target, aAtk, attacker);
     applyDamage(ownerP, attacker, tAtk, target);
+    if(aAtk>0){ if(targetHadShield && !target.shield) burst(tel, "var(--shield)", 8); else impactFlash(tel, "var(--atk)"); }
+    if(tAtk>0){ if(attackerHadShield && !attacker.shield) burst(ael, "var(--shield)", 8); else impactFlash(ael, "var(--atk)"); }
     floatDmg(cardEl(target), aAtk); floatDmg(cardEl(attacker), tAtk);
     // Guardiana de las Alturas: sobrevive como Guardián -> +1/+1
     if(target.flag==="guardiana" && effVida(foe,target)>0 && target.kw.includes("Guardián")){
@@ -693,7 +731,8 @@ function cleanupDeaths(){
 
 function killCreature(p, c, reason, fromCombat){
   const i=p.field.indexOf(c); if(i<0) return;
-  const el=cardEl(c); if(el) el.classList.add("dead");
+  const el=cardEl(c);
+  if(el){ el.classList.add("dead"); const fac=FACTIONS[c.fac]; burst(el, fac?fac.color:"var(--gold)", 10); }
   p.field.splice(i,1);
   log(`${c.name} ${reason}.`);
   // muerte de host de cristal
@@ -716,7 +755,7 @@ async function runDeath(p,c){
         if(doIt){
           spendMana(p,1);
           const rev=instantiate("automata"); rev.automataUsed=true; rev.plusAtk=c.plusAtk; rev.plusVida=c.plusVida; rev.sick=true;
-          if(p.field.length<7){ p.field.push(rev); c.deathReturned=true; log(`Autómata de Repuestos vuelve al campo.`); }
+          if(p.field.length<7){ rev.justSummoned=true; p.field.push(rev); c.deathReturned=true; log(`Autómata de Repuestos vuelve al campo.`); }
         }
       }
       break;
@@ -789,7 +828,7 @@ async function aiEtb(p,c){
       if(dead.length){ const pick=dead[0]; p.grave.splice(p.grave.indexOf(pick),1);
         const rev=instantiate(pick.key, pick.vanilla?{fac:pick.fac,name:pick.name,cost:pick.cost,type:"criatura",atk:pick.baseAtk,vida:pick.baseVida,kw:[],art:pick.art,txt:"",vanilla:true}:undefined);
         rev.plusAtk=-1; rev.plusVida=-1; rev.sick=true;
-        if(effMaxVida(p,rev)>0) p.field.push(rev); else p.grave.push(rev); }
+        if(effMaxVida(p,rev)>0){ rev.justSummoned=true; p.field.push(rev); } else p.grave.push(rev); }
       break;
     }
     case "anciana":{ const ok=Math.random()<0.6; p.life=Math.min(30,p.life+(ok?4:2)); break; }
@@ -1075,6 +1114,11 @@ function makeCardEl(c, owner, mode){
     el.onclick=()=>onHandClick(c);
   } else {
     el.classList.add("onfield");
+    if(c.justSummoned){
+      el.classList.add("summonIn");
+      el.insertAdjacentHTML("beforeend", `<div class="summonring" style="--sc:${fac?fac.color:"var(--gold)"}"></div>`);
+      c.justSummoned=false;
+    }
     if(c.type==="criatura" && c.sick && !c.attacked){ el.classList.add("summonsick"); el.insertAdjacentHTML("beforeend",`<div class="zzz">💤</div>`); }
     if(owner.id==="p" && S.turn==="p" && c.type==="criatura" && !c.sick && !c.attacked && effAtk(c)>0 && !S.targeting){
       el.classList.add("canattack");
@@ -1136,6 +1180,42 @@ function floatDmg(el, n){
   const f=document.createElement("div"); f.className="fltd"; f.textContent="-"+n; f.style.color="var(--vida)";
   f.style.left=(r.left+r.width/2-8)+"px"; f.style.top=(r.top+8)+"px";
   document.body.appendChild(f); setTimeout(()=>f.remove(),1000);
+}
+// Destello puntual de impacto (golpe normal)
+function impactFlash(el, color){
+  if(!el) return;
+  const r=el.getBoundingClientRect();
+  const f=document.createElement("div"); f.className="impactflash";
+  f.style.left=(r.left+r.width/2)+"px"; f.style.top=(r.top+r.height/2)+"px";
+  f.style.setProperty("--fc", color||"var(--atk)");
+  document.body.appendChild(f); setTimeout(()=>f.remove(),320);
+}
+// Ráfaga de partículas radiales (rotura de Escudo, muerte)
+function burst(el, color, count){
+  if(!el) return;
+  count = count||7;
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  for(let i=0;i<count;i++){
+    const s=document.createElement("div"); s.className="spark";
+    const ang=(Math.random()*360)|0, dist=18+Math.random()*24;
+    s.style.setProperty("--ang", ang+"deg");
+    s.style.setProperty("--dist", dist+"px");
+    s.style.left=cx+"px"; s.style.top=cy+"px";
+    s.style.background=color||"var(--gold)";
+    s.style.boxShadow="0 0 6px "+(color||"var(--gold)");
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),540);
+  }
+}
+// Reacción del héroe al recibir un golpe directo; vignette solo si es el propio jugador
+function heroHitFx(p, elId){
+  const el=document.getElementById(elId);
+  el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
+  if(p.id==="p"){
+    const v=document.getElementById("vignette");
+    v.classList.remove("show"); void v.offsetWidth; v.classList.add("show");
+  }
 }
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
