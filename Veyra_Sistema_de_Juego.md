@@ -348,6 +348,15 @@ Ejemplos concretos ya con tu lore:
 - `mapa_nomadas.jpg`
 - `mapa_general_veyra.jpg` (mapa madre con los 6 continentes)
 
+### Fondos de Ciudad Central (carpeta `/backgrounds/mapas`, sugerido 1920×1080 — falta agregar en la estructura de carpetas de más arriba, ya la usa el motor)
+Una Ciudad Central por facción (sección 13): mismo layout de botones, distinto fondo.
+- `ciudad_alderium.jpg`
+- `ciudad_qashir.jpg`
+- `ciudad_brasshaven.jpg`
+- `ciudad_koren.jpg`
+- `ciudad_caelum.jpg`
+- `ciudad_nomadas.jpg`
+
 ### Fondos de mazmorra (carpeta `/backgrounds/mazmorras`, uno por nodo o uno genérico por mazmorra para empezar)
 - `mazmorra_biblioteca.jpg`
 - `mazmorra_minas_brasshaven.jpg`
