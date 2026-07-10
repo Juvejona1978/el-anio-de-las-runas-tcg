@@ -23,24 +23,49 @@
   #app{height:100dvh;display:flex;flex-direction:column;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 
-  /* ---------- Menu ---------- */
-  #menu{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;overflow:auto;
+  /* ---------- Pantallas superpuestas (Mapa / Ciudad / Menú de duelo) ---------- */
+  #menu,#mapScreen,#cityScreen{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;overflow:auto;
     background:radial-gradient(900px 600px at 50% 20%, #241d33, #0b0a10);padding:16px}
-  .menucard{width:min(680px,100%);background:linear-gradient(#1b1826,#141220);
+  .menucard,.mapcard,.citycard{width:min(680px,100%);background:linear-gradient(#1b1826,#141220);
     border:1px solid var(--line);border-radius:18px;padding:22px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
   .brand{font-size:clamp(40px,12vw,54px);letter-spacing:6px;font-weight:800;text-align:center;
     background:linear-gradient(#f6e6b8,#c99b46);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand.small{font-size:clamp(26px,8vw,32px);letter-spacing:4px}
   .tag{text-align:center;color:var(--dim);margin:2px 0 18px;letter-spacing:3px;font-size:11px;text-transform:uppercase}
   .pick-h{color:var(--gold);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:14px 2px 8px}
-  .factions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-  .fac{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:11px 12px;
+  .factions,.continents{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .fac,.cont{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:11px 12px;
     transition:.15s;position:relative;overflow:hidden}
-  .fac:active{transform:scale(.98)}
+  .fac:active,.cont:active{transform:scale(.98)}
   .fac.sel{border-color:var(--fc);box-shadow:0 0 0 2px var(--fc) inset, 0 8px 24px rgba(0,0,0,.4)}
   .fac .fn{font-weight:800;font-size:15px;color:var(--fc);letter-spacing:.5px}
   .fac .fd{color:var(--dim);font-size:11.5px;margin-top:3px;line-height:1.3}
-  .fac .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--fc)}
+  .fac .bar,.cont .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--fc)}
   .row{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+
+  /* Nodo de continente en el mapa. El emoji es un placeholder — ver data-img-slot para el arte esperado. */
+  .cont{text-align:center;padding:16px 10px}
+  .cont .cico{font-size:30px;margin-bottom:5px}
+  .cont .cn{font-weight:800;font-size:13.5px;color:var(--fc)}
+  .cont.locked{opacity:.42;filter:grayscale(.7);cursor:not-allowed}
+  .cont .clock{position:absolute;top:8px;right:9px;font-size:13px}
+  .hint2{color:var(--dim);font-size:11.5px;margin-top:16px;line-height:1.4;text-align:center}
+
+  /* Ciudad Central: una sola plantilla, la estética real llega por imagen (data-img-slot) */
+  .backbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:9px;
+    padding:9px 14px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;margin-bottom:14px}
+  .cityart{height:110px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:50px;
+    margin-bottom:12px;background:linear-gradient(160deg, color-mix(in srgb, var(--fc,#2c2838) 32%, #141220), #141220 75%);
+    border:1px solid var(--line)}
+  .cityname{font-weight:800;font-size:19px;color:var(--fc);text-align:center;margin-bottom:14px;letter-spacing:.5px}
+  .cityacts{display:flex;flex-direction:column;gap:8px}
+  .cityact{display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;min-height:48px}
+  .cityact:active{border-color:var(--fc)}
+  .cityact .ai{font-size:19px;flex:0 0 auto}
+  .cityact .at{font-weight:800;font-size:13.5px;color:var(--ink)}
+  .cityact .ad{color:var(--dim);font-size:11px;margin-top:1px;line-height:1.3}
+  .cityact.soon{opacity:.55}
   .btn{cursor:pointer;border:none;border-radius:10px;padding:14px 20px;font-weight:800;letter-spacing:1px;
     font-family:inherit;font-size:15px;min-height:48px}
   .btn.play{background:linear-gradient(#e9c877,#c99b46);color:#2a2110;flex:1;min-width:160px}
@@ -263,12 +288,40 @@
 <div class="hint">Tocá una carta de la mano para jugarla · tocá tu criatura y luego el objetivo para atacar · Espacio termina turno</div>
 
 <div id="toast"></div>
-<div id="banner"><div class="big"></div><div class="sub"></div><button class="btn play" style="max-width:220px;margin-top:14px" onclick="location.reload()">Jugar otra vez</button></div>
+<div id="banner"><div class="big"></div><div class="sub"></div>
+  <button class="btn play" style="max-width:220px;margin-top:14px" onclick="location.reload()">Jugar otra vez</button>
+  <button class="btn ghost" style="max-width:220px" onclick="backToCityFlow()">Volver a la ciudad</button>
+</div>
 <div id="modal"><div class="mbox" id="mbox"></div></div>
 
-<!-- ===================== MENU ===================== -->
+<!-- ===================== MAPA DE CONTINENTES =====================
+     data-img-slot: assets/backgrounds/mapas/mapa_general_veyra.jpg (fondo de esta pantalla)
+     Cada nodo .cont espera assets/backgrounds/mapas/mapa_<faccion>.jpg como miniatura. -->
+<div id="mapScreen" data-img-slot="assets/backgrounds/mapas/mapa_general_veyra.jpg">
+  <div class="mapcard">
+    <div class="brand small">VEYRÁ</div>
+    <div class="tag">Elegí un continente</div>
+    <div class="continents" id="contPick"></div>
+    <div class="hint2">🔒 Los continentes bloqueados se desbloquean completando la campaña del anterior (Historia/Exploración — todavía sin construir).</div>
+  </div>
+</div>
+
+<!-- ===================== CIUDAD CENTRAL =====================
+     Plantilla única para las 6 facciones — misma estructura, distinta estética por imagen.
+     data-img-slot en #cityArt: assets/backgrounds/mapas/ciudad_<faccion>.jpg -->
+<div id="cityScreen">
+  <div class="citycard">
+    <button class="backbtn" id="cityBack">‹ Mapa</button>
+    <div class="cityart" id="cityArt" data-img-slot=""></div>
+    <div class="cityname" id="cityName"></div>
+    <div class="cityacts" id="cityActs"></div>
+  </div>
+</div>
+
+<!-- ===================== SELECCIÓN DE DUELO ===================== -->
 <div id="menu">
   <div class="menucard">
+    <button class="backbtn" id="menuBack">‹ Volver</button>
     <div class="brand">VEYRÁ</div>
     <div class="tag">Duelo · Prototipo jugable v1</div>
     <div class="pick-h">Elegí tu facción</div>
@@ -421,18 +474,101 @@ function effMaxVida(p,c){ return c.baseVida + c.plusVida + auraBonusVida(p,c); }
 function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
 
 // ============================================================
-//  Arranque
+//  Navegación: Mapa de continentes → Ciudad Central → Duelo
+//  (sección 7, 13 del diseño). Ciudad Central es UNA plantilla
+//  reutilizada por las 6 facciones; la estética real llega por
+//  imagen (ver data-img-slot en el HTML) — acá solo la mecánica.
+// ============================================================
+const CAMPAIGN_ORDER = ["alderium","qashir","brasshaven","koren","caelum","nomadas"];
+// Progresión de campaña (sección 6.1): solo Alderium desbloqueada al inicio.
+// Sin motor de mazmorra todavía no hay forma de desbloquear el resto — se deja el estado listo para cuando lo haya.
+S.unlocked = {alderium:true};
+function isUnlocked(k){ return !!S.unlocked[k]; }
+
+let currentCity=null;
+function showScreen(id){
+  ["menu","mapScreen","cityScreen"].forEach(x=>{
+    document.getElementById(x).style.display = (x===id) ? "flex" : "none";
+  });
+}
+
+function renderMap(){
+  const el=document.getElementById("contPick");
+  el.innerHTML="";
+  for(const k of CAMPAIGN_ORDER){
+    const f=FACTIONS[k], unlocked=isUnlocked(k);
+    const d=document.createElement("div");
+    d.className="cont"+(unlocked?"":" locked");
+    d.style.setProperty("--fc",f.color);
+    d.innerHTML=`<div class="bar"></div>${unlocked?"":'<div class="clock">🔒</div>'}
+      <div class="cico">${f.art}</div><div class="cn">${f.name}</div>`;
+    d.onclick=()=>{
+      if(!unlocked){ toast("🔒 Se desbloquea completando la campaña del continente anterior."); return; }
+      openCity(k);
+    };
+    el.appendChild(d);
+  }
+}
+
+function openCity(fac){
+  currentCity=fac;
+  const f=FACTIONS[fac];
+  const art=document.getElementById("cityArt");
+  art.style.setProperty("--fc",f.color); art.textContent=f.art;
+  art.dataset.imgSlot=`assets/backgrounds/mapas/ciudad_${fac}.jpg`;
+  const nameEl=document.getElementById("cityName");
+  nameEl.textContent=f.name+" — Ciudad Central"; nameEl.style.setProperty("--fc",f.color);
+  const acts=document.getElementById("cityActs"); acts.innerHTML="";
+  const items=[
+    {icon:"⚔️", t:"Duelo", d:"Contra la IA, con "+f.name+" o cualquier facción desbloqueada.", go:()=>openDuelPicker(fac)},
+    {icon:"🎯", t:"Entrenamiento", d:"Practicá sin consecuencias ni recompensas.", go:()=>openDuelPicker(fac)},
+    {icon:"🗂️", t:"Administrar cartas", d:"Colección y constructor de mazos.", soon:true},
+    {icon:"📜", t:"Tablón de misiones", d:"Mazmorras disponibles en este continente.", soon:true},
+    {icon:"🍺", t:"Taberna", d:"NPCs, rumores y pergaminos.", soon:true},
+  ];
+  for(const it of items){
+    const b=document.createElement("button"); b.className="cityact"+(it.soon?" soon":"");
+    b.innerHTML=`<div class="ai">${it.icon}</div><div><div class="at">${it.t}</div><div class="ad">${it.d}</div></div>`;
+    b.onclick=()=> it.soon ? toast(it.t+": todavía no está construido (próximamente).") : it.go();
+    acts.appendChild(b);
+  }
+  showScreen("cityScreen");
+}
+document.getElementById("cityBack").onclick=()=>showScreen("mapScreen");
+
+function openDuelPicker(fac){
+  chosenFac = isUnlocked(fac) ? fac : CAMPAIGN_ORDER.find(isUnlocked);
+  refreshFacPickSelection();
+  showScreen("menu");
+}
+function backToCityFlow(){
+  document.getElementById("banner").style.display="none";
+  S.phase="menu";
+  showScreen(currentCity ? "cityScreen" : "mapScreen");
+}
+
+// ============================================================
+//  Selección de facción/rival para un duelo puntual
 // ============================================================
 let chosenFac=null, rivalFac="random";
+let facCards={};
+function refreshFacPickSelection(){
+  for(const k in facCards){ facCards[k].classList.toggle("sel", k===chosenFac); }
+  document.getElementById("startBtn").disabled = !chosenFac;
+}
 function initMenu(){
   const pick=document.getElementById("facPick");
   for(const k in FACTIONS){
     const f=FACTIONS[k];
+    const unlocked=isUnlocked(k);
     const d=document.createElement("div");
-    d.className="fac"; d.style.setProperty("--fc",f.color);
-    d.innerHTML=`<div class="bar"></div><div class="fn">${f.name}</div><div class="fd">${f.desc}</div>`;
-    d.onclick=()=>{ chosenFac=k; [...pick.children].forEach(c=>c.classList.remove("sel")); d.classList.add("sel");
-      document.getElementById("startBtn").disabled=false; };
+    d.className="fac"+(unlocked?"":" locked"); d.style.setProperty("--fc",f.color);
+    d.innerHTML=`<div class="bar"></div>${unlocked?"":'<div class="clock">🔒</div>'}<div class="fn">${f.name}</div><div class="fd">${f.desc}</div>`;
+    d.onclick=()=>{
+      if(!unlocked){ toast("🔒 Todavía no desbloqueaste "+f.name+"."); return; }
+      chosenFac=k; refreshFacPickSelection();
+    };
+    facCards[k]=d;
     pick.appendChild(d);
   }
   const rb=document.getElementById("rivalBtn");
@@ -443,6 +579,7 @@ function initMenu(){
     rb.textContent = "Rival: " + (rivalFac==="random"?"aleatorio":FACTIONS[rivalFac].name);
   };
   document.getElementById("startBtn").onclick=start;
+  document.getElementById("menuBack").onclick=()=>showScreen(currentCity?"cityScreen":"mapScreen");
 }
 
 function start(){
@@ -455,7 +592,7 @@ function start(){
   S.players.a.deck=buildDeck(rf);
   for(let i=0;i<3;i++) drawCard(S.players.p);
   for(let i=0;i<4;i++) drawCard(S.players.a); // el segundo compensa con una carta extra
-  document.getElementById("menu").style.display="none";
+  showScreen(null);
   S.phase="play"; S.turn="p"; S.turnNum=0;
   log(`Duelo: ${FACTIONS[chosenFac].name} vs ${FACTIONS[rf].name}`);
   startTurn();
@@ -1277,4 +1414,6 @@ document.addEventListener("pointerdown",e=>{
 }, true);
 
 initMenu();
+renderMap();
+showScreen("mapScreen");
 </script>
