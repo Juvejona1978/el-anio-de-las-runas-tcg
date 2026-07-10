@@ -935,7 +935,10 @@ function requestTarget(p,c){
     if(p.id==="a"){ res(aiPickTarget(p,c)); return; }
     const filter=c.target;
     const cands=targetCandidates(p,filter);
-    if(!cands.length){ res(undefined); return; } // sin objetivos válidos: se juega igual (o nada)
+    if(!cands.length){
+      guide("sin-objetivo","«"+c.name+"» necesita un objetivo válido y ahora mismo no tenés ninguno.", cardEl(c));
+      res(null); return;
+    }
     S.targeting={resolve:res, filter, card:c, cands};
     document.getElementById("cancel").style.display="block";
     toast("Elegí un objetivo");
