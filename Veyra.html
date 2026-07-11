@@ -1154,6 +1154,46 @@ function renderMap(){
 }
 
 // ---- 2. Ciudad Central (una plantilla, 6 variantes) ----
+// ---- Ciudades con identidad (canon: Veyra_Ciudades_y_Arco.md) ----
+// Los seis roles funcionales son la MISMA mecánica/código en las 6 ciudades — lo que cambia por
+// facción es nombre, imagen y voz (sección 1 del documento). "mazmorras" no tiene nombre propio
+// en la tabla de la sección 3 del canon: se mantiene genérico a propósito, no se inventa uno.
+const CITY_VENUE_NAMES = {
+  social:{alderium:"La Taberna del Juramento", qashir:"La Casa de las Apuestas", brasshaven:"La Cantina del Engranaje", koren:"El Círculo del Fuego", caelum:"El Atrio de las Voces", nomadas:"El Fuego Común"},
+  practica:{alderium:"Patio de Armas", qashir:"La Arena de Polvo", brasshaven:"Taller de Pruebas", koren:"Claro de Piedra", caelum:"El Simulacro", nomadas:"El Ruedo"},
+  duelo:{alderium:"Sala del Desafío", qashir:"El Reto del Bazar", brasshaven:"Piso de Fundición", koren:"Altar del Encuentro", caelum:"Cámara de Convergencia", nomadas:"Duelo ante la Caravana"},
+  cartas:{alderium:"Salón de Estandartes", qashir:"La Bóveda de Sellos", brasshaven:"Registro de Patentes", koren:"Cámara de Ecos", caelum:"Archivo Lumínico", nomadas:"Los Fardos del Andar"},
+  mercado:{alderium:"Mercado del Alba", qashir:"El Gran Bazar", brasshaven:"Casa de Cambio", koren:"Trueque del Valle", caelum:"Intercambio Etéreo", nomadas:"Trato entre Fuegos"},
+};
+// Descripción corta (una frase) en la voz de cada facción — sección 4 del canon.
+const CITY_VENUE_DESC = {
+  social:{alderium:"Rumores y compañía, cuando el turno de guardia lo permita.", qashir:"Rumores, tratos y una mesa siempre abierta a nombre de Zahira.", brasshaven:"Vapor, rumores de taller y una ronda cuando baje la presión.", koren:"Historias alrededor del fuego, cuando haya algo que contar.", caelum:"Ecos y consultas, cuando haya alguno que valga la pena oír.", nomadas:"El punto de encuentro de la caravana, cuando se encienda."},
+  practica:{alderium:"Formación y disciplina, sin gloria ni recompensa todavía.", qashir:"Practicá sin apostar nada — todavía.", brasshaven:"Ensayos sin registro, sin consecuencias.", koren:"Un espacio para ensayar, sin memoria que quede grabada.", caelum:"Un ensayo sin peso real, para afinar el gesto.", nomadas:"Un round sin apuesta, para probar el pulso."},
+  duelo:{alderium:"Donde un Guardián demuestra su temple ante un rival real.", qashir:"Un duelo real, con algo real en juego.", brasshaven:"Donde una estrategia se templa contra un rival de verdad.", koren:"Donde dos caminos se cruzan de verdad.", caelum:"Donde dos leyes se ponen a prueba, una frente a la otra.", nomadas:"Un desafío real, con toda la caravana mirando."},
+  cartas:{alderium:"Tu colección y tu mazo, guardados como se guarda un juramento.", qashir:"Tu colección, guardada bajo llave como cualquier trato que importa.", brasshaven:"Tu colección, catalogada y lista para reconfigurar el mazo.", koren:"Tu colección, guardada como se guarda un recuerdo.", caelum:"Tu colección, ordenada como se ordena una ley.", nomadas:"Tu colección, atada y lista para el próximo camino."},
+  mazmorras:{alderium:"Las ruinas que Alderium todavía jura vigilar.", qashir:"Riesgo que paga mejor que cualquier apuesta segura.", brasshaven:"Rutas catalogadas hacia lo que la Franja todavía no ha desarmado.", koren:"Los caminos antiguos que Kóren recuerda mejor que nadie.", caelum:"Umbrales hacia lo que las Leyes todavía no terminaron de sellar.", nomadas:"Las rutas que la caravana ya anduvo, y las que todavía no."},
+  mercado:{alderium:"Comercio bajo la primera luz, todavía por abrir.", qashir:"Todo tiene precio, si sabés negociarlo.", brasshaven:"Piezas, patentes y trueques, en cuanto abran los libros.", koren:"Lo viejo por lo necesario, según manda la costumbre.", caelum:"Un trueque que todavía busca su alineación correcta.", nomadas:"Donde una caravana cambia lo que trae por lo que le falta."},
+};
+// Líneas de ficción propias al tocar Social/Mercado (todavía no construidos) — nunca un
+// "próximamente" genérico (sección 4 del canon).
+const CITY_SOON_LINES = {
+  social:{
+    alderium:"Las puertas de La Taberna del Juramento están cerradas hasta el cambio de guardia.",
+    qashir:"La Casa de las Apuestas todavía no reparte cartas — nadie apuesta sin testigos, y hoy no hay ninguno.",
+    brasshaven:"La Cantina del Engranaje está cerrada por mantenimiento — vuelvan cuando el vapor baje de presión.",
+    koren:"El Círculo del Fuego arde solo cuando hay algo que contar — hoy el fuego descansa.",
+    caelum:"El Atrio de las Voces guarda silencio — todavía no hay ecos que valga la pena escuchar.",
+    nomadas:"El Fuego Común todavía no se enciende — faltan manos alrededor para prenderlo.",
+  },
+  mercado:{
+    alderium:"El Mercado del Alba no abre sus puestos hasta la primera luz — todavía es de noche.",
+    qashir:"El Gran Bazar espera a que alguien traiga algo que valga la pena negociar.",
+    brasshaven:"La Casa de Cambio todavía está calibrando sus balanzas.",
+    koren:"El Trueque del Valle espera la próxima luna llena para abrir sus canastas.",
+    caelum:"El Intercambio Etéreo aún no encuentra la alineación correcta para abrirse.",
+    nomadas:"El Trato entre Fuegos espera a que la caravana descargue algo digno de cambiar.",
+  },
+};
 function openCity(fac){
   currentCity=fac; dungeonState=null;
   const f=FACTIONS[fac];
@@ -1161,18 +1201,23 @@ function openCity(fac){
   document.getElementById("cityBg").dataset.slotLabel=`ciudad_${fac}.jpg`;
   document.getElementById("cityTitle").textContent=f.name.toUpperCase();
   const frames=document.getElementById("cityFrames"); frames.innerHTML="";
+  // Los seis roles funcionales, mismo orden que la sección 2 del canon.
   const items=[
-    {t:"Taberna", d:"NPCs, rumores y pergaminos.", slot:"boton_taberna.jpg", soon:true},
-    {t:"Entrenamiento", d:"Practicá sin consecuencias ni recompensas.", slot:"boton_entrenamiento.jpg", go:()=>openDuelPicker(fac)},
-    {t:"Duelo", d:"Contra la IA, con "+f.name+" o cualquier facción desbloqueada.", slot:"boton_duelo.jpg", go:()=>openDuelPicker(fac)},
-    {t:"Administrar cartas", d:"Colección y constructor de mazos.", slot:"boton_cartas.jpg", go:()=>openConstructor(fac,{type:"city"})},
-    {t:"Salir a mazmorras", d:"Mazmorras y campaña disponibles en este continente.", slot:"boton_mazmorras.jpg", go:()=>openDungeonMap(fac)},
+    {role:"social", t:CITY_VENUE_NAMES.social[fac], d:CITY_VENUE_DESC.social[fac], soon:true},
+    {role:"practica", t:CITY_VENUE_NAMES.practica[fac], d:CITY_VENUE_DESC.practica[fac], go:()=>openDuelPicker(fac)},
+    // TODO(autor): Práctica y Duelo abren hoy el mismo selector — diferenciar recompensas cuando exista ese sistema.
+    {role:"duelo", t:CITY_VENUE_NAMES.duelo[fac], d:CITY_VENUE_DESC.duelo[fac], go:()=>openDuelPicker(fac)},
+    {role:"cartas", t:CITY_VENUE_NAMES.cartas[fac], d:CITY_VENUE_DESC.cartas[fac], go:()=>openConstructor(fac,{type:"city"})},
+    {role:"mazmorras", t:"Mazmorras", d:CITY_VENUE_DESC.mazmorras[fac], go:()=>openDungeonMap(fac)},
+    {role:"mercado", t:CITY_VENUE_NAMES.mercado[fac], d:CITY_VENUE_DESC.mercado[fac], soon:true},
   ];
   for(const it of items){
     const b=document.createElement("div"); b.className="cityframe"+(it.soon?" soon":"");
+    const slot=`boton_${it.role}_${fac}.jpg`;
+    b.style.backgroundImage=`url('assets/backgrounds/${slot}')`; // si no existe, cae al fondo semitransparente actual (mismo criterio que el resto del arte)
     b.innerHTML=`<div><div class="cf-name">${it.t}${it.soon?' <span style="font-size:10px;color:var(--text-dim);font-weight:400">(próximamente)</span>':""}</div>
-      <div class="cf-desc">${it.d}</div></div><div class="cf-slot">${it.slot}</div>`;
-    b.onclick=()=> it.soon ? toast(it.t+": todavía no está construido (próximamente).") : it.go();
+      <div class="cf-desc">${it.d}</div></div><div class="cf-slot">${slot}</div>`;
+    b.onclick=()=> it.soon ? toast(CITY_SOON_LINES[it.role][fac]) : it.go();
     frames.appendChild(b);
   }
   showScreen("cityScreen");
