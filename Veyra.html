@@ -9,7 +9,7 @@
     --good:#5bc46a; --bad:#e05a4d;
     --alderium:#c9a24b; --qashir:#c65b3a; --brasshaven:#b8863f;
     --koren:#4faa86; --caelum:#6f7fd8; --nomadas:#9b6fc4;
-    /* Paleta de las pantallas-lugar (mapa/ciudad/mazmorra) — distinta de la paleta de cartas de arriba a propósito */
+    /* Paleta de las pantallas-lugar (mapa/ciudad/lugar) — distinta de la paleta de cartas de arriba a propósito */
     --bg-base:#14120f; --frame:#8a6d3f; --text:#e8e0d0; --text-dim:#9a917f;
     /* tamaños de carta escalables: se ajustan por viewport, el interior usa cqw */
     --handW: clamp(125px, 35vw, 194px);   /* mano en carrusel, grande y legible */
@@ -55,7 +55,7 @@
   .btn:disabled{opacity:.4;cursor:not-allowed}
 
   /* ====================================================================
-     PANTALLAS-LUGAR: Mapa mundial / Ciudad / Mapa de mazmorras / Mazmorra
+     PANTALLAS-LUGAR: Mapa mundial / Ciudad / Mapa de lugares / Lugar
      La imagen de fondo ES el lugar (referencia: mapas de campaña Warcraft
      3 / AoE2); la UI solo posiciona puntos interactivos encima. Mientras
      no hay arte real, .scene-bg muestra una textura oscura + el nombre
@@ -63,7 +63,7 @@
      volver a un layout de tarjetas-menú acá — la estructura espacial ya
      es la definitiva, solo cambia el fondo cuando llegue el .jpg.
      ==================================================================== */
-  #mapScreen,#cityScreen,#dungeonMapScreen,#dungeonInterior{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
+  #mapScreen,#cityScreen,#placeMapScreen,#placeInterior{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
   .scene-bg{position:absolute;inset:0;background-color:var(--bg-base);background-size:cover;background-position:center;
     background-image:
       radial-gradient(circle at 22% 28%, rgba(255,255,255,.035) 0, transparent 42%),
@@ -81,7 +81,7 @@
   [data-faction="caelum"]{--fc:#d9cfa8}
   [data-faction="nomadas"]{--fc:#a33c2f}
 
-  /* Hotspots (mapa mundial y mapa de mazmorras) */
+  /* Hotspots (mapa mundial y mapa de lugares) */
   .hotspot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;
     gap:5px;cursor:pointer;z-index:2}
   .hs-circle{width:60px;height:60px;border-radius:50%;border:2px solid var(--frame);position:relative;
@@ -98,20 +98,20 @@
     border-radius:50%;padding:2px;line-height:1}
   .hs-label{font-family:Georgia,serif;font-size:11px;color:var(--text);background:rgba(0,0,0,.6);
     padding:3px 9px;border-radius:3px;border:1px solid var(--frame);white-space:nowrap;backdrop-filter:blur(2px)}
-  #mapHotspots,#dungeonHotspots{position:absolute;inset:0;z-index:2}
+  #mapHotspots,#placeHotspots{position:absolute;inset:0;z-index:2}
 
-  /* Hotspot de mazmorra: rombo en vez de círculo, más chico */
-  .dungeon-hotspot .hs-diamond{width:44px;height:44px;border:2px solid var(--frame);transform:rotate(45deg);
+  /* Hotspot de lugar: rombo en vez de círculo, más chico */
+  .place-hotspot .hs-diamond{width:44px;height:44px;border:2px solid var(--frame);transform:rotate(45deg);
     background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.1), rgba(0,0,0,.6));
     display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.65);position:relative}
-  .dungeon-hotspot .hs-diamond span{transform:rotate(-45deg);font-size:18px}
-  .dungeon-hotspot:not(.locked) .hs-diamond{animation:hspulse 2.6s ease-in-out infinite}
+  .place-hotspot .hs-diamond span{transform:rotate(-45deg);font-size:18px}
+  .place-hotspot:not(.locked) .hs-diamond{animation:hspulse 2.6s ease-in-out infinite}
   .dg-empty{color:var(--text-dim);font-family:Georgia,serif;font-size:14px;text-align:center;
     position:absolute;left:0;right:0;top:44%;padding:0 30px}
   .dg-more{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));text-align:center;
     color:var(--text-dim);font-size:11.5px;letter-spacing:.3px}
 
-  /* Encabezado de pantalla (mapa mundial, mapa de mazmorras) */
+  /* Encabezado de pantalla (mapa mundial, mapa de lugares) */
   .scene-title{position:absolute;top:calc(env(safe-area-inset-top) + 16px);left:0;right:0;text-align:center;z-index:2;
     font-family:Georgia,serif;font-size:clamp(22px,7vw,30px);font-weight:700;color:var(--text);letter-spacing:2px;
     text-shadow:0 2px 10px rgba(0,0,0,.9)}
@@ -141,7 +141,7 @@
     font-family:"Courier New",monospace;z-index:2}
   .cityframe.soon{opacity:.55}
 
-  /* Interior de mazmorra: carta única con swipe (estilo Reigns) */
+  /* Interior de lugar: carta única con swipe (estilo Reigns) */
   .dg-card-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 5%;z-index:2}
   .dg-card{width:85%;max-width:340px;aspect-ratio:5/7.2;background:linear-gradient(160deg,#1c1710,#100d09);
     border:2px solid var(--frame);border-radius:14px;box-shadow:0 22px 55px rgba(0,0,0,.75);
@@ -160,7 +160,7 @@
   .dg-place-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:34px;background:linear-gradient(160deg,#2a2216,#141008);opacity:.6}
   .dg-place-real{position:absolute;inset:0;background-size:cover;background-position:center}
-  /* Nodos con más de 2 salidas (sección "Sistemas de Mazmorra Profunda" #1): direcciones como botones. */
+  /* Nodos con más de 2 salidas (sección "Sistemas de Lugares Profundos" #1): direcciones como botones. */
   .dg-card-exits{display:none;flex-direction:column;gap:7px;margin-top:10px}
   .dg-exit-btn{font-family:Georgia,serif;font-size:12.5px;color:var(--text);background:rgba(255,255,255,.05);
     border:1px solid var(--frame);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:center}
@@ -205,7 +205,7 @@
   .zbtn:disabled{opacity:.35;cursor:not-allowed}
   .zcount{font-family:Georgia,serif;font-size:16px;font-weight:700;min-width:56px;text-align:center}
 
-  /* ---------- Campaña: hotspot destacado dentro del mapa de mazmorras (no es pantalla propia) ---------- */
+  /* ---------- Campaña: hotspot destacado dentro del mapa de lugares (no es pantalla propia) ---------- */
   .campaign-hotspot .hs-circle{border-color:var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.65),0 0 0 1px rgba(216,180,106,.4) inset}
   .campaign-hotspot .hs-init{font-size:26px}
   .campaign-hotspot:not(.locked) .hs-circle{animation:hspulse-gold 2.2s ease-in-out infinite}
@@ -214,8 +214,8 @@
     50%{box-shadow:0 0 18px 8px rgba(216,180,106,0), 0 4px 16px rgba(0,0,0,.65)}
   }
   .campaign-hotspot .hs-label{border-color:var(--gold);color:var(--gold2)}
-  .dungeon-hotspot.locked .hs-diamond{filter:grayscale(.85) brightness(.5)}
-  .dungeon-hotspot .hs-lock{transform:rotate(-45deg)}
+  .place-hotspot.locked .hs-diamond{filter:grayscale(.85) brightness(.5)}
+  .place-hotspot .hs-lock{transform:rotate(-45deg)}
 
   /* ---------- Board layout (mobile-first, vertical) ---------- */
   .herobar{display:flex;align-items:center;gap:10px;padding:6px 12px;flex:0 0 auto;
@@ -604,20 +604,20 @@
   <div class="city-frames" id="cityFrames"></div>
 </div>
 
-<!-- ===================== MAPA DE MAZMORRAS DEL CONTINENTE =====================
+<!-- ===================== MAPA DE LUGARES DEL CONTINENTE =====================
      data-img-slot: assets/backgrounds/mapas/mapa_<faccion>.jpg -->
-<div id="dungeonMapScreen">
-  <div class="scene-bg" id="dungeonMapBg"></div>
-  <button class="compass-btn" id="dungeonMapBack" title="Volver a la ciudad">‹</button>
-  <div class="scene-title" id="dungeonMapTitle"></div>
-  <div id="dungeonHotspots"></div>
+<div id="placeMapScreen">
+  <div class="scene-bg" id="placeMapBg"></div>
+  <button class="compass-btn" id="placeMapBack" title="Volver a la ciudad">‹</button>
+  <div class="scene-title" id="placeMapTitle"></div>
+  <div id="placeHotspots"></div>
 </div>
 
-<!-- ===================== INTERIOR DE MAZMORRA =====================
-     data-img-slot: assets/backgrounds/mazmorras/mazmorra_<id>.jpg -->
-<div id="dungeonInterior">
-  <div class="scene-bg" id="dungeonBg"></div>
-  <button class="compass-btn" id="dungeonExitBtn" title="Abandonar mazmorra">✕</button>
+<!-- ===================== INTERIOR DE LUGAR =====================
+     data-img-slot: assets/backgrounds/lugares/lugar_<id>.jpg -->
+<div id="placeInterior">
+  <div class="scene-bg" id="placeBg"></div>
+  <button class="compass-btn" id="placeExitBtn" title="Abandonar lugar">✕</button>
   <div class="dg-card-wrap">
     <div class="dg-card" id="dgCard">
       <div class="dg-place-img" id="dgPlaceImg">
@@ -820,7 +820,7 @@ const S = {
   players:{}, turn:"p", turnNum:0, phase:"menu", busy:false,
   selected:null, targeting:null, // targeting = {resolve, filter}
   hints:{}, // conteo de veces que se explicó cada regla (guía interactiva)
-  aiDifficulty:1, // nivel 1-5 de la mazmorra activa (sección "Sistemas de Mazmorra Profunda" #5)
+  aiDifficulty:1, // nivel 1-5 del lugar activo (sección "Sistemas de Lugares Profundos" #5)
 };
 function P(){ return S.players[S.turn]; }
 function foeOf(id){ return id==="p"?"a":"p"; }
@@ -905,7 +905,7 @@ function effMaxVida(p,c){
 function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
 
 // ============================================================
-//  Navegación: Mapa mundial → Ciudad → Mapa de mazmorras → Mazmorra → Duelo
+//  Navegación: Mapa mundial → Ciudad → Mapa de lugares → Lugar → Duelo
 //  (secciones 7, 10, 11, 13 del diseño). Pantallas-lugar: la imagen de
 //  fondo ES el lugar (ver data-slot-label en el HTML), la UI solo pone
 //  puntos interactivos encima. Ciudad Central es UNA plantilla
@@ -918,38 +918,52 @@ S.unlocked = {alderium:true};
 S.collection = {}; // {clave_de_carta: copias poseídas}
 S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facción
 S.campaignProgress = {}; // {facción: {nodeId, done}} — progreso persistente de campaña
-S.dungeonsUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
+S.placesUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
 S.audio = {musicVol:0.6, sfxVol:0.8, muted:false}; // preferencias de audio (sección 5 del motor de audio)
-S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar" (sección Mazmorra Profunda #2)
-S.dungeonCleared = {}; // {dungeonId: true} — jefe vencido al menos una vez (sección Mazmorra Profunda #4)
+S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar"
+S.placeCleared = {}; // {placeId: true} — jefe vencido al menos una vez
 function isUnlocked(k){ return !!S.unlocked[k]; }
 function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaignProgress[fac].done); }
 
 // ---- Persistencia (localStorage, clave versionada) ----
-const SAVE_KEY = "veyra_save_v1";
+// v2: "mazmorra" desapareció del vocabulario del juego (pasa a "lugar") — dungeonsUnlocked/
+// dungeonCleared se renombraron a placesUnlocked/placeCleared. loadGame() migra sola una
+// partida vieja (guardada bajo la clave v1, con los nombres de campo viejos) sin perder progreso:
+// lee v1 solo si no hay v2, copia los campos con su nombre nuevo, guarda bajo v2 y borra v1.
+const SAVE_KEY = "veyra_save_v2";
+const SAVE_KEY_LEGACY_V1 = "veyra_save_v1";
 function saveGame(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       unlocked: S.unlocked, collection: S.collection, savedDecks: S.savedDecks,
-      campaignProgress: S.campaignProgress, dungeonsUnlocked: S.dungeonsUnlocked,
-      audio: S.audio, loreSeen: S.loreSeen, dungeonCleared: S.dungeonCleared,
+      campaignProgress: S.campaignProgress, placesUnlocked: S.placesUnlocked,
+      audio: S.audio, loreSeen: S.loreSeen, placeCleared: S.placeCleared,
     }));
   } catch(e){ /* localStorage no disponible (modo privado, cuota, etc.): seguir solo en memoria */ }
 }
 function loadGame(){
   try{
-    const raw=localStorage.getItem(SAVE_KEY);
-    if(!raw) return false;
+    let raw=localStorage.getItem(SAVE_KEY);
+    let migratingFromV1=false;
+    if(!raw){
+      raw=localStorage.getItem(SAVE_KEY_LEGACY_V1);
+      if(!raw) return false;
+      migratingFromV1=true;
+    }
     const data=JSON.parse(raw);
     if(!data || typeof data!=="object") return false;
     if(data.unlocked && typeof data.unlocked==="object") Object.assign(S.unlocked, data.unlocked);
     if(data.collection && typeof data.collection==="object") Object.assign(S.collection, data.collection);
     if(data.savedDecks && typeof data.savedDecks==="object") Object.assign(S.savedDecks, data.savedDecks);
     if(data.campaignProgress && typeof data.campaignProgress==="object") Object.assign(S.campaignProgress, data.campaignProgress);
-    if(data.dungeonsUnlocked && typeof data.dungeonsUnlocked==="object") Object.assign(S.dungeonsUnlocked, data.dungeonsUnlocked);
+    // placesUnlocked/placeCleared: clave nueva si existe; si no, migrar desde el nombre viejo (v1).
+    const placesUnlockedSrc = data.placesUnlocked || data.dungeonsUnlocked;
+    if(placesUnlockedSrc && typeof placesUnlockedSrc==="object") Object.assign(S.placesUnlocked, placesUnlockedSrc);
+    const placeClearedSrc = data.placeCleared || data.dungeonCleared;
+    if(placeClearedSrc && typeof placeClearedSrc==="object") Object.assign(S.placeCleared, placeClearedSrc);
     if(data.audio && typeof data.audio==="object") Object.assign(S.audio, data.audio);
     if(data.loreSeen && typeof data.loreSeen==="object") Object.assign(S.loreSeen, data.loreSeen);
-    if(data.dungeonCleared && typeof data.dungeonCleared==="object") Object.assign(S.dungeonCleared, data.dungeonCleared);
+    if(migratingFromV1){ saveGame(); try{ localStorage.removeItem(SAVE_KEY_LEGACY_V1); } catch(e2){} } // escribe bajo v2 y borra v1
     return true;
   } catch(e){
     try{ localStorage.removeItem(SAVE_KEY); } catch(e2){} // save corrupto: descartar y arrancar limpio
@@ -1092,7 +1106,7 @@ function musicDuck(){
 // Mapa pantalla → pista (sección 3). "menu" (picker de facción/rival) no tiene pista propia:
 // se deja sonando lo que ya sonaba. Ciudad: Alderium usa su tema propio, el resto tema_ciudad_central.
 const SCREEN_TRACK = {
-  mapScreen:"tema_mapa_mundial", dungeonMapScreen:"tema_mazmorra", dungeonInterior:"tema_mazmorra",
+  mapScreen:"tema_mapa_mundial", placeMapScreen:"tema_lugar", placeInterior:"tema_lugar",
   constructorScreen:"tema_constructor",
 };
 function setScreenMusic(screenId){
@@ -1121,11 +1135,11 @@ const MAP_HOTSPOTS = {
   caelum:{left:15,top:46}, qashir:{left:85,top:46},
   koren:{left:30,top:77}, brasshaven:{left:66,top:77},
 };
-// Cantidad total de mazmorras planificadas por continente (sección 10) — para el aviso "X de Y construidas".
-const DUNGEON_TOTALS = {alderium:5, qashir:4, brasshaven:4, koren:4, caelum:4, nomadas:2};
+// Cantidad total de lugares planificadas por continente (sección 10) — para el aviso "X de Y construidas".
+const PLACE_TOTALS = {alderium:5, qashir:4, brasshaven:4, koren:4, caelum:4, nomadas:2};
 
-let currentCity=null, dungeonState=null, duelReturn=null;
-const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", dungeonMapScreen:"block", dungeonInterior:"block",
+let currentCity=null, placeState=null, duelReturn=null;
+const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", placeMapScreen:"block", placeInterior:"block",
   constructorScreen:"flex"};
 function showScreen(id){
   for(const x in SCREEN_DISPLAY){ document.getElementById(x).style.display = (x===id) ? SCREEN_DISPLAY[x] : "none"; }
@@ -1156,8 +1170,9 @@ function renderMap(){
 // ---- 2. Ciudad Central (una plantilla, 6 variantes) ----
 // ---- Ciudades con identidad (canon: Veyra_Ciudades_y_Arco.md) ----
 // Los seis roles funcionales son la MISMA mecánica/código en las 6 ciudades — lo que cambia por
-// facción es nombre, imagen y voz (sección 1 del documento). "mazmorras" no tiene nombre propio
-// en la tabla de la sección 3 del canon: se mantiene genérico a propósito, no se inventa uno.
+// facción es nombre, imagen y voz (sección 1 del documento). El rol de salida al mundo ("mundo")
+// no tiene nombre propio en la tabla de la sección 3 del canon: se mantiene genérico ("Salir al
+// mundo") a propósito, no se inventa uno.
 const CITY_VENUE_NAMES = {
   social:{alderium:"La Taberna del Juramento", qashir:"La Casa de las Apuestas", brasshaven:"La Cantina del Engranaje", koren:"El Círculo del Fuego", caelum:"El Atrio de las Voces", nomadas:"El Fuego Común"},
   practica:{alderium:"Patio de Armas", qashir:"La Arena de Polvo", brasshaven:"Taller de Pruebas", koren:"Claro de Piedra", caelum:"El Simulacro", nomadas:"El Ruedo"},
@@ -1171,7 +1186,7 @@ const CITY_VENUE_DESC = {
   practica:{alderium:"Formación y disciplina, sin gloria ni recompensa todavía.", qashir:"Practicá sin apostar nada — todavía.", brasshaven:"Ensayos sin registro, sin consecuencias.", koren:"Un espacio para ensayar, sin memoria que quede grabada.", caelum:"Un ensayo sin peso real, para afinar el gesto.", nomadas:"Un round sin apuesta, para probar el pulso."},
   duelo:{alderium:"Donde un Guardián demuestra su temple ante un rival real.", qashir:"Un duelo real, con algo real en juego.", brasshaven:"Donde una estrategia se templa contra un rival de verdad.", koren:"Donde dos caminos se cruzan de verdad.", caelum:"Donde dos leyes se ponen a prueba, una frente a la otra.", nomadas:"Un desafío real, con toda la caravana mirando."},
   cartas:{alderium:"Tu colección y tu mazo, guardados como se guarda un juramento.", qashir:"Tu colección, guardada bajo llave como cualquier trato que importa.", brasshaven:"Tu colección, catalogada y lista para reconfigurar el mazo.", koren:"Tu colección, guardada como se guarda un recuerdo.", caelum:"Tu colección, ordenada como se ordena una ley.", nomadas:"Tu colección, atada y lista para el próximo camino."},
-  mazmorras:{alderium:"Las ruinas que Alderium todavía jura vigilar.", qashir:"Riesgo que paga mejor que cualquier apuesta segura.", brasshaven:"Rutas catalogadas hacia lo que la Franja todavía no ha desarmado.", koren:"Los caminos antiguos que Kóren recuerda mejor que nadie.", caelum:"Umbrales hacia lo que las Leyes todavía no terminaron de sellar.", nomadas:"Las rutas que la caravana ya anduvo, y las que todavía no."},
+  mundo:{alderium:"Las ruinas que Alderium todavía jura vigilar.", qashir:"Riesgo que paga mejor que cualquier apuesta segura.", brasshaven:"Rutas catalogadas hacia lo que la Franja todavía no ha desarmado.", koren:"Los caminos antiguos que Kóren recuerda mejor que nadie.", caelum:"Umbrales hacia lo que las Leyes todavía no terminaron de sellar.", nomadas:"Las rutas que la caravana ya anduvo, y las que todavía no."},
   mercado:{alderium:"Comercio bajo la primera luz, todavía por abrir.", qashir:"Todo tiene precio, si sabés negociarlo.", brasshaven:"Piezas, patentes y trueques, en cuanto abran los libros.", koren:"Lo viejo por lo necesario, según manda la costumbre.", caelum:"Un trueque que todavía busca su alineación correcta.", nomadas:"Donde una caravana cambia lo que trae por lo que le falta."},
 };
 // Líneas de ficción propias al tocar Social/Mercado (todavía no construidos) — nunca un
@@ -1195,7 +1210,7 @@ const CITY_SOON_LINES = {
   },
 };
 function openCity(fac){
-  currentCity=fac; dungeonState=null;
+  currentCity=fac; placeState=null;
   const f=FACTIONS[fac];
   document.getElementById("cityScreen").dataset.faction=fac;
   document.getElementById("cityBg").dataset.slotLabel=`ciudad_${fac}.jpg`;
@@ -1208,7 +1223,7 @@ function openCity(fac){
     // TODO(autor): Práctica y Duelo abren hoy el mismo selector — diferenciar recompensas cuando exista ese sistema.
     {role:"duelo", t:CITY_VENUE_NAMES.duelo[fac], d:CITY_VENUE_DESC.duelo[fac], go:()=>openDuelPicker(fac)},
     {role:"cartas", t:CITY_VENUE_NAMES.cartas[fac], d:CITY_VENUE_DESC.cartas[fac], go:()=>openConstructor(fac,{type:"city"})},
-    {role:"mazmorras", t:"Mazmorras", d:CITY_VENUE_DESC.mazmorras[fac], go:()=>openDungeonMap(fac)},
+    {role:"mundo", t:"Salir al mundo", d:CITY_VENUE_DESC.mundo[fac], go:()=>openPlaceMap(fac)},
     {role:"mercado", t:CITY_VENUE_NAMES.mercado[fac], d:CITY_VENUE_DESC.mercado[fac], soon:true},
   ];
   for(const it of items){
@@ -1235,22 +1250,22 @@ function backToCityFlow(){
   showScreen(currentCity ? "cityScreen" : "mapScreen");
 }
 
-// ---- 3. Mapa de mazmorras del continente — "Salir a mazmorras" abre SIEMPRE esta pantalla.
-// La campaña (si existe y no está completa) aparece como hotspot destacado; las mazmorras
-// normales quedan bloqueadas (candado) hasta completarla.
-function openDungeonMap(fac){
+// ---- 3. Mapa de lugares del continente — "Salir al mundo" abre SIEMPRE esta pantalla.
+// La campaña (si existe y no está completa) aparece como hotspot destacado; los lugares
+// normales quedan bloqueados (candado) hasta completarla.
+function openPlaceMap(fac){
   currentCity=fac;
-  document.getElementById("dungeonMapScreen").dataset.faction=fac;
-  document.getElementById("dungeonMapBg").dataset.slotLabel=`mapa_${fac}.jpg`;
-  document.getElementById("dungeonMapTitle").textContent=FACTIONS[fac].name.toUpperCase()+" — MAZMORRAS";
-  const el=document.getElementById("dungeonHotspots"); el.innerHTML="";
+  document.getElementById("placeMapScreen").dataset.faction=fac;
+  document.getElementById("placeMapBg").dataset.slotLabel=`mapa_${fac}.jpg`;
+  document.getElementById("placeMapTitle").textContent=FACTIONS[fac].name.toUpperCase()+" — LUGARES";
+  const el=document.getElementById("placeHotspots"); el.innerHTML="";
   let any=false;
 
   const campaignId=CAMPAIGN_IDS[fac];
   const campaignPending = campaignId && !isCampaignComplete(fac);
   if(campaignPending){
     any=true;
-    const dg=DUNGEONS[campaignId];
+    const dg=PLACES[campaignId];
     const progress=S.campaignProgress[fac];
     const step = progress ? (dg.nodes[progress.nodeId]||{}).step||1 : 1;
     const totalSteps=(CAMPAIGN_STEP_NAMES[fac]||[]).length||6;
@@ -1259,37 +1274,37 @@ function openDungeonMap(fac){
     d.style.left="50%"; d.style.top="28%";
     d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_campana_${fac}.png"><span class="hs-init">⚜️</span></div>
       <div class="hs-label">${dg.name} — ${step}/${totalSteps}</div>`;
-    d.onclick=()=>enterDungeon(campaignId);
+    d.onclick=()=>enterPlace(campaignId);
     el.appendChild(d);
   }
 
-  const list=CONTINENT_DUNGEONS[fac]||[];
-  const dungeonsLocked = campaignId ? !isCampaignComplete(fac) : false;
+  const list=CONTINENT_PLACES[fac]||[];
+  const placesLocked = campaignId ? !isCampaignComplete(fac) : false;
   if(list.length){
     any=true;
     for(const id of list){
-      const dg=DUNGEONS[id];
+      const dg=PLACES[id];
       const d=document.createElement("div");
-      d.className="hotspot dungeon-hotspot"+(dungeonsLocked?" locked":"");
+      d.className="hotspot place-hotspot"+(placesLocked?" locked":"");
       d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
-      d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/mazmorra/icono_mazmorra_${id}.png">${dungeonsLocked?'<span class="hs-lock">🔒</span>':""}<span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
+      d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/lugar/icono_lugar_${id}.png">${placesLocked?'<span class="hs-lock">🔒</span>':""}<span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
       d.onclick=()=>{
-        if(dungeonsLocked){ toast("🔒 Completá la campaña de "+FACTIONS[fac].name+" para desbloquear sus mazmorras."); return; }
-        enterDungeon(id);
+        if(placesLocked){ toast("🔒 Completá la campaña de "+FACTIONS[fac].name+" para desbloquear sus lugares."); return; }
+        enterPlace(id);
       };
       el.appendChild(d);
     }
-    const total=DUNGEON_TOTALS[fac];
+    const total=PLACE_TOTALS[fac];
     if(total && total>list.length){
       const more=document.createElement("div"); more.className="dg-more";
-      more.textContent=`${list.length} de ${total} mazmorras construidas — el resto llega más adelante.`;
+      more.textContent=`${list.length} de ${total} lugares construidos — el resto llega más adelante.`;
       el.appendChild(more);
     }
   }
-  if(!any){ el.innerHTML=`<div class="dg-empty">Sin mazmorras todavía en ${FACTIONS[fac].name}.</div>`; }
-  showScreen("dungeonMapScreen");
+  if(!any){ el.innerHTML=`<div class="dg-empty">Sin lugares todavía en ${FACTIONS[fac].name}.</div>`; }
+  showScreen("placeMapScreen");
 }
-document.getElementById("dungeonMapBack").onclick=()=>showScreen("cityScreen");
+document.getElementById("placeMapBack").onclick=()=>showScreen("cityScreen");
 
 // ============================================================
 //  Colección y Constructor de Mazos
@@ -1416,21 +1431,21 @@ document.getElementById("ctorSaveBtn").onclick=()=>{
   else showScreen("cityScreen");
 };
 
-// ---- 4. Interior de mazmorra: grafo de nodos con swipe (estilo Reigns) ----
-// Mazmorra piloto (sección 11 + grafo en Veyra_Grafo_Mazmorra.mermaid + jefe de sección 8).
+// ---- 4. Interior de lugar: grafo de nodos con swipe (estilo Reigns) ----
+// Lugar piloto (sección 11 + grafo en Veyra_Grafo_Lugares.mermaid + jefe de sección 8).
 
-// ---- Plantillas de topología reutilizables (sección "Sistemas de Mazmorra Profunda" #1) ----
+// ---- Plantillas de topología reutilizables (sección "Sistemas de Lugares Profundos" #1) ----
 // Cada plantilla es solo DATOS: un mapa id -> [ids de destino] que describe la FORMA del grafo,
-// sin contenido. buildDungeonGraph(shape, content) la combina con el contenido real (texto, tipo,
+// sin contenido. buildPlaceGraph(shape, content) la combina con el contenido real (texto, tipo,
 // enemigos, recompensas...) que da cada autor vía content:{id:{...}} y arma el objeto `nodes` final:
 //  - un id con 1 solo destino queda como nodo de paso (combat/quiz/bridge/place/decision-continua):
 //    se le agrega `next` con ese destino.
 //  - un id con 2+ destinos se resuelve como `type:"decision"` con `exits:[{dest,hint,reward}]`,
 //    tomando `content[id].hints`/`content[id].rewards` (alineados por índice con los destinos).
 // `shape` puede ser la clave de una plantilla de abajo, o un objeto de aristas ya armado a mano
-// (por ejemplo clonando una plantilla y agregándole un desvío propio) — así una mazmorra puede
+// (por ejemplo clonando una plantilla y agregándole un desvío propio) — así un lugar puede
 // "usar" una forma base y todavía sumarle un callejón sin salida puntual.
-const DUNGEON_TOPOLOGIES = {
+const PLACE_TOPOLOGIES = {
   // (a) Lineal con un desvío: cadena principal con un tramo que se bifurca y reconecta antes del jefe.
   linear_detour: {n1:["n2"], n2:["n3a","n3b"], n3a:["n4"], n3b:["n4"], n4:["n5"], n5:["n6a","n6b"],
     n6a:["n7"], n6b:["n7"], n7:["n8"], n8:["boss"], boss:["exit"]},
@@ -1443,7 +1458,7 @@ const DUNGEON_TOPOLOGIES = {
   double_ring: {n1:["r1a","r1b"], r1a:["join1"], r1b:["join1"],
     join1:["r2a","r2b"], r2a:["join2"], r2b:["join2"], join2:["boss"], boss:["exit"]},
   // (d) Árbol con 2 callejones sin salida premiados: dos ramas, cada una con un desvío que TERMINA
-  //     la mazmorra con recompensa (sin jefe) en vez de reconectar.
+  //     el lugar con recompensa (sin jefe) en vez de reconectar.
   tree_two_deadends: {n1:["a1","b1"],
     a1:["a2","deadendA"], a2:["join"], deadendA:["exit"],
     b1:["b2","deadendB"], b2:["join"], deadendB:["exit"],
@@ -1452,8 +1467,8 @@ const DUNGEON_TOPOLOGIES = {
   maze_shortcut: {n1:["n2"], n2:["n3"], n3:["n4","shortcut"], n4:["n5"], n5:["n6"], n6:["n7"],
     n7:["boss"], shortcut:["boss"], boss:["exit"]},
 };
-function buildDungeonGraph(shape, content){
-  const edges = typeof shape==="string" ? DUNGEON_TOPOLOGIES[shape] : shape;
+function buildPlaceGraph(shape, content){
+  const edges = typeof shape==="string" ? PLACE_TOPOLOGIES[shape] : shape;
   const nodes={};
   for(const id in edges){
     const dests=edges[id]; const base=content[id]||{};
@@ -1476,8 +1491,8 @@ const OPPONENTS = {
 
 // ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
 // reconexión hasta el jefe. 2 nodos "lugar" de ejemplo (uno por rama) + 1 quiz que referencia un
-// fact del propio palacio (los quiz cross-mazmorra reales llegan con el contenido nuevo).
-const _piloteEdges = Object.assign({}, DUNGEON_TOPOLOGIES.early_fork_no_reconnect, {
+// fact del propio palacio (los quiz cross-lugar reales llegan con el contenido nuevo).
+const _piloteEdges = Object.assign({}, PLACE_TOPOLOGIES.early_fork_no_reconnect, {
   b3:["b4","corredor"], corredor:["exit"], // desvío de tesoro sin salida — no forma parte de la plantilla base
 });
 const _piloteContent = {
@@ -1520,10 +1535,10 @@ const _piloteContent = {
     repeatReward:{type:"collection",key:"sold_alderium_0",n:1,fac:"alderium"}},
 };
 
-const DUNGEONS = {
+const PLACES = {
   alderium_piloto: {
     faction:"alderium", name:"El Palacio en Ruinas", icon:"🏛️", mapPos:{left:50,top:45}, startNode:"n1", level:2,
-    nodes: buildDungeonGraph(_piloteEdges, _piloteContent),
+    nodes: buildPlaceGraph(_piloteEdges, _piloteContent),
   },
   // ---- Campaña "El Juramento de Alderium" (sección 6.1 del diseño) ----
   // Reusa el mismo motor de nodos con swipe/tap; isCampaign:true activa recompensas y progreso persistente.
@@ -1580,7 +1595,7 @@ const DUNGEONS = {
     }
   },
 };
-const CONTINENT_DUNGEONS = {alderium:["alderium_piloto"]};
+const CONTINENT_PLACES = {alderium:["alderium_piloto"]};
 const CAMPAIGN_IDS = {alderium:"alderium_juramento"};
 const CAMPAIGN_STEP_NAMES = {alderium:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"]};
 function buildVanillaOnlyDeck(fac){
@@ -1604,7 +1619,7 @@ function buildGuardianHeavyDeck(fac){
   while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
   return shuffle(deck);
 }
-// ---- Dificultad progresiva (sección "Sistemas de Mazmorra Profunda" #5): nivel 1-5 por mazmorra.
+// ---- Dificultad progresiva (sección "Sistemas de Lugares Profundos" #5): nivel 1-5 por lugar.
 // Nivel 1 = la IA actual (sin cambios). Niveles altos: mazo con mejor curva/impacto (buildLeveledDeck)
 // y la IA evita con más frecuencia un intercambio de combate perdedor (tradeSkip, ver aiAttacks).
 const AI_LEVEL = {
@@ -1629,7 +1644,7 @@ function buildLeveledDeck(fac, level){
   return shuffle(deck);
 }
 
-// ---- Boss evadible en revisita (sección "JEFE OPCIONAL EN REVISITA"): si la mazmorra ya fue
+// ---- Boss evadible en revisita (sección "JEFE OPCIONAL EN REVISITA"): si el lugar ya fue
 // vencida una vez, el nodo de jefe se resuelve como una decisión swipeable en vez de combate directo.
 function synthesizeBossRevisit(raw){
   const opp = OPPONENTS[raw.bossId] || {name:"El rival", avoidLine:"Te deja pasar sin decir palabra."};
@@ -1646,26 +1661,26 @@ function synthesizeBossRevisit(raw){
 // Cualquier nodo con un solo destino (que no exija tap para "enganchar" — combate/quiz/puente) se
 // resuelve con un `exits` de una sola entrada: ambos lados del swipe llevan al mismo próximo nodo
 // (mismo comportamiento que ya tenían los nodos "lugar"/de paso antes de generalizar el motor).
-function resolveDungeonNode(raw){
-  if(raw.type==="combat" && raw.boss && dungeonState && S.dungeonCleared[dungeonState.dungeonId]){
+function resolvePlaceNode(raw){
+  if(raw.type==="combat" && raw.boss && placeState && S.placeCleared[placeState.placeId]){
     return synthesizeBossRevisit(raw);
   }
-  if(!raw.exits && raw.next && !DUNGEON_TAP_HANDLERS[raw.type]){
+  if(!raw.exits && raw.next && !PLACE_TAP_HANDLERS[raw.type]){
     return Object.assign({}, raw, {exits:[{dest:raw.next, reward:raw.reward||null}]});
   }
   return raw;
 }
-function currentDungeonNode(){ return resolveDungeonNode(DUNGEONS[dungeonState.dungeonId].nodes[dungeonState.nodeId]); }
+function currentPlaceNode(){ return resolvePlaceNode(PLACES[placeState.placeId].nodes[placeState.nodeId]); }
 
-function enterDungeon(dungeonId){
-  playSfx("mazmorra_entrar");
-  const dg=DUNGEONS[dungeonId];
+function enterPlace(placeId){
+  playSfx("lugar_entrar");
+  const dg=PLACES[placeId];
   const saved = dg.isCampaign && S.campaignProgress[dg.faction];
-  dungeonState={dungeonId, nodeId: (saved && saved.nodeId) || dg.startNode};
-  document.getElementById("dungeonInterior").dataset.faction=dg.faction;
-  document.getElementById("dungeonBg").dataset.slotLabel = dg.isCampaign ? `campana_${dg.faction}.jpg` : `mazmorra_${dungeonId}.jpg`;
-  showScreen("dungeonInterior");
-  renderDungeonNode();
+  placeState={placeId, nodeId: (saved && saved.nodeId) || dg.startNode};
+  document.getElementById("placeInterior").dataset.faction=dg.faction;
+  document.getElementById("placeBg").dataset.slotLabel = dg.isCampaign ? `campana_${dg.faction}.jpg` : `lugar_${placeId}.jpg`;
+  showScreen("placeInterior");
+  renderPlaceNode();
 }
 
 function registerLoreFacts(node){
@@ -1675,8 +1690,8 @@ function registerLoreFacts(node){
   if(changed) saveGame();
 }
 
-function renderDungeonNode(){
-  const node=currentDungeonNode();
+function renderPlaceNode(){
+  const node=currentPlaceNode();
   const card=document.getElementById("dgCard");
   card.style.transition="none"; card.style.transform=""; card.style.opacity="1";
   void card.offsetWidth; card.style.transition="";
@@ -1711,17 +1726,17 @@ function renderDungeonNode(){
   clearSwipeHints();
 }
 
-function dungeonAdvance(nextId){
-  if(nextId==="exit"){ exitDungeonToMap(); return; }
-  dungeonState.nodeId=nextId;
-  const dg=DUNGEONS[dungeonState.dungeonId];
+function placeAdvance(nextId){
+  if(nextId==="exit"){ exitPlaceToMap(); return; }
+  placeState.nodeId=nextId;
+  const dg=PLACES[placeState.placeId];
   if(dg.isCampaign){ S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {nodeId:nextId}); saveGame(); }
-  renderDungeonNode();
+  renderPlaceNode();
 }
-function exitDungeonToMap(){
-  const dg = dungeonState && DUNGEONS[dungeonState.dungeonId];
-  if(dg) openDungeonMap(dg.faction); // re-renderiza hotspots (progreso de campaña, desbloqueos) y muestra la pantalla
-  else showScreen("dungeonMapScreen");
+function exitPlaceToMap(){
+  const dg = placeState && PLACES[placeState.placeId];
+  if(dg) openPlaceMap(dg.faction); // re-renderiza hotspots (progreso de campaña, desbloqueos) y muestra la pantalla
+  else showScreen("placeMapScreen");
 }
 
 // commitExit(): resuelve UNA salida concreta de node.exits[idx] — otorga su recompensa (si tiene),
@@ -1729,7 +1744,7 @@ function exitDungeonToMap(){
 // finalmente avanza al destino (o reengancha el combate si dest es el sentinel "__fight__", usado
 // por la decisión de revisita de jefe — ver synthesizeBossRevisit).
 function commitExit(idx, dirSign){
-  const node=currentDungeonNode();
+  const node=currentPlaceNode();
   const exit=(node.exits||[])[idx]; if(!exit) return;
   playSfx("swipe");
   if(exit.reward){ grantReward(exit.reward); toast("Recompensa: "+rewardLabel(exit.reward)); showRewardCardPopup(exit.reward); }
@@ -1739,37 +1754,37 @@ function commitExit(idx, dirSign){
   card.style.transform=`translateX(${dirSign*620}px) rotate(${dirSign*28}deg)`;
   card.style.opacity="0";
   setTimeout(()=>{
-    if(exit.dest==="__fight__"){ engageDungeonCombat(node._raw); }
-    else { dungeonAdvance(exit.dest); }
+    if(exit.dest==="__fight__"){ engagePlaceCombat(node._raw); }
+    else { placeAdvance(exit.dest); }
   }, 220);
 }
 function commitSwipe(dir){
-  const node=currentDungeonNode();
+  const node=currentPlaceNode();
   const exits=node.exits||[];
   const idx = exits.length===1 ? 0 : (dir==="left"?0:1);
   commitExit(idx, dir==="left"?-1:1);
 }
 function commitChoiceButton(idx){ commitExit(idx, idx%2===0?-1:1); }
 
-function engageDungeonCombat(node){
-  const dg=DUNGEONS[dungeonState.dungeonId];
-  const alreadyCleared = !!S.dungeonCleared[dungeonState.dungeonId];
+function engagePlaceCombat(node){
+  const dg=PLACES[placeState.placeId];
+  const alreadyCleared = !!S.placeCleared[placeState.placeId];
   const reward = (node.boss && alreadyCleared) ? (node.repeatReward||null) : node.reward;
   beginDuel(dg.faction, node.enemyFac, {
-    type:"dungeon", next:node.next, reward, campaignDone:node.campaignDone,
-    boss: !!node.boss, dungeonId: dungeonState.dungeonId,
+    type:"place", next:node.next, reward, campaignDone:node.campaignDone,
+    boss: !!node.boss, placeId: placeState.placeId,
   }, {enemyDeckBuilder: node.enemyDeckBuilder || (fac=>buildLeveledDeck(fac, dg.level||1)), difficulty: dg.level||1});
 }
 let quizModalOpen=false;
-async function engageDungeonQuiz(node){
+async function engagePlaceQuiz(node){
   if(quizModalOpen) return; // evita apilar modales si se toca la carta varias veces
   const required=(node.quiz.requires)||[];
   const known = required.every(fid=>S.loreSeen[fid]);
   if(required.length && !known){
-    // quiz cross-mazmorra (sección "Sistemas de Mazmorra Profunda" #3): el fact todavía no se vio en
+    // quiz cross-lugar (sección "Sistemas de Lugares Profundos" #3): el fact todavía no se vio en
     // ningún lugar — no falla, queda pendiente en ficción y el jugador sigue de todos modos.
     toast(node.quiz.pendingText || "Los símbolos te resultan ilegibles todavía — algo en este mundo debe explicarlos.");
-    dungeonAdvance(node.next);
+    placeAdvance(node.next);
     return;
   }
   quizModalOpen=true;
@@ -1777,19 +1792,19 @@ async function engageDungeonQuiz(node){
   quizModalOpen=false;
   if(ok){ playSfx("quiz_correcto"); grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); showRewardCardPopup(node.reward); }
   else { playSfx("quiz_incorrecto"); toast("No era así — seguís de todos modos."); }
-  dungeonAdvance(node.next);
+  placeAdvance(node.next);
 }
-function engageDungeonBridge(node){
-  const dg=DUNGEONS[dungeonState.dungeonId];
+function engagePlaceBridge(node){
+  const dg=PLACES[placeState.placeId];
   openConstructor(node.bridgeFac||dg.faction, {type:"campaign"});
 }
 function returnToCampaignFromConstructor(){
-  const dg=DUNGEONS[dungeonState.dungeonId];
-  const node=currentDungeonNode();
-  showScreen("dungeonInterior");
+  const dg=PLACES[placeState.placeId];
+  const node=currentPlaceNode();
+  showScreen("placeInterior");
   const savedOk = S.savedDecks[dg.faction] && deckCount(S.savedDecks[dg.faction])===40;
-  if(savedOk){ toast("Mazo válido: continuá tu camino."); dungeonAdvance(node.next); }
-  else { renderDungeonNode(); toast("Necesitás un mazo de 40 cartas guardado para continuar."); }
+  if(savedOk){ toast("Mazo válido: continuá tu camino."); placeAdvance(node.next); }
+  else { renderPlaceNode(); toast("Necesitás un mazo de 40 cartas guardado para continuar."); }
 }
 function grantReward(reward){
   if(!reward) return;
@@ -1814,10 +1829,10 @@ function askQuizModal(quiz){
   });
 }
 
-const DUNGEON_TAP_HANDLERS = {combat:engageDungeonCombat, quiz:engageDungeonQuiz, bridge:engageDungeonBridge};
+const PLACE_TAP_HANDLERS = {combat:engagePlaceCombat, quiz:engagePlaceQuiz, bridge:engagePlaceBridge};
 
 function updateSwipeHints(dx){
-  const node=currentDungeonNode();
+  const node=currentPlaceNode();
   const l=document.getElementById("dgHintL"), r=document.getElementById("dgHintR");
   const exits=node.exits;
   if(!exits || exits.length>2){ l.classList.remove("show"); r.classList.remove("show"); return; }
@@ -1831,11 +1846,11 @@ function clearSwipeHints(){
   document.getElementById("dgHintL").classList.remove("show");
   document.getElementById("dgHintR").classList.remove("show");
 }
-function initDungeonCardDrag(){
+function initPlaceCardDrag(){
   const card=document.getElementById("dgCard");
   let drag=null;
   card.addEventListener("pointerdown", e=>{
-    if(!dungeonState) return;
+    if(!placeState) return;
     drag={x0:e.clientX, dx:0, id:e.pointerId};
     card.setPointerCapture(e.pointerId);
     card.style.transition="none";
@@ -1850,11 +1865,11 @@ function initDungeonCardDrag(){
     if(!drag) return;
     const dx=drag.dx; drag=null;
     card.style.transition="transform .22s ease-out";
-    const node=currentDungeonNode();
+    const node=currentPlaceNode();
     clearSwipeHints();
-    if(DUNGEON_TAP_HANDLERS[node.type]){
+    if(PLACE_TAP_HANDLERS[node.type]){
       card.style.transform="";
-      if(Math.abs(dx)<10){ DUNGEON_TAP_HANDLERS[node.type](node); }
+      if(Math.abs(dx)<10){ PLACE_TAP_HANDLERS[node.type](node); }
       return;
     }
     if(!node.exits || node.exits.length>2){ card.style.transform=""; return; } // navegación por botones (dgExits), no por swipe
@@ -1865,7 +1880,7 @@ function initDungeonCardDrag(){
   card.addEventListener("pointerup", release);
   card.addEventListener("pointercancel", release);
 }
-document.getElementById("dungeonExitBtn").onclick=()=>exitDungeonToMap();
+document.getElementById("placeExitBtn").onclick=()=>exitPlaceToMap();
 
 // ============================================================
 //  Selección de facción/rival para un duelo puntual (menú de tarjetas —
@@ -1903,7 +1918,7 @@ function initMenu(){
   document.getElementById("menuBack").onclick=()=>showScreen(currentCity?"cityScreen":"mapScreen");
 }
 
-// ---- 5. Duelo: motor existente, ahora con contexto de retorno (ciudad o nodo de mazmorra) ----
+// ---- 5. Duelo: motor existente, ahora con contexto de retorno (ciudad o nodo de lugar) ----
 function getPlayerDeck(fac){
   return S.savedDecks[fac] ? buildDeckFromCounts(fac, S.savedDecks[fac]) : buildDeck(fac);
 }
@@ -1911,7 +1926,7 @@ function beginDuel(playerFac, enemyFac, returnCtx, opts){
   opts = opts||{};
   duelReturn = returnCtx||null;
   chosenFac = playerFac;
-  S.aiDifficulty = opts.difficulty||1; // nivel 1-5 de la mazmorra (perillas simples, ver AI_LEVEL/aiAttacks)
+  S.aiDifficulty = opts.difficulty||1; // nivel 1-5 del lugar (perillas simples, ver AI_LEVEL/aiAttacks)
   S.players.p=newPlayer("p",playerFac);
   S.players.a=newPlayer("a",enemyFac);
   S.players.p.deck = opts.playerDeck || getPlayerDeck(playerFac);
@@ -3028,7 +3043,7 @@ function burst(el, color, count){
     setTimeout(()=>s.remove(),540);
   }
 }
-// Animación de acople (sección "Sistemas de Mazmorra Profunda" #6): cuando una carta aplica un
+// Animación de acople (sección "Sistemas de Lugares Profundos" #6): cuando una carta aplica un
 // efecto dirigido a UNA carta concreta (dar Escudo, ligar una Reliquia, curar), la carta origen se
 // desliza hasta quedar parcialmente metida junto/bajo la objetivo (offset tipo cartas apoyadas en
 // una mesa), destella al contacto, y vuelve a su lugar (persist:true la deja en la posición de acople
@@ -3085,24 +3100,24 @@ function checkWin(){
     b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
     musicDuck(); playSfx(win?"stinger_victoria":"stinger_derrota"); // la próxima showScreen() retoma el tema normal
 
-    // Contexto de retorno: duelo de mazmorra vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
+    // Contexto de retorno: duelo de lugar vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
-    if(duelReturn && duelReturn.type==="dungeon" && win){
+    if(duelReturn && duelReturn.type==="place" && win){
       if(duelReturn.reward){ grantReward(duelReturn.reward); b.querySelector(".sub").textContent += " Recompensa: "+rewardLabel(duelReturn.reward)+"."; showRewardCardPopup(duelReturn.reward); }
-      if(duelReturn.boss && duelReturn.dungeonId){ S.dungeonCleared[duelReturn.dungeonId]=true; saveGame(); } // sección "dungeonCleared" — jefe vencido al menos una vez
-      if(duelReturn.campaignDone && dungeonState){
-        const dg=DUNGEONS[dungeonState.dungeonId];
+      if(duelReturn.boss && duelReturn.placeId){ S.placeCleared[duelReturn.placeId]=true; saveGame(); } // jefe vencido al menos una vez
+      if(duelReturn.campaignDone && placeState){
+        const dg=PLACES[placeState.placeId];
         S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {done:true});
-        S.dungeonsUnlocked[dg.faction]=true;
+        S.placesUnlocked[dg.faction]=true;
         saveGame();
-        b.querySelector(".sub").textContent += " ¡Mazmorras de "+FACTIONS[dg.faction].name+" desbloqueadas!";
+        b.querySelector(".sub").textContent += " ¡Lugares de "+FACTIONS[dg.faction].name+" desbloqueados!";
       }
-      contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("dungeonInterior"); dungeonAdvance(duelReturn.next); };
+      contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); placeAdvance(duelReturn.next); };
       replayBtn.style.display="none";
-      backBtn.textContent="Abandonar mazmorra"; backBtn.onclick=()=>{ b.style.display="none"; exitDungeonToMap(); };
-    } else if(duelReturn && duelReturn.type==="dungeon" && !win){
+      backBtn.textContent="Abandonar lugar"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
+    } else if(duelReturn && duelReturn.type==="place" && !win){
       contBtn.style.display="none"; replayBtn.style.display="none";
-      backBtn.textContent="Volver al mapa de mazmorras"; backBtn.onclick=()=>{ b.style.display="none"; exitDungeonToMap(); };
+      backBtn.textContent="Volver al mapa de lugares"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
     } else {
       contBtn.style.display="none";
       replayBtn.style.display="block"; replayBtn.onclick=()=>location.reload();
@@ -3153,6 +3168,6 @@ initAudioUI();
 
 initMenu();
 renderMap();
-initDungeonCardDrag();
+initPlaceCardDrag();
 showScreen("mapScreen");
 </script>

@@ -284,17 +284,17 @@ Este orden es una propuesta inicial — se puede reordenar cuando tengamos más 
 Esto significa, en la práctica:
 
 - **Los personajes del libro son utilizables como piezas, no como guion.** Podés jugar con Rhaen, Zahira o Eratiel en cualquier combinación, en cualquier momento, sin que eso implique "esto pasa antes o después" de algo del libro.
-- **Los lugares son mapas, no capítulos.** Cada continente/región (Alderium, Qashir, Brasshaven, Kóren, Caelum, La Franja) es un mapa explorable de forma libre, con sus propias mazmorras y actividades adentro. El jugador elige a dónde ir, no sigue un orden 1-2-3.
+- **Los lugares son mapas, no capítulos.** Cada continente/región (Alderium, Qashir, Brasshaven, Kóren, Caelum, La Franja) es un mapa explorable de forma libre, con sus propias lugares y actividades adentro. El jugador elige a dónde ir, no sigue un orden 1-2-3.
 - **La novela sigue existiendo en paralelo**, como lore ambiental: se puede contar historia de personajes, del mundo, de eventos — mediante Recuerdos, bibliotecas, diálogos — pero es opcional y nunca condiciona el avance del jugador ni lo obliga a una secuencia.
-- **El canon crece sin atarse a la trama.** Justo como pediste antes ("cada capítulo nuevo puede volverse contenido jugable"), pero ahora explícitamente: contenido *nuevo e inventado para el juego* (monstruos, jefes, mazmorras) puede alimentar de vuelta al lore del libro más adelante, no solo al revés.
+- **El canon crece sin atarse a la trama.** Justo como pediste antes ("cada capítulo nuevo puede volverse contenido jugable"), pero ahora explícitamente: contenido *nuevo e inventado para el juego* (monstruos, jefes, lugares) puede alimentar de vuelta al lore del libro más adelante, no solo al revés.
 
-**Consecuencia para el diseño de mapas:** cada continente necesita su propio conjunto de mazmorras y actividades internas, navegables por cartas de exploración (izquierda/derecha, sin mapa visible dentro de la mazmorra), pero accesible desde un mapa general de continentes que sí es libre.
+**Consecuencia para el diseño de mapas:** cada continente necesita su propio conjunto de lugares y actividades internas, navegables por cartas de exploración (izquierda/derecha, sin mapa visible dentro del lugar), pero accesible desde un mapa general de continentes que sí es libre.
 
 ---
 
 ## 8. Bestiario original (fuera del canon, semillas para el lore)
 
-Estos monstruos y jefes no existen todavía en el libro. Los invento como contenido de mazmorra — cada uno pensado para encajar temáticamente con su región, para que si más adelante los querés incorporar a la novela, ya tengan personalidad e identidad de facción.
+Estos monstruos y jefes no existen todavía en el libro. Los invento como contenido de lugar — cada uno pensado para encajar temáticamente con su región, para que si más adelante los querés incorporar a la novela, ya tengan personalidad e identidad de facción.
 
 ### Biblioteca (La Franja / Terra Caelum)
 **El Custodio de Páginas Muertas** — jefe. Un guardián hecho de libros y polvo que protege conocimiento olvidado. Mecánicamente: castiga al jugador que ataca sin "recordar" primero (encaja perfecto con tu mecánica de Recuerdo).
@@ -316,24 +316,24 @@ Estos monstruos y jefes no existen todavía en el libro. Los invento como conten
 ### Taller oculto de Lyra (Brasshaven)
 **El Autómata Aprendiz** — mini-jefe. Un invento temprano de Lyra que se activó solo y no sabe distinguir aliados de intrusos.
 
-*Nota: esta lista es un punto de partida. Se puede seguir ampliando por continente a medida que definamos cuántas mazmorras tiene cada uno.*
+*Nota: esta lista es un punto de partida. Se puede seguir ampliando por continente a medida que definamos cuántas lugares tiene cada uno.*
 
 ---
 
 ## 9. Modos de juego
 
-- **Historia / Exploración** — el modo principal. Mapa de continentes → mazmorras → cartas de exploración, sin orden cronológico obligatorio (ver sección 7).
-- **Duelo vs IA** — enfrentamiento de cartas contra un mazo controlado por la máquina. Sirve tanto para practicar como para desafíos narrativos (ej. enfrentar a un personaje del lore en duelo directo dentro de una mazmorra).
+- **Historia / Exploración** — el modo principal. Mapa de continentes → lugares → cartas de exploración, sin orden cronológico obligatorio (ver sección 7).
+- **Duelo vs IA** — enfrentamiento de cartas contra un mazo controlado por la máquina. Sirve tanto para practicar como para desafíos narrativos (ej. enfrentar a un personaje del lore en duelo directo dentro de un lugar).
 - **Duelo PvP** — jugador contra jugador, mazo contra mazo, con las reglas de combate ya definidas (ataque directo salvo Guardián).
 - **Zona de Entrenamiento** — sin consecuencias, sin progreso ni recompensas. Mazos de práctica prearmados por facción, para aprender mecánicas nuevas o probar combinaciones antes de arriesgarlas en Duelo o Historia.
 
 ---
 
-## 10. Cuántas mazmorras por continente
+## 10. Cuántas lugares por continente
 
 Reparto no parejo, según cuánto lore ya existe de cada facción en los documentos que me diste — así ninguna se siente vacía ni sobrecargada, y no forzamos una cantidad pareja artificial:
 
-| Facción / Continente | Mazmorras | Por qué |
+| Facción / Continente | Lugares | Por qué |
 |---|---|---|
 | Alderium | 5 | Corte imperial, más personajes y lugares nombrados (Coliseo, Palacio) |
 | Caelum / Terra Caelum | 4 | Biblioteca, ciudades flotantes — hub narrativo central |
@@ -343,17 +343,17 @@ Reparto no parejo, según cuánto lore ya existe de cada facción en los documen
 | La Franja | 3 | Zona de frontera, menos lugares nombrados todavía |
 | Nómadas | 2 | Sin ciudades fijas — pocos lugares pero con más peso narrativo (Piedra de Sigrun) |
 
-**Total: 26 mazmorras** para el primer set completo. Ambicioso pero manejable, y deja espacio para crecer después sin sentir que faltó contenido desde el día uno.
+**Total: 26 lugares** para el primer set completo. Ambicioso pero manejable, y deja espacio para crecer después sin sentir que faltó contenido desde el día uno.
 
 ---
 
-## 11. Estructura de mazmorra (grafo de nodos)
+## 11. Estructura de lugar (grafo de nodos)
 
-Cada mazmorra es un grafo de cartas de exploración, y **cada nodo es un lugar con nombre propio**, no una bifurcación abstracta — el jugador ve algo como "El Jardín Oscuro" o "Los Pasos Quebrados", con su descripción corta, antes de elegir izquierda/derecha.
+Cada lugar es un grafo de cartas de exploración, y **cada nodo es un lugar con nombre propio**, no una bifurcación abstracta — el jugador ve algo como "El Jardín Oscuro" o "Los Pasos Quebrados", con su descripción corta, antes de elegir izquierda/derecha.
 
-Además, **algunos nodos —no todos— disparan un encuentro** antes de dejar seguir eligiendo camino. Ese encuentro no siempre es el jefe de la mazmorra: es un combate corto contra **enemigos mundanos** (ver más abajo), pensado para dar ritmo y riesgo entre decisiones, sin ser el clímax de la mazmorra.
+Además, **algunos nodos —no todos— disparan un encuentro** antes de dejar seguir eligiendo camino. Ese encuentro no siempre es el jefe del lugar: es un combate corto contra **enemigos mundanos** (ver más abajo), pensado para dar ritmo y riesgo entre decisiones, sin ser el clímax del lugar.
 
-Ver `Veyra_Grafo_Mazmorra.mermaid` para el esquema visual actualizado. Estructura:
+Ver `Veyra_Grafo_Lugares.mermaid` para el esquema visual actualizado. Estructura:
 
 - **Entrada** → dos nodos nombrados iniciales (decisión real desde el inicio).
 - Uno de ellos puede tener un **encuentro** (ej. Emboscada de Ladrones) antes de continuar.
@@ -361,20 +361,20 @@ Ver `Veyra_Grafo_Mazmorra.mermaid` para el esquema visual actualizado. Estructur
 - Desde el cruce, dos caminos nuevos, uno con otro posible encuentro (ej. Bestias Salvajes).
 - **Tres finales distintos:** Final A (jefe de facción, del bestiario original), Final B (tesoro oculto), Final C (recuerdo especial — condicionado a haber resuelto bien un encuentro anterior, no siempre accesible).
 
-No todos los nodos necesitan encuentro — alternar nodos de solo decisión/lore con nodos de desafío es lo que le da ritmo a la mazmorra en vez de sentirse una cadena de combates.
+No todos los nodos necesitan encuentro — alternar nodos de solo decisión/lore con nodos de desafío es lo que le da ritmo al lugar en vez de sentirse una cadena de combates.
 
 ---
 
 ## 11.1 Enemigos mundanos (distintos de los jefes de facción)
 
-Estos no son personajes del canon ni jefes únicos de bestiario — son el "relleno" con el que se llenan los encuentros dentro del camino de la mazmorra. Reutilizables entre mazmorras y continentes, sin necesitar arte único por cada aparición.
+Estos no son personajes del canon ni jefes únicos de bestiario — son el "relleno" con el que se llenan los encuentros dentro del camino del lugar. Reutilizables entre lugares y continentes, sin necesitar arte único por cada aparición.
 
 | Enemigo | Descripción | Dónde aparece |
 |---|---|---|
-| **Bandido Errante** | Ladrón común, sin lealtad a ninguna facción | Cualquier mazmorra |
-| **Mercenario Renegado** | Viste colores de una facción pero no pertenece a su ejército oficial (reskineable por facción cambiando solo el color) | Mazmorras cercanas a ciudades (Alderium, Brasshaven) |
+| **Bandido Errante** | Ladrón común, sin lealtad a ninguna facción | Cualquier lugar |
+| **Mercenario Renegado** | Viste colores de una facción pero no pertenece a su ejército oficial (reskineable por facción cambiando solo el color) | Lugares cercanas a ciudades (Alderium, Brasshaven) |
 | **Bestia Salvaje** | Animal agresivo genérico, sin trasfondo narrativo | Zonas naturales (Kóren, La Franja) |
-| **Carroñero de Ruinas** | Criatura pequeña que habita sitios abandonados | Ruinas, mazmorras antiguas (Kóren, Caelum) |
+| **Carroñero de Ruinas** | Criatura pequeña que habita sitios abandonados | Ruinas, lugares antiguos (Kóren, Caelum) |
 | **Saqueador de Caravanas** | Grupo armado que ataca viajeros, sin bandera | Qashir (desierto/cuevas) |
 
 Estos van en una carpeta de assets aparte de los jefes de facción — ver actualización de la sección 12.
@@ -427,7 +427,7 @@ Estructura de carpetas sugerida (todo en PNG con fondo transparente donde apliqu
     /recursos
   /backgrounds
     /mapas
-    /mazmorras
+    /lugares
     /ui
   /ui
     /frames
@@ -479,12 +479,12 @@ Ejemplos concretos ya con tu lore:
 - `boton_entrenamiento.jpg`
 - `boton_duelo.jpg`
 - `boton_cartas.jpg`
-- `boton_mazmorras.jpg`
+- `boton_mundo_<faccion>.jpg`
 
-### Iconos de mazmorra (carpeta `/icons/mazmorra`, sugerido 128×128, fondo transparente) — hotspot rombo del mapa de mazmorras del continente
-- `icono_mazmorra_<id>.png` (ej. `icono_mazmorra_alderium_piloto.png`)
+### Iconos de lugar (carpeta `/icons/lugar`, sugerido 128×128, fondo transparente) — hotspot rombo del mapa de lugares del continente
+- `icono_lugar_<id>.png` (ej. `icono_lugar_alderium_piloto.png`)
 
-### Icono de campaña (carpeta `/icons/faccion`, sugerido 128×128, fondo transparente) — hotspot circular destacado (dorado) en el mapa de mazmorras, uno por facción con campaña
+### Icono de campaña (carpeta `/icons/faccion`, sugerido 128×128, fondo transparente) — hotspot circular destacado (dorado) en el mapa de lugares, uno por facción con campaña
 - `icono_campana_<facción>.png` (ej. `icono_campana_alderium.png`)
 
 ### Fondos de mapa (carpeta `/backgrounds/mapas`, sugerido 1920×1080)
@@ -505,14 +505,14 @@ Una Ciudad Central por facción (sección 13): mismo layout de botones, distinto
 - `ciudad_caelum.jpg`
 - `ciudad_nomadas.jpg`
 
-### Fondos de mazmorra (carpeta `/backgrounds/mazmorras`, uno por nodo o uno genérico por mazmorra para empezar)
-- `mazmorra_biblioteca.jpg`
-- `mazmorra_minas_brasshaven.jpg`
-- `mazmorra_ruinas_koren.jpg`
-- `mazmorra_cuevas_qashir.jpg`
-- `mazmorra_palacio_alderium.jpg`
-- `mazmorra_taller_lyra.jpg`
-- `mazmorra_alderium_piloto.jpg` — la mazmorra piloto que ya tiene motor jugable en `Veyra.html` (grafo de 8 nodos, jefe "El Juez Silente"); es de prueba, no reemplaza la lista de arriba cuando se diseñen las 5 mazmorras reales de Alderium.
+### Fondos de lugar (carpeta `/backgrounds/lugares`, uno por nodo o uno genérico por lugar para empezar)
+- `lugar_biblioteca.jpg`
+- `lugar_minas_brasshaven.jpg`
+- `lugar_ruinas_koren.jpg`
+- `lugar_cuevas_qashir.jpg`
+- `lugar_palacio_alderium.jpg`
+- `lugar_taller_lyra.jpg`
+- `lugar_alderium_piloto.jpg` — el lugar piloto que ya tiene motor jugable en `Veyra.html` (grafo de 8 nodos, jefe "El Juez Silente"); es de prueba, no reemplaza la lista de arriba cuando se diseñen los 5 lugares reales de Alderium.
 
 ### UI (carpeta `/ui`)
 - `frame_criatura.png` (marco base para cartas de criatura, uno por facción si querés diferenciarlos: `frame_criatura_alderium.png`, etc.)
@@ -525,7 +525,7 @@ Una Ciudad Central por facción (sección 13): mismo layout de botones, distinto
 
 ### Especificaciones técnicas sugeridas
 - **Arte de carta (ilustración del personaje/objeto):** 750×1050 px, PNG, sin marco (el marco se superpone en el motor).
-- **Fondos de mapa/mazmorra:** 1920×1080, JPG.
+- **Fondos de mapa/lugar:** 1920×1080, JPG.
 - **Iconos:** 128×128, PNG con transparencia.
 - **Frames/UI:** PNG con transparencia, tamaño acorde al frame que definamos en el motor (te lo confirmo cuando armemos la pantalla de carta en Claude Code).
 
@@ -541,7 +541,7 @@ Actividades disponibles desde la Ciudad Central:
 1. **Entrenamiento** — Zona de Entrenamiento (ya definida en sección 9).
 2. **Duelo** — vs IA, vs otro jugador, o vs "la Guía" (un NPC especial que puede funcionar como tutorial o desafío narrativo recurrente).
 3. **Administrar cartas** — colección, constructor de mazos, y eventualmente compra/adquisición de cartas.
-4. **Tablón de misiones** — estilo cartel de recompensas ("wanted"): muestra qué mazmorras están disponibles en ese continente y qué recompensa dan.
+4. **Tablón de misiones** — estilo cartel de recompensas ("wanted"): muestra qué lugares están disponibles en ese continente y qué recompensa dan.
 5. **Taberna** — hub social y narrativo (ver sección 14).
 
 ---
@@ -551,22 +551,22 @@ Actividades disponibles desde la Ciudad Central:
 Estética tipo Magic/Hearthstone: un fondo fijo, con uno o varios personajes presentes en la escena.
 
 - **NPCs como cartas-retrato:** cada personaje presente se representa como una carta con su imagen. El jugador "habla" con cada uno y recibe **una pieza de información puntual**, no un diálogo largo — coherente con la filosofía de "nunca explicar todo, dejar que el jugador descubra".
-- **Mecánica de pergaminos aleatorios:** sobre la mesa hay pergaminos/rollos. El jugador elige uno al azar. La mayoría son simple lore/ambientación; ocasionalmente uno resulta importante (una pista de mazmorra secreta, un Recuerdo raro, un rumor que desbloquea algo). Esto alimenta directamente los objetivos psicológicos de "recompensa intelectual" y "aspiración" que ya tenías definidos en la filosofía original.
+- **Mecánica de pergaminos aleatorios:** sobre la mesa hay pergaminos/rollos. El jugador elige uno al azar. La mayoría son simple lore/ambientación; ocasionalmente uno resulta importante (una pista de lugar secreta, un Recuerdo raro, un rumor que desbloquea algo). Esto alimenta directamente los objetivos psicológicos de "recompensa intelectual" y "aspiración" que ya tenías definidos en la filosofía original.
 
 ---
 
-## 15. Héroes y Runas encontrados en mazmorras (no solo combate)
+## 15. Héroes y Runas encontrados en lugares (no solo combate)
 
-Las mazmorras no son solo caminos con enemigos:
+Las lugares no son solo caminos con enemigos:
 
 - **Conversación clave con un héroe:** en ciertos nodos puede haber un personaje con quien hablar en vez de pelear. Si la conversación se resuelve bien (puede requerir un Recuerdo acertado), ese personaje se vuelve **reclutable** — pasa a estar disponible como Criatura en tus mazos futuros.
-- **Runas encontradas, no solo obtenidas por otro medio:** dado que las Runas son extremadamente escasas (sección 4), tiene sentido que aparezcan como hallazgo narrativo dentro de una mazmorra específica, ligadas a un nodo especial — no como recompensa genérica de victoria.
+- **Runas encontradas, no solo obtenidas por otro medio:** dado que las Runas son extremadamente escasas (sección 4), tiene sentido que aparezcan como hallazgo narrativo dentro de un lugar específico, ligadas a un nodo especial — no como recompensa genérica de victoria.
 
 ---
 
-## 16. Reutilización de mazmorras (para que el mundo se sienta grande sin disparar el costo de arte)
+## 16. Reutilización de lugares (para que el mundo se sienta grande sin disparar el costo de arte)
 
-El mismo esqueleto de grafo (sección 11) se puede repetir **2-3 veces dentro de un mismo continente**, cambiando solo el contenido temático: nombres de nodos, texto de ambientación, y qué enemigo mundano aparece — sin necesitar diseñar un grafo nuevo ni arte nuevo cada vez. Esto es clave para la meta de 26 mazmorras: no son 26 diseños desde cero, son ~7-10 "plantillas" repartidas con reskin de texto y, cuando alcance el presupuesto de arte, reskin visual liviano (cambio de paleta, por ejemplo).
+El mismo esqueleto de grafo (sección 11) se puede repetir **2-3 veces dentro de un mismo continente**, cambiando solo el contenido temático: nombres de nodos, texto de ambientación, y qué enemigo mundano aparece — sin necesitar diseñar un grafo nuevo ni arte nuevo cada vez. Esto es clave para la meta de 26 lugares: no son 26 diseños desde cero, son ~7-10 "plantillas" repartidas con reskin de texto y, cuando alcance el presupuesto de arte, reskin visual liviano (cambio de paleta, por ejemplo).
 
 ---
 
@@ -723,7 +723,7 @@ Partida simulada Alderium (control) vs Qashir (agro/sacrificio), usando mazos re
 1. ~~Definir números reales de ATK/VIDA para Eratiel~~ — **hecho**: 4/2, alto riesgo/alto impacto (sección 5).
 2. ~~Elegir 2-3 personajes más por facción para un primer set jugable~~ — **hecho**: 18 cartas de prueba (sección 17).
 3. ~~Probar el combate en una partida de mesa simulada~~ — **hecho**: Playtest #1 (sección 18). Falta repetirlo en mesa física con otra persona para confirmar que las reglas provisionales de combate (sección 1) se sienten bien.
-4. Definir el "costo de fallo" en encuentros de mazmorra (ej. la Emboscada de Ladrones del grafo) — por ahora se fijó como propuesta "pierde la carta superior del mazo", a validar junto con el punto 3.
+4. Definir el "costo de fallo" en encuentros de lugar (ej. la Emboscada de Ladrones del grafo) — por ahora se fijó como propuesta "pierde la carta superior del mazo", a validar junto con el punto 3.
 5. Revisar el combo de sacrificio de Zahra (Qashir) a la luz del hallazgo #2 del Playtest #1 — puede necesitar un ajuste de texto.
 6. Agregar al menos una carta con Silencio y una con Vínculo al set de prueba, para completar la cobertura de palabras clave antes del segundo playtest.
 
@@ -731,7 +731,7 @@ Partida simulada Alderium (control) vs Qashir (agro/sacrificio), usando mazos re
 
 ## 20. Principios de arquitectura
 
-**Mazmorras y mapas son datos extensibles.** El motor debe soportar agregar nodos, conexiones y condiciones de desbloqueo (campaña completada, carta poseída, pregunta de Recuerdo acertada) **sin modificar código** — es la forma en que ya está construido `DUNGEONS`/`CAMPAIGNS` en `Veyra.html`: cada mazmorra o campaña es una entrada de datos (nodos, tipo, texto, recompensa, próximo nodo), no una función a medida. Esto es intencional y no debe romperse al agregar contenido: **el lore va a abrir pasadizos nuevos en mazmorras ya jugadas** como estrategia de contenido deliberada (un nodo puede aparecer o desbloquearse más adelante sin tocar el grafo existente).
+**Lugares y mapas son datos extensibles.** El motor debe soportar agregar nodos, conexiones y condiciones de desbloqueo (campaña completada, carta poseída, pregunta de Recuerdo acertada) **sin modificar código** — es la forma en que ya está construido `PLACES`/`CAMPAIGNS` en `Veyra.html`: cada lugar o campaña es una entrada de datos (nodos, tipo, texto, recompensa, próximo nodo), no una función a medida. Esto es intencional y no debe romperse al agregar contenido: **el lore va a abrir pasadizos nuevos en lugares ya jugados** como estrategia de contenido deliberada (un nodo puede aparecer o desbloquearse más adelante sin tocar el grafo existente).
 
 **Estructura de facciones preparada para una séptima.** `FACTIONS` y el resto del modelo de datos deben poder aceptar una entrada más (Terra Caelum, ver Veyra_Lore_Notas.md sección 1) el día que se diseñe la primera expansión, sin necesitar refactor — simplemente no se expone en la UI (mapa mundial, selector de facción) hasta ese momento.
 

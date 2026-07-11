@@ -90,7 +90,7 @@ Para los soldados, mantené personajes anónimos (yelmos, capuchas, rostros parc
 ## Pendiente (NO generar todavía)
 
 - **13 cartas de Alderium por diseñar** (4 especialistas, 4 hechizos, 3 reliquias, 1 recuerdo, 1 runa): primero se diseñan las mecánicas y nombres, después te doy sus prompts.
-- **Fondos** (mapa mundial, ciudad de Alderium, mapa de mazmorras, interiores): tienen sus propios slots (`assets/backgrounds/...`) y proporciones distintas (horizontal). Lote aparte cuando cerremos las mazmorras de Alderium.
+- **Fondos** (mapa mundial, ciudad de Alderium, mapa de lugares, interiores): tienen sus propios slots (`assets/backgrounds/...`) y proporciones distintas (horizontal). Lote aparte cuando cerremos los lugares de Alderium.
 - **Iconos**: ya son SVG en código, no hay que generar ninguno.
 
 ## Checklist al subir

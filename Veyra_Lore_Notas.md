@@ -2,7 +2,7 @@
 
 Este documento es la versión operativa (para desarrollo del juego) del canon narrativo de Veyrá. La fuente primaria es el libro **`_Bienvenidos a Veyrá.docx`** (en esta misma carpeta), que incluye el texto completo más un apéndice de notas de canon (secciones A–F) agregado en una sesión anterior. **Si en el futuro hay conflicto entre este `.md` y el `.docx`, gana el `.docx` más reciente del autor.**
 
-No es un documento de diseño de juego (eso vive en `Veyra_Sistema_de_Juego.md`) — es la referencia de lore para no contradecir al libro al escribir cartas, mazmorras o textos de ambientación.
+No es un documento de diseño de juego (eso vive en `Veyra_Sistema_de_Juego.md`) — es la referencia de lore para no contradecir al libro al escribir cartas, lugares o textos de ambientación.
 
 ---
 

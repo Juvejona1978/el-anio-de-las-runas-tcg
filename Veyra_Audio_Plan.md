@@ -25,7 +25,7 @@ Suena en todas las partidas hasta que existan temas por facción. Tiene que agua
 ### 3. Ciudad Central — `tema_ciudad_central.mp3`
 > Medieval fantasy town theme, warm and welcoming, lute, harp, wooden flute, soft hand percussion, market square at golden hour, cozy and safe feeling, gentle melody, instrumental, relaxed tempo
 
-### 4. Mazmorra (exploración) — `tema_mazmorra.mp3`
+### 4. Lugar (exploración) — `tema_lugar.mp3`
 > Dark fantasy dungeon exploration ambience with music, low sustained strings, sparse haunting bells, deep drones, cautious footsteps mood, mysterious and tense but quiet, minimal melody, instrumental, slow
 
 ### 5. Victoria (stinger, 10–20 seg) — `stinger_victoria.mp3`
@@ -68,7 +68,7 @@ Kenney.nl → packs "RPG Audio", "Casual Sounds" e "Interface Sounds" (CC0, grat
 | `quiz_correcto.mp3` | Respuesta correcta | success chime short |
 | `quiz_incorrecto.mp3` | Respuesta incorrecta | error buzz soft / wrong answer |
 | `recompensa.mp3` | Carta de recompensa aparece | reward jingle / treasure chime |
-| `mazmorra_entrar.mp3` | Entrar a una mazmorra | stone door / dungeon door open |
+| `lugar_entrar.mp3` | Entrar a un lugar | stone door / dungeon door open |
 
 Consejo: bajá más efectos de los que necesitás y quedate con los que suenen de la misma "familia" (mismo pack de Kenney = coherencia garantizada). Los efectos de UI tienen que ser CORTOS y suaves — se escuchan cientos de veces.
 

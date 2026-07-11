@@ -2,7 +2,7 @@
 
 Estado: **aceptado por el autor** (julio 2026). Fuente de verdad para nombres de
 lugares urbanos y estructura narrativa del jugador. Cualquier contenido nuevo
-(campañas, mazmorras, NPCs, textos de ciudad) debe respetar este documento.
+(campañas, lugares, NPCs, textos de ciudad) debe respetar este documento.
 
 ---
 
@@ -19,7 +19,7 @@ cultura se expresa en cómo llama a sus lugares.
 2. **Práctica** — duelos sin consecuencias ni recompensas.
 3. **Duelo** — duelos reales contra la IA.
 4. **Cartas** — colección y constructor de mazos.
-5. **Mazmorras** — salida al mapa de mazmorras y campaña del continente.
+5. **Lugares** — salida al mapa de lugares y campaña del continente.
 6. **Mercado** — la tienda como lugar del mundo, NUNCA como popup
    (filosofía comercial fundacional del proyecto).
 
@@ -69,7 +69,7 @@ Curva de toda campaña de facción:
 2. **Aprendizaje** — tutorial diegético (entrenamiento, primeras cartas).
 3. **Juramento o pacto local** — el compromiso que lo integra a la facción
    (en Alderium, literalmente "El Juramento de Alderium", ya construido).
-4. **Misión** — el conflicto propio de esa facción (mazmorras, rivales con
+4. **Misión** — el conflicto propio de esa facción (lugares, rivales con
    nombre, decisiones).
 5. **Algo que no cierra** — un detalle, lugar o frase que queda sin explicar.
 6. **Logro final** — cierre satisfactorio de la historia local + la pregunta
@@ -82,12 +82,12 @@ hilo **no se nombra jamás en contenido temprano**. Cada campaña se disfruta
 completa sin saber que existe algo más. El patrón solo se vuelve visible para
 quien jugó varias campañas, y se confirma únicamente en el clímax narrativo
 final (Nómadas). Todo el material sensible sigue aislado en
-`Veyra_Lore_Notas.md` sección 2 y NO se filtra a campañas, mazmorras, cartas
+`Veyra_Lore_Notas.md` sección 2 y NO se filtra a campañas, lugares, cartas
 ni textos de ciudad tempranos.
 
 ### Cronología
 
-Las campañas y mazmorras siguen un orden cronológico interno que el jugador
+Las campañas y lugares siguen un orden cronológico interno que el jugador
 **reconstruye viajando** (lore ambiental en nodos-lugar), nunca mediante
 explicaciones directas. Los nodos-lugar y sus loreFacts son el vehículo; las
 cartas/nodos de Recuerdo preguntan lejos de donde se aprendió (ver sistema de
