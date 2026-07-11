@@ -339,6 +339,24 @@ Ejemplos concretos ya con tu lore:
 - `icon_ataque.png`
 - `icon_vida.png`
 
+### Iconos de facción (carpeta `/icons/faccion`, sugerido 128×128, fondo transparente) — hotspot circular del mapa mundial
+- `icono_alderium.png`
+- `icono_qashir.png`
+- `icono_brasshaven.png`
+- `icono_koren.png`
+- `icono_caelum.png`
+- `icono_nomadas.png`
+
+### Botones de Ciudad Central (carpeta `/ui/botones`, sugerido rectangular ~3:1, JPG o PNG) — los 5 marcos de actividad, mismo archivo para las 6 ciudades (el marco ya lleva el acento de color)
+- `boton_taberna.jpg`
+- `boton_entrenamiento.jpg`
+- `boton_duelo.jpg`
+- `boton_cartas.jpg`
+- `boton_mazmorras.jpg`
+
+### Iconos de mazmorra (carpeta `/icons/mazmorra`, sugerido 128×128, fondo transparente) — hotspot rombo del mapa de mazmorras del continente
+- `icono_mazmorra_<id>.png` (ej. `icono_mazmorra_alderium_piloto.png`)
+
 ### Fondos de mapa (carpeta `/backgrounds/mapas`, sugerido 1920×1080)
 - `mapa_alderium.jpg`
 - `mapa_qashir.jpg`
@@ -364,6 +382,7 @@ Una Ciudad Central por facción (sección 13): mismo layout de botones, distinto
 - `mazmorra_cuevas_qashir.jpg`
 - `mazmorra_palacio_alderium.jpg`
 - `mazmorra_taller_lyra.jpg`
+- `mazmorra_alderium_piloto.jpg` — la mazmorra piloto que ya tiene motor jugable en `Veyra.html` (grafo de 8 nodos, jefe "El Juez Silente"); es de prueba, no reemplaza la lista de arriba cuando se diseñen las 5 mazmorras reales de Alderium.
 
 ### UI (carpeta `/ui`)
 - `frame_criatura.png` (marco base para cartas de criatura, uno por facción si querés diferenciarlos: `frame_criatura_alderium.png`, etc.)

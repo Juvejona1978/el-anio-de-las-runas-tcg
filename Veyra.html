@@ -9,6 +9,8 @@
     --good:#5bc46a; --bad:#e05a4d;
     --alderium:#c9a24b; --qashir:#c65b3a; --brasshaven:#b8863f;
     --koren:#4faa86; --caelum:#6f7fd8; --nomadas:#9b6fc4;
+    /* Paleta de las pantallas-lugar (mapa/ciudad/mazmorra) — distinta de la paleta de cartas de arriba a propósito */
+    --bg-base:#14120f; --frame:#8a6d3f; --text:#e8e0d0; --text-dim:#9a917f;
     /* tamaños de carta escalables: se ajustan por viewport, el interior usa cqw */
     --handW: clamp(125px, 35vw, 194px);   /* mano en carrusel, grande y legible */
     --fieldW: clamp(78px, 21vw, 150px);   /* mesa grande */
@@ -23,55 +25,141 @@
   #app{height:100dvh;display:flex;flex-direction:column;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 
-  /* ---------- Pantallas superpuestas (Mapa / Ciudad / Menú de duelo) ---------- */
-  #menu,#mapScreen,#cityScreen{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;overflow:auto;
+  /* ---------- Menú de duelo (selector de facción/rival) — sigue siendo un menú de tarjetas a propósito, no es una "pantalla-lugar" ---------- */
+  #menu{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;overflow:auto;
     background:radial-gradient(900px 600px at 50% 20%, #241d33, #0b0a10);padding:16px}
-  .menucard,.mapcard,.citycard{width:min(680px,100%);background:linear-gradient(#1b1826,#141220);
+  .menucard{width:min(680px,100%);background:linear-gradient(#1b1826,#141220);
     border:1px solid var(--line);border-radius:18px;padding:22px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
   .brand{font-size:clamp(40px,12vw,54px);letter-spacing:6px;font-weight:800;text-align:center;
     background:linear-gradient(#f6e6b8,#c99b46);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .brand.small{font-size:clamp(26px,8vw,32px);letter-spacing:4px}
   .tag{text-align:center;color:var(--dim);margin:2px 0 18px;letter-spacing:3px;font-size:11px;text-transform:uppercase}
   .pick-h{color:var(--gold);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:14px 2px 8px}
-  .factions,.continents{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-  .fac,.cont{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:11px 12px;
+  .factions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .fac{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:11px 12px;
     transition:.15s;position:relative;overflow:hidden}
-  .fac:active,.cont:active{transform:scale(.98)}
+  .fac:active{transform:scale(.98)}
   .fac.sel{border-color:var(--fc);box-shadow:0 0 0 2px var(--fc) inset, 0 8px 24px rgba(0,0,0,.4)}
+  .fac.locked{opacity:.42;filter:grayscale(.7);cursor:not-allowed}
   .fac .fn{font-weight:800;font-size:15px;color:var(--fc);letter-spacing:.5px}
   .fac .fd{color:var(--dim);font-size:11.5px;margin-top:3px;line-height:1.3}
-  .fac .bar,.cont .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--fc)}
+  .fac .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--fc)}
+  .fac .clock{position:absolute;top:8px;right:9px;font-size:13px}
   .row{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
-
-  /* Nodo de continente en el mapa. El emoji es un placeholder — ver data-img-slot para el arte esperado. */
-  .cont{text-align:center;padding:16px 10px}
-  .cont .cico{font-size:30px;margin-bottom:5px}
-  .cont .cn{font-weight:800;font-size:13.5px;color:var(--fc)}
-  .cont.locked{opacity:.42;filter:grayscale(.7);cursor:not-allowed}
-  .cont .clock{position:absolute;top:8px;right:9px;font-size:13px}
-  .hint2{color:var(--dim);font-size:11.5px;margin-top:16px;line-height:1.4;text-align:center}
-
-  /* Ciudad Central: una sola plantilla, la estética real llega por imagen (data-img-slot) */
   .backbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:9px;
     padding:9px 14px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;margin-bottom:14px}
-  .cityart{height:110px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:50px;
-    margin-bottom:12px;background:linear-gradient(160deg, color-mix(in srgb, var(--fc,#2c2838) 32%, #141220), #141220 75%);
-    border:1px solid var(--line)}
-  .cityname{font-weight:800;font-size:19px;color:var(--fc);text-align:center;margin-bottom:14px;letter-spacing:.5px}
-  .cityacts{display:flex;flex-direction:column;gap:8px}
-  .cityact{display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);border:1px solid var(--line);
-    border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;min-height:48px}
-  .cityact:active{border-color:var(--fc)}
-  .cityact .ai{font-size:19px;flex:0 0 auto}
-  .cityact .at{font-weight:800;font-size:13.5px;color:var(--ink)}
-  .cityact .ad{color:var(--dim);font-size:11px;margin-top:1px;line-height:1.3}
-  .cityact.soon{opacity:.55}
   .btn{cursor:pointer;border:none;border-radius:10px;padding:14px 20px;font-weight:800;letter-spacing:1px;
     font-family:inherit;font-size:15px;min-height:48px}
   .btn.play{background:linear-gradient(#e9c877,#c99b46);color:#2a2110;flex:1;min-width:160px}
   .btn.play:active{filter:brightness(1.08)}
   .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);flex:1;min-width:140px}
   .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ====================================================================
+     PANTALLAS-LUGAR: Mapa mundial / Ciudad / Mapa de mazmorras / Mazmorra
+     La imagen de fondo ES el lugar (referencia: mapas de campaña Warcraft
+     3 / AoE2); la UI solo posiciona puntos interactivos encima. Mientras
+     no hay arte real, .scene-bg muestra una textura oscura + el nombre
+     del archivo esperado en la esquina (ver data-slot-label). Prohibido
+     volver a un layout de tarjetas-menú acá — la estructura espacial ya
+     es la definitiva, solo cambia el fondo cuando llegue el .jpg.
+     ==================================================================== */
+  #mapScreen,#cityScreen,#dungeonMapScreen,#dungeonInterior{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
+  .scene-bg{position:absolute;inset:0;background-color:var(--bg-base);background-size:cover;background-position:center;
+    background-image:
+      radial-gradient(circle at 22% 28%, rgba(255,255,255,.035) 0, transparent 42%),
+      radial-gradient(circle at 78% 68%, rgba(255,255,255,.03) 0, transparent 46%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.014) 0 2px, transparent 2px 5px)}
+  .scene-bg::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 90% at 50% 38%, transparent 38%, rgba(0,0,0,.6) 100%)}
+  .scene-bg::after{content:attr(data-slot-label);position:absolute;bottom:9px;right:11px;z-index:1;
+    font-size:9.5px;letter-spacing:.4px;color:rgba(255,255,255,.28);font-family:"Courier New",monospace}
+
+  [data-faction="alderium"]{--fc:#7fb3d9}
+  [data-faction="qashir"]{--fc:#c9873e}
+  [data-faction="brasshaven"]{--fc:#b0562e}
+  [data-faction="koren"]{--fc:#7d9455}
+  [data-faction="caelum"]{--fc:#d9cfa8}
+  [data-faction="nomadas"]{--fc:#a33c2f}
+
+  /* Hotspots (mapa mundial y mapa de mazmorras) */
+  .hotspot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;
+    gap:5px;cursor:pointer;z-index:2}
+  .hs-circle{width:60px;height:60px;border-radius:50%;border:2px solid var(--frame);position:relative;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.1), rgba(0,0,0,.6));
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.65)}
+  .hs-init{font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:700;color:var(--fc,var(--text))}
+  .hotspot:not(.locked) .hs-circle{animation:hspulse 2.6s ease-in-out infinite}
+  @keyframes hspulse{
+    0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--fc,#d8b46a) 45%, transparent), 0 4px 16px rgba(0,0,0,.65)}
+    50%{box-shadow:0 0 16px 7px color-mix(in srgb, var(--fc,#d8b46a) 0%, transparent), 0 4px 16px rgba(0,0,0,.65)}
+  }
+  .hotspot.locked .hs-circle{filter:grayscale(.85) brightness(.55)}
+  .hotspot .hs-lock{position:absolute;bottom:-3px;right:-3px;font-size:14px;background:#0b0a08;
+    border-radius:50%;padding:2px;line-height:1}
+  .hs-label{font-family:Georgia,serif;font-size:11px;color:var(--text);background:rgba(0,0,0,.6);
+    padding:3px 9px;border-radius:3px;border:1px solid var(--frame);white-space:nowrap;backdrop-filter:blur(2px)}
+  #mapHotspots,#dungeonHotspots{position:absolute;inset:0;z-index:2}
+
+  /* Hotspot de mazmorra: rombo en vez de círculo, más chico */
+  .dungeon-hotspot .hs-diamond{width:44px;height:44px;border:2px solid var(--frame);transform:rotate(45deg);
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.1), rgba(0,0,0,.6));
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.65);position:relative}
+  .dungeon-hotspot .hs-diamond span{transform:rotate(-45deg);font-size:18px}
+  .dungeon-hotspot:not(.locked) .hs-diamond{animation:hspulse 2.6s ease-in-out infinite}
+  .dg-empty{color:var(--text-dim);font-family:Georgia,serif;font-size:14px;text-align:center;
+    position:absolute;left:0;right:0;top:44%;padding:0 30px}
+  .dg-more{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));text-align:center;
+    color:var(--text-dim);font-size:11.5px;letter-spacing:.3px}
+
+  /* Encabezado de pantalla (mapa mundial, mapa de mazmorras) */
+  .scene-title{position:absolute;top:calc(env(safe-area-inset-top) + 16px);left:0;right:0;text-align:center;z-index:2;
+    font-family:Georgia,serif;font-size:clamp(22px,7vw,30px);font-weight:700;color:var(--text);letter-spacing:2px;
+    text-shadow:0 2px 10px rgba(0,0,0,.9)}
+  .scene-sub{position:absolute;top:calc(env(safe-area-inset-top) + 46px);left:0;right:0;text-align:center;z-index:2;
+    font-size:10.5px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase}
+  .compass-btn{position:absolute;top:calc(env(safe-area-inset-top) + 14px);z-index:3;left:14px;
+    width:40px;height:40px;border-radius:50%;border:1.5px solid var(--frame);background:rgba(0,0,0,.5);
+    color:var(--text);font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    backdrop-filter:blur(3px)}
+  .compass-btn.right{left:auto;right:14px}
+  .lockhint{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));text-align:center;
+    color:var(--text-dim);font-size:11px;letter-spacing:.3px;padding:0 24px;z-index:2}
+
+  /* Ciudad Central: título + marcos rectangulares en la mitad inferior */
+  .city-title{position:absolute;top:calc(env(safe-area-inset-top) + 20px);left:0;right:0;text-align:center;z-index:2;
+    font-family:Georgia,serif;font-size:clamp(24px,7.5vw,34px);font-weight:700;color:var(--fc,var(--text));
+    letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 26px rgba(0,0,0,.6)}
+  .city-frames{position:absolute;left:0;right:0;bottom:0;height:47%;display:flex;flex-direction:column;gap:7px;
+    padding:8px 14px calc(10px + env(safe-area-inset-bottom));z-index:2}
+  .cityframe{position:relative;flex:1;min-height:0;border:1.5px solid var(--frame);border-radius:8px;
+    background:rgba(10,9,7,.58);backdrop-filter:blur(4px);display:flex;align-items:center;padding:0 16px;
+    cursor:pointer;overflow:hidden;background-size:cover;background-position:center}
+  .cityframe:active{border-color:var(--fc,var(--frame))}
+  .cityframe .cf-name{font-family:Georgia,serif;font-size:15px;font-weight:700;color:var(--text);z-index:2}
+  .cityframe .cf-desc{font-size:10.5px;color:var(--text-dim);margin-top:1px;z-index:2}
+  .cityframe .cf-slot{position:absolute;bottom:3px;right:8px;font-size:8px;color:rgba(255,255,255,.28);
+    font-family:"Courier New",monospace;z-index:2}
+  .cityframe.soon{opacity:.55}
+
+  /* Interior de mazmorra: carta única con swipe (estilo Reigns) */
+  .dg-card-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 5%;z-index:2}
+  .dg-card{width:85%;max-width:340px;aspect-ratio:5/7.2;background:linear-gradient(160deg,#1c1710,#100d09);
+    border:2px solid var(--frame);border-radius:14px;box-shadow:0 22px 55px rgba(0,0,0,.75);
+    padding:24px 18px;display:flex;flex-direction:column;touch-action:none;cursor:grab;user-select:none}
+  .dg-card:active{cursor:grabbing}
+  .dg-card-name{font-family:Georgia,serif;font-weight:700;font-size:19px;color:var(--gold2);text-align:center;margin-bottom:4px}
+  .dg-card-sub{font-size:10.5px;color:var(--fc,var(--gold));text-align:center;letter-spacing:1.5px;
+    text-transform:uppercase;margin-bottom:16px;min-height:12px}
+  .dg-card-text{font-size:14px;line-height:1.55;color:var(--text);flex:1;text-align:center;display:flex;
+    align-items:center;justify-content:center}
+  .dg-card-hint{font-size:11px;color:var(--text-dim);text-align:center;margin-top:12px;letter-spacing:.3px}
+  .dg-swipe-hints{position:absolute;inset:0;pointer-events:none;z-index:3}
+  .dg-hint-l,.dg-hint-r{position:absolute;top:20%;font-family:Georgia,serif;font-size:12px;color:var(--text);
+    background:rgba(0,0,0,.65);border:1px solid var(--frame);border-radius:6px;padding:6px 11px;opacity:0;
+    transition:opacity .15s;max-width:34%;text-align:center}
+  .dg-hint-l{left:5%}
+  .dg-hint-r{right:5%}
+  .dg-hint-l.show,.dg-hint-r.show{opacity:1}
 
   /* ---------- Board layout (mobile-first, vertical) ---------- */
   .herobar{display:flex;align-items:center;gap:10px;padding:6px 12px;flex:0 0 auto;
@@ -289,32 +377,58 @@
 
 <div id="toast"></div>
 <div id="banner"><div class="big"></div><div class="sub"></div>
-  <button class="btn play" style="max-width:220px;margin-top:14px" onclick="location.reload()">Jugar otra vez</button>
-  <button class="btn ghost" style="max-width:220px" onclick="backToCityFlow()">Volver a la ciudad</button>
+  <button class="btn play" id="bannerContinue" style="max-width:220px;margin-top:14px">Continuar</button>
+  <button class="btn play" id="bannerReplay" style="max-width:220px;margin-top:14px">Jugar otra vez</button>
+  <button class="btn ghost" id="bannerBack" style="max-width:220px">Volver</button>
 </div>
 <div id="modal"><div class="mbox" id="mbox"></div></div>
 
-<!-- ===================== MAPA DE CONTINENTES =====================
-     data-img-slot: assets/backgrounds/mapas/mapa_general_veyra.jpg (fondo de esta pantalla)
-     Cada nodo .cont espera assets/backgrounds/mapas/mapa_<faccion>.jpg como miniatura. -->
-<div id="mapScreen" data-img-slot="assets/backgrounds/mapas/mapa_general_veyra.jpg">
-  <div class="mapcard">
-    <div class="brand small">VEYRÁ</div>
-    <div class="tag">Elegí un continente</div>
-    <div class="continents" id="contPick"></div>
-    <div class="hint2">🔒 Los continentes bloqueados se desbloquean completando la campaña del anterior (Historia/Exploración — todavía sin construir).</div>
-  </div>
+<!-- ===================== MAPA MUNDIAL =====================
+     Pantalla-lugar: la imagen de fondo ES el mapa. data-img-slot:
+     assets/backgrounds/mapas/mapa_general_veyra.jpg -->
+<div id="mapScreen">
+  <div class="scene-bg" id="mapBg" data-slot-label="mapa_general_veyra.jpg"></div>
+  <div class="scene-title">VEYRÁ</div>
+  <div class="scene-sub">Elegí un continente</div>
+  <div id="mapHotspots"></div>
+  <div class="lockhint">🔒 Los continentes bloqueados se desbloquean completando la campaña del anterior.</div>
 </div>
 
 <!-- ===================== CIUDAD CENTRAL =====================
-     Plantilla única para las 6 facciones — misma estructura, distinta estética por imagen.
-     data-img-slot en #cityArt: assets/backgrounds/mapas/ciudad_<faccion>.jpg -->
+     Plantilla única para las 6 facciones — misma estructura, distinta
+     estética por imagen. data-img-slot: assets/backgrounds/mapas/ciudad_<faccion>.jpg -->
 <div id="cityScreen">
-  <div class="citycard">
-    <button class="backbtn" id="cityBack">‹ Mapa</button>
-    <div class="cityart" id="cityArt" data-img-slot=""></div>
-    <div class="cityname" id="cityName"></div>
-    <div class="cityacts" id="cityActs"></div>
+  <div class="scene-bg" id="cityBg"></div>
+  <button class="compass-btn" id="cityToMap" title="Al mapa mundial">🧭</button>
+  <div class="city-title" id="cityTitle"></div>
+  <div class="city-frames" id="cityFrames"></div>
+</div>
+
+<!-- ===================== MAPA DE MAZMORRAS DEL CONTINENTE =====================
+     data-img-slot: assets/backgrounds/mapas/mapa_<faccion>.jpg -->
+<div id="dungeonMapScreen">
+  <div class="scene-bg" id="dungeonMapBg"></div>
+  <button class="compass-btn" id="dungeonMapBack" title="Volver a la ciudad">‹</button>
+  <div class="scene-title" id="dungeonMapTitle"></div>
+  <div id="dungeonHotspots"></div>
+</div>
+
+<!-- ===================== INTERIOR DE MAZMORRA =====================
+     data-img-slot: assets/backgrounds/mazmorras/mazmorra_<id>.jpg -->
+<div id="dungeonInterior">
+  <div class="scene-bg" id="dungeonBg"></div>
+  <button class="compass-btn" id="dungeonExitBtn" title="Abandonar mazmorra">✕</button>
+  <div class="dg-card-wrap">
+    <div class="dg-card" id="dgCard">
+      <div class="dg-card-name" id="dgName"></div>
+      <div class="dg-card-sub" id="dgSub"></div>
+      <div class="dg-card-text" id="dgText"></div>
+      <div class="dg-card-hint" id="dgHint"></div>
+    </div>
+  </div>
+  <div class="dg-swipe-hints">
+    <div class="dg-hint-l" id="dgHintL"></div>
+    <div class="dg-hint-r" id="dgHintR"></div>
   </div>
 </div>
 
@@ -474,34 +588,46 @@ function effMaxVida(p,c){ return c.baseVida + c.plusVida + auraBonusVida(p,c); }
 function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
 
 // ============================================================
-//  Navegación: Mapa de continentes → Ciudad Central → Duelo
-//  (sección 7, 13 del diseño). Ciudad Central es UNA plantilla
-//  reutilizada por las 6 facciones; la estética real llega por
-//  imagen (ver data-img-slot en el HTML) — acá solo la mecánica.
+//  Navegación: Mapa mundial → Ciudad → Mapa de mazmorras → Mazmorra → Duelo
+//  (secciones 7, 10, 11, 13 del diseño). Pantallas-lugar: la imagen de
+//  fondo ES el lugar (ver data-slot-label en el HTML), la UI solo pone
+//  puntos interactivos encima. Ciudad Central es UNA plantilla
+//  reutilizada por las 6 facciones.
 // ============================================================
 const CAMPAIGN_ORDER = ["alderium","qashir","brasshaven","koren","caelum","nomadas"];
 // Progresión de campaña (sección 6.1): solo Alderium desbloqueada al inicio.
-// Sin motor de mazmorra todavía no hay forma de desbloquear el resto — se deja el estado listo para cuando lo haya.
+// Sin motor de campaña completo todavía no hay forma de desbloquear el resto — se deja el estado listo para cuando lo haya.
 S.unlocked = {alderium:true};
 function isUnlocked(k){ return !!S.unlocked[k]; }
 
-let currentCity=null;
+// Posiciones de los hotspots en el mapa mundial, en % del contenedor (mantienen su lugar relativo en cualquier pantalla).
+const MAP_HOTSPOTS = {
+  nomadas:{left:30,top:16}, alderium:{left:66,top:16},
+  caelum:{left:15,top:46}, qashir:{left:85,top:46},
+  koren:{left:30,top:77}, brasshaven:{left:66,top:77},
+};
+// Cantidad total de mazmorras planificadas por continente (sección 10) — para el aviso "X de Y construidas".
+const DUNGEON_TOTALS = {alderium:5, qashir:4, brasshaven:4, koren:4, caelum:4, nomadas:2};
+
+let currentCity=null, dungeonState=null, duelReturn=null;
+const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", dungeonMapScreen:"block", dungeonInterior:"block"};
 function showScreen(id){
-  ["menu","mapScreen","cityScreen"].forEach(x=>{
-    document.getElementById(x).style.display = (x===id) ? "flex" : "none";
-  });
+  for(const x in SCREEN_DISPLAY){ document.getElementById(x).style.display = (x===id) ? SCREEN_DISPLAY[x] : "none"; }
 }
 
+// ---- 1. Mapa mundial ----
 function renderMap(){
-  const el=document.getElementById("contPick");
+  const el=document.getElementById("mapHotspots");
   el.innerHTML="";
   for(const k of CAMPAIGN_ORDER){
-    const f=FACTIONS[k], unlocked=isUnlocked(k);
+    const f=FACTIONS[k], unlocked=isUnlocked(k), pos=MAP_HOTSPOTS[k];
     const d=document.createElement("div");
-    d.className="cont"+(unlocked?"":" locked");
-    d.style.setProperty("--fc",f.color);
-    d.innerHTML=`<div class="bar"></div>${unlocked?"":'<div class="clock">🔒</div>'}
-      <div class="cico">${f.art}</div><div class="cn">${f.name}</div>`;
+    d.className="hotspot"+(unlocked?"":" locked");
+    d.dataset.faction=k;
+    d.style.left=pos.left+"%"; d.style.top=pos.top+"%";
+    d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_${k}.png">
+        <span class="hs-init">${f.name[0]}</span>${unlocked?"":'<span class="hs-lock">🔒</span>'}
+      </div><div class="hs-label">${f.name}</div>`;
     d.onclick=()=>{
       if(!unlocked){ toast("🔒 Se desbloquea completando la campaña del continente anterior."); return; }
       openCity(k);
@@ -510,31 +636,31 @@ function renderMap(){
   }
 }
 
+// ---- 2. Ciudad Central (una plantilla, 6 variantes) ----
 function openCity(fac){
-  currentCity=fac;
+  currentCity=fac; dungeonState=null;
   const f=FACTIONS[fac];
-  const art=document.getElementById("cityArt");
-  art.style.setProperty("--fc",f.color); art.textContent=f.art;
-  art.dataset.imgSlot=`assets/backgrounds/mapas/ciudad_${fac}.jpg`;
-  const nameEl=document.getElementById("cityName");
-  nameEl.textContent=f.name+" — Ciudad Central"; nameEl.style.setProperty("--fc",f.color);
-  const acts=document.getElementById("cityActs"); acts.innerHTML="";
+  document.getElementById("cityScreen").dataset.faction=fac;
+  document.getElementById("cityBg").dataset.slotLabel=`ciudad_${fac}.jpg`;
+  document.getElementById("cityTitle").textContent=f.name.toUpperCase();
+  const frames=document.getElementById("cityFrames"); frames.innerHTML="";
   const items=[
-    {icon:"⚔️", t:"Duelo", d:"Contra la IA, con "+f.name+" o cualquier facción desbloqueada.", go:()=>openDuelPicker(fac)},
-    {icon:"🎯", t:"Entrenamiento", d:"Practicá sin consecuencias ni recompensas.", go:()=>openDuelPicker(fac)},
-    {icon:"🗂️", t:"Administrar cartas", d:"Colección y constructor de mazos.", soon:true},
-    {icon:"📜", t:"Tablón de misiones", d:"Mazmorras disponibles en este continente.", soon:true},
-    {icon:"🍺", t:"Taberna", d:"NPCs, rumores y pergaminos.", soon:true},
+    {t:"Taberna", d:"NPCs, rumores y pergaminos.", slot:"boton_taberna.jpg", soon:true},
+    {t:"Entrenamiento", d:"Practicá sin consecuencias ni recompensas.", slot:"boton_entrenamiento.jpg", go:()=>openDuelPicker(fac)},
+    {t:"Duelo", d:"Contra la IA, con "+f.name+" o cualquier facción desbloqueada.", slot:"boton_duelo.jpg", go:()=>openDuelPicker(fac)},
+    {t:"Administrar cartas", d:"Colección y constructor de mazos.", slot:"boton_cartas.jpg", soon:true},
+    {t:"Salir a mazmorras", d:"Mazmorras disponibles en este continente.", slot:"boton_mazmorras.jpg", go:()=>openDungeonMap(fac)},
   ];
   for(const it of items){
-    const b=document.createElement("button"); b.className="cityact"+(it.soon?" soon":"");
-    b.innerHTML=`<div class="ai">${it.icon}</div><div><div class="at">${it.t}</div><div class="ad">${it.d}</div></div>`;
+    const b=document.createElement("div"); b.className="cityframe"+(it.soon?" soon":"");
+    b.innerHTML=`<div><div class="cf-name">${it.t}${it.soon?' <span style="font-size:10px;color:var(--text-dim);font-weight:400">(próximamente)</span>':""}</div>
+      <div class="cf-desc">${it.d}</div></div><div class="cf-slot">${it.slot}</div>`;
     b.onclick=()=> it.soon ? toast(it.t+": todavía no está construido (próximamente).") : it.go();
-    acts.appendChild(b);
+    frames.appendChild(b);
   }
   showScreen("cityScreen");
 }
-document.getElementById("cityBack").onclick=()=>showScreen("mapScreen");
+document.getElementById("cityToMap").onclick=()=>showScreen("mapScreen");
 
 function openDuelPicker(fac){
   chosenFac = isUnlocked(fac) ? fac : CAMPAIGN_ORDER.find(isUnlocked);
@@ -547,8 +673,165 @@ function backToCityFlow(){
   showScreen(currentCity ? "cityScreen" : "mapScreen");
 }
 
+// ---- 3. Mapa de mazmorras del continente ----
+function openDungeonMap(fac){
+  currentCity=fac;
+  document.getElementById("dungeonMapScreen").dataset.faction=fac;
+  document.getElementById("dungeonMapBg").dataset.slotLabel=`mapa_${fac}.jpg`;
+  document.getElementById("dungeonMapTitle").textContent=FACTIONS[fac].name.toUpperCase()+" — MAZMORRAS";
+  const el=document.getElementById("dungeonHotspots"); el.innerHTML="";
+  const list=CONTINENT_DUNGEONS[fac]||[];
+  if(!list.length){
+    el.innerHTML=`<div class="dg-empty">Sin mazmorras todavía en ${FACTIONS[fac].name}.</div>`;
+  } else {
+    for(const id of list){
+      const dg=DUNGEONS[id];
+      const d=document.createElement("div");
+      d.className="hotspot dungeon-hotspot";
+      d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
+      d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/mazmorra/icono_mazmorra_${id}.png"><span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
+      d.onclick=()=>enterDungeon(id);
+      el.appendChild(d);
+    }
+    const total=DUNGEON_TOTALS[fac];
+    if(total && total>list.length){
+      const more=document.createElement("div"); more.className="dg-more";
+      more.textContent=`${list.length} de ${total} mazmorras construidas — el resto llega más adelante.`;
+      el.appendChild(more);
+    }
+  }
+  showScreen("dungeonMapScreen");
+}
+document.getElementById("dungeonMapBack").onclick=()=>showScreen("cityScreen");
+
+// ---- 4. Interior de mazmorra: grafo de nodos con swipe (estilo Reigns) ----
+// Mazmorra piloto (sección 11 + grafo en Veyra_Grafo_Mazmorra.mermaid + jefe de sección 8).
+const DUNGEONS = {
+  alderium_piloto: {
+    faction:"alderium", name:"El Palacio en Ruinas", icon:"🏛️", mapPos:{left:50,top:45}, startNode:"start",
+    nodes:{
+      start:{name:"Entrada al Palacio en Ruinas", type:"decision",
+        text:"Las puertas de bronce yacen entreabiertas. El viento trae olor a polvo y a algo más viejo. Dos caminos se abren ante vos.",
+        left:"jardin", right:"pasos", leftHint:"El Jardín Oscuro", rightHint:"Los Pasos Quebrados"},
+      jardin:{name:"El Jardín Oscuro", type:"decision",
+        text:"Estatuas cubiertas de enredaderas observan en silencio. Entre las sombras, algo se mueve.",
+        left:"emboscada", right:"emboscada", leftHint:"Avanzar", rightHint:"Avanzar"},
+      pasos:{name:"Los Pasos Quebrados", type:"decision",
+        text:"Escalones rotos suben hacia una galería derrumbada. El camino es más largo, pero más tranquilo.",
+        left:"cruce", right:"cruce", leftHint:"Avanzar", rightHint:"Avanzar"},
+      emboscada:{name:"Emboscada de Ladrones", type:"combat", subtitle:"Encuentro",
+        text:"Mercenarios sin bandera saltan de entre los escombros.", enemyFac:"qashir", next:"cruce"},
+      cruce:{name:"El Cruce del Río Seco", type:"decision",
+        text:"Ambos caminos se encuentran junto al cauce seco de un río olvidado. Más allá, el aire se vuelve pesado.",
+        left:"camara", right:"bestias", leftHint:"La Cámara Sellada", rightHint:"El Corredor Hundido"},
+      bestias:{name:"Bestias Salvajes", type:"combat", subtitle:"Encuentro",
+        text:"Algo enorme y hambriento bloquea el corredor hundido.", enemyFac:"nomadas", next:"corredor"},
+      corredor:{name:"El Corredor Hundido", type:"decision", subtitle:"Final B — Tesoro Oculto",
+        text:"Más allá de las bestias, un cofre cubierto de óxido descansa intacto.",
+        left:"exit", right:"exit", leftHint:"Salir con el tesoro", rightHint:"Salir con el tesoro"},
+      camara:{name:"La Cámara Sellada", type:"combat", subtitle:"Final A — Jefe de facción: El Juez Silente",
+        text:"Una armadura vacía se yergue en el centro. El Juez Silente todavía ejecuta justicia, sin nadie dentro.",
+        enemyFac:"alderium", boss:true, next:"exit"},
+    }
+  }
+};
+const CONTINENT_DUNGEONS = {alderium:["alderium_piloto"]};
+
+function currentDungeonNode(){ return DUNGEONS[dungeonState.dungeonId].nodes[dungeonState.nodeId]; }
+
+function enterDungeon(dungeonId){
+  const dg=DUNGEONS[dungeonId];
+  dungeonState={dungeonId, nodeId:dg.startNode};
+  document.getElementById("dungeonInterior").dataset.faction=dg.faction;
+  document.getElementById("dungeonBg").dataset.slotLabel=`mazmorra_${dungeonId}.jpg`;
+  showScreen("dungeonInterior");
+  renderDungeonNode();
+}
+
+function renderDungeonNode(){
+  const node=currentDungeonNode();
+  const card=document.getElementById("dgCard");
+  card.style.transition="none"; card.style.transform=""; card.style.opacity="1";
+  void card.offsetWidth; card.style.transition="";
+  document.getElementById("dgName").textContent=node.name;
+  document.getElementById("dgSub").textContent=node.subtitle||"";
+  document.getElementById("dgText").textContent=node.text;
+  document.getElementById("dgHint").textContent = node.type==="combat" ? "Tocá para enfrentarlo" : "Deslizá para elegir tu camino";
+  clearSwipeHints();
+}
+
+function dungeonAdvance(nextId){
+  if(nextId==="exit"){ exitDungeonToMap(); return; }
+  dungeonState.nodeId=nextId;
+  renderDungeonNode();
+}
+function exitDungeonToMap(){ showScreen("dungeonMapScreen"); }
+
+function commitSwipe(dir){
+  const node=currentDungeonNode();
+  const dest = dir==="left" ? node.left : node.right;
+  const card=document.getElementById("dgCard");
+  card.style.transition="transform .26s ease-in, opacity .26s ease-in";
+  card.style.transform=`translateX(${dir==="left"?-620:620}px) rotate(${dir==="left"?-28:28}deg)`;
+  card.style.opacity="0";
+  setTimeout(()=>dungeonAdvance(dest), 220);
+}
+
+function engageDungeonCombat(node){
+  const dg=DUNGEONS[dungeonState.dungeonId];
+  beginDuel(dg.faction, node.enemyFac, {type:"dungeon", next:node.next});
+}
+
+function updateSwipeHints(dx){
+  const node=currentDungeonNode();
+  const l=document.getElementById("dgHintL"), r=document.getElementById("dgHintR");
+  if(node.type!=="decision"){ l.classList.remove("show"); r.classList.remove("show"); return; }
+  l.textContent=node.leftHint||""; r.textContent=node.rightHint||"";
+  l.classList.toggle("show", dx<-24 && !!node.leftHint);
+  r.classList.toggle("show", dx>24 && !!node.rightHint);
+}
+function clearSwipeHints(){
+  document.getElementById("dgHintL").classList.remove("show");
+  document.getElementById("dgHintR").classList.remove("show");
+}
+function initDungeonCardDrag(){
+  const card=document.getElementById("dgCard");
+  let drag=null;
+  card.addEventListener("pointerdown", e=>{
+    if(!dungeonState) return;
+    drag={x0:e.clientX, dx:0, id:e.pointerId};
+    card.setPointerCapture(e.pointerId);
+    card.style.transition="none";
+  });
+  card.addEventListener("pointermove", e=>{
+    if(!drag||drag.id!==e.pointerId) return;
+    drag.dx=e.clientX-drag.x0;
+    card.style.transform=`translateX(${drag.dx}px) rotate(${drag.dx/18}deg)`;
+    updateSwipeHints(drag.dx);
+  });
+  function release(e){
+    if(!drag) return;
+    const dx=drag.dx; drag=null;
+    card.style.transition="transform .22s ease-out";
+    const node=currentDungeonNode();
+    clearSwipeHints();
+    if(node.type==="combat"){
+      card.style.transform="";
+      if(Math.abs(dx)<10){ engageDungeonCombat(node); }
+      return;
+    }
+    const TH=80;
+    if(Math.abs(dx)>TH){ commitSwipe(dx>0?"right":"left"); }
+    else { card.style.transform=""; }
+  }
+  card.addEventListener("pointerup", release);
+  card.addEventListener("pointercancel", release);
+}
+document.getElementById("dungeonExitBtn").onclick=()=>exitDungeonToMap();
+
 // ============================================================
-//  Selección de facción/rival para un duelo puntual
+//  Selección de facción/rival para un duelo puntual (menú de tarjetas —
+//  no es una "pantalla-lugar", queda igual que antes a propósito)
 // ============================================================
 let chosenFac=null, rivalFac="random";
 let facCards={};
@@ -582,20 +865,26 @@ function initMenu(){
   document.getElementById("menuBack").onclick=()=>showScreen(currentCity?"cityScreen":"mapScreen");
 }
 
-function start(){
-  let rf;
-  if(rivalFac==="random"){ const opts=Object.keys(FACTIONS).filter(k=>k!==chosenFac); rf=opts[(Math.random()*opts.length)|0]; }
-  else rf=rivalFac;
-  S.players.p=newPlayer("p",chosenFac);
-  S.players.a=newPlayer("a",rf);
-  S.players.p.deck=buildDeck(chosenFac);
-  S.players.a.deck=buildDeck(rf);
+// ---- 5. Duelo: motor existente, ahora con contexto de retorno (ciudad o nodo de mazmorra) ----
+function beginDuel(playerFac, enemyFac, returnCtx){
+  duelReturn = returnCtx||null;
+  chosenFac = playerFac;
+  S.players.p=newPlayer("p",playerFac);
+  S.players.a=newPlayer("a",enemyFac);
+  S.players.p.deck=buildDeck(playerFac);
+  S.players.a.deck=buildDeck(enemyFac);
   for(let i=0;i<3;i++) drawCard(S.players.p);
   for(let i=0;i<4;i++) drawCard(S.players.a); // el segundo compensa con una carta extra
   showScreen(null);
   S.phase="play"; S.turn="p"; S.turnNum=0;
-  log(`Duelo: ${FACTIONS[chosenFac].name} vs ${FACTIONS[rf].name}`);
+  log(`Duelo: ${FACTIONS[playerFac].name} vs ${FACTIONS[enemyFac].name}`);
   startTurn();
+}
+function start(){
+  let rf;
+  if(rivalFac==="random"){ const opts=Object.keys(FACTIONS).filter(k=>k!==chosenFac); rf=opts[(Math.random()*opts.length)|0]; }
+  else rf=rivalFac;
+  beginDuel(chosenFac, rf, null);
 }
 
 function drawCard(p){
@@ -1397,6 +1686,21 @@ function checkWin(){
     b.querySelector(".big").textContent = win? "VICTORIA" : "DERROTA";
     b.querySelector(".big").style.color = win? "var(--gold2)":"var(--vida)";
     b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
+
+    // Contexto de retorno: duelo de mazmorra vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
+    const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
+    if(duelReturn && duelReturn.type==="dungeon" && win){
+      contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("dungeonInterior"); dungeonAdvance(duelReturn.next); };
+      replayBtn.style.display="none";
+      backBtn.textContent="Abandonar mazmorra"; backBtn.onclick=()=>{ b.style.display="none"; exitDungeonToMap(); };
+    } else if(duelReturn && duelReturn.type==="dungeon" && !win){
+      contBtn.style.display="none"; replayBtn.style.display="none";
+      backBtn.textContent="Volver al mapa de mazmorras"; backBtn.onclick=()=>{ b.style.display="none"; exitDungeonToMap(); };
+    } else {
+      contBtn.style.display="none";
+      replayBtn.style.display="block"; replayBtn.onclick=()=>location.reload();
+      backBtn.textContent="Volver a la ciudad"; backBtn.onclick=()=>{ b.style.display="none"; backToCityFlow(); };
+    }
     b.style.display="flex";
   }
 }
@@ -1415,5 +1719,6 @@ document.addEventListener("pointerdown",e=>{
 
 initMenu();
 renderMap();
+initDungeonCardDrag();
 showScreen("mapScreen");
 </script>
