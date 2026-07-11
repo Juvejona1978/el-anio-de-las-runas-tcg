@@ -161,6 +161,53 @@
   .dg-hint-r{right:5%}
   .dg-hint-l.show,.dg-hint-r.show{opacity:1}
 
+  /* ---------- Constructor de mazos ---------- */
+  #constructorScreen{position:fixed;inset:0;z-index:48;display:none;overflow:hidden;flex-direction:column}
+  .ctor-head{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:calc(env(safe-area-inset-top) + 14px) 60px 6px;text-align:center}
+  .ctor-title{font-family:Georgia,serif;font-size:18px;font-weight:700;color:var(--text)}
+  .ctor-count{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--gold2);
+    background:rgba(0,0,0,.5);border:1px solid var(--frame);border-radius:20px;padding:2px 12px}
+  .ctor-curve{position:relative;z-index:2;display:flex;gap:5px;align-items:flex-end;height:46px;
+    padding:6px 14px 4px;flex:0 0 auto}
+  .curve-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px}
+  .curve-bar .cb-fill{width:100%;background:var(--fc,var(--gold));border-radius:2px 2px 0 0;min-height:2px;transition:height .15s}
+  .curve-bar .cb-label{font-size:9px;color:var(--text-dim)}
+  .ctor-list{position:relative;z-index:2;flex:1;overflow-y:auto;padding:2px 10px 10px;-webkit-overflow-scrolling:touch}
+  .ctor-row{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid rgba(138,109,63,.25);cursor:pointer}
+  .ctor-row:active{background:rgba(255,255,255,.05)}
+  .ctor-row .cr-cost{width:24px;height:24px;border-radius:50%;background:var(--mana);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11.5px;flex:0 0 auto;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .ctor-row .cr-info{flex:1;min-width:0}
+  .ctor-row .cr-name{font-weight:700;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ctor-row .cr-meta{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px}
+  .ctor-row .cr-count{font-weight:800;font-size:14px;color:var(--fc,var(--gold2));flex:0 0 auto;min-width:38px;text-align:right}
+  .ctor-empty{color:var(--text-dim);font-family:Georgia,serif;font-size:13px;text-align:center;padding:30px 20px;line-height:1.5}
+  .ctor-save{position:relative;z-index:2;margin:8px 14px calc(10px + env(safe-area-inset-bottom));flex:0 0 auto;max-width:none}
+
+  /* Vista ampliada de carta (dentro del modal existente) */
+  .zoomwrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .zoomctrl{display:flex;align-items:center;gap:16px}
+  .zbtn{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--frame);background:var(--panel2);
+    color:var(--ink);font-size:20px;font-weight:800;cursor:pointer;font-family:inherit}
+  .zbtn:disabled{opacity:.35;cursor:not-allowed}
+  .zcount{font-family:Georgia,serif;font-size:16px;font-weight:700;min-width:56px;text-align:center}
+
+  /* ---------- Campaña ---------- */
+  #campaignScreen{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
+  .campaign-progress{position:absolute;left:0;right:0;bottom:0;top:30%;overflow-y:auto;z-index:2;
+    padding:10px 16px calc(16px + env(safe-area-inset-bottom))}
+  .cnode{display:flex;align-items:center;gap:12px;background:rgba(10,9,7,.6);border:1.5px solid var(--frame);
+    border-radius:10px;padding:12px 14px;margin-bottom:8px;backdrop-filter:blur(3px)}
+  .cnode.done{opacity:.55}
+  .cnode.locked{opacity:.4}
+  .cnode .cn-badge{width:30px;height:30px;border-radius:50%;background:var(--panel2);border:1px solid var(--frame);
+    display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto;font-weight:800}
+  .cnode.done .cn-badge{background:var(--good);color:#0b0a08}
+  .cnode.current .cn-badge{background:var(--fc,var(--gold));color:#0b0a08}
+  .cnode .cn-name{font-family:Georgia,serif;font-weight:700;font-size:14px;color:var(--text)}
+  .cnode .cn-desc{font-size:11px;color:var(--text-dim);margin-top:1px}
+
   /* ---------- Board layout (mobile-first, vertical) ---------- */
   .herobar{display:flex;align-items:center;gap:10px;padding:6px 12px;flex:0 0 auto;
     background:linear-gradient(#1a1626,#141120);border-bottom:1px solid var(--line);position:relative;z-index:5}
@@ -432,6 +479,27 @@
   </div>
 </div>
 
+<!-- ===================== CONSTRUCTOR DE MAZOS ===================== -->
+<div id="constructorScreen">
+  <div class="scene-bg" id="constructorBg"></div>
+  <button class="compass-btn" id="constructorBack" title="Volver">‹</button>
+  <div class="ctor-head">
+    <div class="ctor-title">Administrar cartas</div>
+    <div class="ctor-count" id="ctorCount">0/40</div>
+  </div>
+  <div class="ctor-curve" id="ctorCurve"></div>
+  <div class="ctor-list" id="ctorList"></div>
+  <button class="btn play ctor-save" id="ctorSaveBtn" disabled>Guardar mazo (0/40)</button>
+</div>
+
+<!-- ===================== CAMPAÑA (mazmorra especial con recompensas) ===================== -->
+<div id="campaignScreen">
+  <div class="scene-bg" id="campaignBg"></div>
+  <button class="compass-btn" id="campaignBack" title="Volver a mazmorras">‹</button>
+  <div class="scene-title" id="campaignTitle"></div>
+  <div class="campaign-progress" id="campaignProgress"></div>
+</div>
+
 <!-- ===================== SELECCIÓN DE DUELO ===================== -->
 <div id="menu">
   <div class="menucard">
@@ -470,57 +538,122 @@ function mk(o){ return Object.assign({uid:UID++}, o); }
 const LIB = {
   // ---------------- Alderium ----------------
   rhaen:{fac:"alderium",name:"Rhaen, Escudo del Trono",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🛡️",
-    txt:"Tus otros Guardianes ganan +0/+1.",aura:true},
+    txt:"Tus otros Guardianes ganan +0/+1.",auraGuardian:{atk:0,vida:1},rarity:"heroe"},
   muralla:{fac:"alderium",name:"Muralla Viviente",cost:3,type:"criatura",atk:1,vida:5,kw:["Guardián"],art:"🧱",
-    txt:"Al entrar: da Escudo a otro Guardián que controlás.",etb:"muralla"},
+    txt:"Al entrar: da Escudo a otro Guardián que controlás.",etb:"muralla",rarity:"especialista"},
   decreto_cont:{fac:"alderium",name:"Decreto de Contención",cost:2,type:"hechizo",art:"📜",
     txt:"Da Escudo a una criatura. Si es Guardián, a dos en vez de una.",target:"criatura",cast:"decreto_cont"},
+  isolde:{fac:"alderium",name:"Isolde, Voz del Decreto",cost:5,type:"criatura",atk:3,vida:5,kw:[],art:"⚔️",
+    txt:"Cuando una criatura enemiga ataca, Isolde le inflige 1 de daño antes de que se resuelva el combate.",flag:"isolde",rarity:"heroe"},
+  tiberon:{fac:"alderium",name:"Tiberon, Portaestandarte del Alba",cost:4,type:"criatura",atk:2,vida:4,kw:[],art:"🚩",
+    txt:"Tus otros Guardianes ganan +1/+1.",auraGuardian:{atk:1,vida:1},rarity:"heroe"},
   // ---------------- Qashir ----------------
-  zahra:{fac:"qashir",name:"Zahra, la Apostadora",cost:3,type:"criatura",atk:4,vida:2,kw:[],art:"🎲",
-    txt:"Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.",etb:"zahra"},
+  zahra:{fac:"qashir",name:"Zahira, la Apostadora",cost:3,type:"criatura",atk:4,vida:2,kw:[],art:"🎲",
+    txt:"Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.",etb:"zahra",rarity:"heroe"},
   chacal:{fac:"qashir",name:"Chacal de las Dunas",cost:2,type:"criatura",atk:3,vida:1,kw:["Prisa"],art:"🐺",
-    txt:"Al morir: inflige 1 de daño al rival.",death:"chacal"},
+    txt:"Al morir: inflige 1 de daño al rival.",death:"chacal",rarity:"especialista"},
   pacto:{fac:"qashir",name:"Pacto de Sangre",cost:1,type:"hechizo",art:"🩸",
     txt:"Sacrificá una criatura tuya. Ganás maná igual a su costo este turno.",target:"criatura_propia",cast:"pacto"},
+  rasim:{fac:"qashir",name:"Rasim, Príncipe de los Espejismos",cost:5,type:"criatura",atk:3,vida:3,kw:[],art:"🌫️",
+    txt:"Al entrar, creá dos Espejismos 1/1 que desaparecen al final de tu próximo turno.",etb:"rasim",rarity:"heroe"},
+  nadira:{fac:"qashir",name:"Nadira, la que Vende el Viento",cost:4,type:"criatura",atk:2,vida:3,kw:[],art:"🌬️",
+    txt:"Habilidad activada, una vez por turno: pagá 2 de vida para robar una carta.",activated:"nadira",rarity:"heroe"},
   // ---------------- Brasshaven ----------------
   lyra:{fac:"brasshaven",name:"Lyra Vale, la Inventora",cost:4,type:"criatura",atk:3,vida:3,kw:[],art:"🔧",
-    txt:"Al entrar: devolvé una criatura de tu cementerio al campo con -1/-1.",etb:"lyra"},
+    txt:"Al entrar: devolvé una criatura de tu cementerio al campo con -1/-1.",etb:"lyra",rarity:"heroe"},
   automata:{fac:"brasshaven",name:"Autómata de Repuestos",cost:3,type:"criatura",atk:2,vida:4,kw:[],art:"🤖",
-    txt:"Al morir: pagá 1 maná para devolverla con sus stats actuales (una vez).",death:"automata"},
+    txt:"Al morir: pagá 1 maná para devolverla con sus stats actuales (una vez).",death:"automata",rarity:"especialista"},
   cristal:{fac:"brasshaven",name:"Cristal de Sobrecarga",cost:2,type:"reliquia",art:"💎",
     txt:"Ligá a una criatura: +2/+0. Al morir esa criatura, ganás +1 maná este turno.",target:"criatura_propia",cast:"cristal"},
+  magnus:{fac:"brasshaven",name:"Magnus Ferro, Capataz de la Franja",cost:6,type:"criatura",atk:4,vida:4,kw:[],art:"🦾",
+    txt:"Al entrar, devolvé al campo al último Autómata aliado destruido.",etb:"magnus",rarity:"heroe"},
+  unidad_prima:{fac:"brasshaven",name:"Unidad Prima, el Primer Autómata",cost:3,type:"criatura",atk:1,vida:3,kw:[],art:"⚙️",
+    txt:"Gana +1/+1 permanente cada vez que ligás una Reliquia a una criatura aliada (incluida ella misma).",flag:"unidad_prima",rarity:"heroe"},
   // ---------------- Kóren ----------------
   anciana:{fac:"koren",name:"Anciana del Río Callado",cost:3,type:"criatura",atk:2,vida:4,kw:[],art:"👵",
-    txt:"Al entrar: curá 2 al jugador. Recuerdo: cura 4.",etb:"anciana"},
+    txt:"Al entrar: curá 2 al jugador. Recuerdo: cura 4.",etb:"anciana",rarity:"especialista"},
   eco:{fac:"koren",name:"Eco del Primer Templo",cost:1,type:"recuerdo",art:"🏛️",
     txt:"La próxima criatura este turno cuesta 1 menos. Recuerdo para activar.",cast:"eco"},
   vendaje:{fac:"koren",name:"Vendaje de Musgo Antiguo",cost:1,type:"hechizo",art:"🌿",
     txt:"Curá 3 a una criatura o al jugador.",target:"cualquiera_amistoso",cast:"vendaje"},
+  bjorna:{fac:"koren",name:"Bjorna, Madre de las Piedras",cost:5,type:"criatura",atk:2,vida:6,kw:[],art:"🗿",
+    txt:"Al final de tu turno, curá 2 a tu héroe o a una criatura aliada.",flag:"bjorna",rarity:"heroe"},
+  halvar:{fac:"koren",name:"Halvar, el que Recuerda",cost:4,type:"criatura",atk:3,vida:4,kw:[],art:"📖",
+    txt:"Tus cartas de Recuerdo cuestan 0. Mientras Halvar esté en tu mazo, podés incluir 1 copia adicional de Recuerdo.",flag:"halvar",rarity:"heroe"},
+  astado:{fac:"koren",name:"El Astado del Valle",cost:7,type:"criatura",atk:8,vida:8,kw:[],art:"🦌",
+    txt:"Entra dormido: no puede atacar durante tus dos primeros turnos con él en el campo.",sleepTurns:2,rarity:"heroe"},
   // ---------------- Caelum ----------------
   ley:{fac:"caelum",name:"Ley de Terra Caelum",cost:5,type:"runa",art:"✦",
     txt:"Mientras esté en juego, tu tope de maná máximo pasa a 12.",cast:"ley"},
-  guardiana:{fac:"caelum",name:"Guardiana de las Alturas",cost:4,type:"criatura",atk:3,vida:5,kw:["Guardián"],art:"🕊️",
-    txt:"Si es atacada como Guardián y sobrevive, gana +1/+1 permanente.",flag:"guardiana"},
+  guardiana:{fac:"caelum",name:"Elyon, Juez del Cielo",cost:4,type:"criatura",atk:3,vida:5,kw:["Guardián"],art:"🕊️",
+    txt:"Si es atacada como Guardián y sobrevive, gana +1/+1 permanente.",flag:"guardiana",rarity:"heroe"},
   equilibrio:{fac:"caelum",name:"Decreto de Equilibrio",cost:3,type:"hechizo",art:"⚖️",
     txt:"El maná disponible de ambos se iguala al menor de los dos.",cast:"equilibrio"},
+  serena:{fac:"caelum",name:"Serena, Tejedora de Leyes",cost:5,type:"criatura",atk:2,vida:5,kw:[],art:"⚖️",
+    txt:"Mientras esté en el campo, el rival solo puede declarar un ataque por turno.",flag:"serena",rarity:"heroe"},
+  custodio:{fac:"caelum",name:"El Custodio del Anillo",cost:6,type:"criatura",atk:3,vida:7,kw:["Guardián"],art:"💍",
+    txt:"Gana +0/+2 por cada Runa activa en juego (de cualquiera de los dos jugadores).",runaBonusVida:2,rarity:"heroe"},
   // ---------------- Nómadas ----------------
   eratiel:{fac:"nomadas",name:"Eratiel, el Guerrero sin Historia",cost:3,type:"criatura",atk:4,vida:2,kw:["Oculto"],art:"👤",
-    txt:"Oculto. Sus stats reales se revelan al atacar o ser atacada."},
+    txt:"Oculto. Sus stats reales se revelan al atacar o ser atacada.",rarity:"heroe"},
   forastero:{fac:"nomadas",name:"Forastero sin Nombre",cost:2,type:"criatura",atk:3,vida:3,kw:["Oculto"],art:"🎭",
-    txt:"Oculto. Al entrar, sus stats se fijan en secreto: 1/1, 3/3 o 5/1.",etb:"forastero"},
+    txt:"Oculto. Al entrar, sus stats se fijan en secreto: 1/1, 3/3 o 5/1.",etb:"forastero",rarity:"especialista"},
   rumor:{fac:"nomadas",name:"Rumor del Camino",cost:1,type:"hechizo",art:"🗺️",
     txt:"Mirá la próxima carta de tu mazo. Dejala arriba o mandala al fondo.",cast:"rumor"},
+  senda:{fac:"nomadas",name:"Senda de los Mil Pasos",cost:4,type:"runa",art:"🐾",
+    txt:"Mientras esté en juego, tus criaturas Nómadas cuestan 1 menos el turno en que se juegan (mínimo 1).",cast:"senda"},
+  mara:{fac:"nomadas",name:"Vessa, Cartógrafa de Rutas Muertas",cost:4,type:"criatura",atk:3,vida:3,kw:[],art:"🗺️",
+    txt:"Al entrar, mirás las 3 cartas superiores del mazo del rival.",etb:"mara",rarity:"heroe"},
+  yesid:{fac:"nomadas",name:"Yesid, el Último Portador",cost:5,type:"criatura",atk:3,vida:4,kw:["Oculto"],art:"🕯️",
+    txt:"Oculto. Cuando se revela, la próxima carta que juegues este turno cuesta 0.",flag:"yesid",rarity:"heroe"},
 };
 
-// Vainillas de relleno por facción (curva de maná) — no son del set final (ver Playtest #1)
-const VANILLA = [
-  {name:"Recluta",cost:1,atk:1,vida:2,art:"🙂"},
-  {name:"Escudero",cost:2,atk:2,vida:2,art:"🧑"},
-  {name:"Guerrero",cost:3,atk:3,vida:3,art:"💪"},
-  {name:"Veterano",cost:4,atk:4,vida:4,art:"🧔"},
-  {name:"Campeón",cost:5,atk:5,vida:5,art:"🦁"},
-  {name:"Coloso",cost:6,atk:6,vida:6,art:"🗿"},
+// Los 12 Soldados por facción (sección 5.1 del diseño): rareza común, hasta 3 copias por mazo,
+// mismo esqueleto de curva en las 6 facciones, nombre con sabor de facción (ej. "Lancero de Alderium").
+const SOLDIER_RANKS = [
+  {cost:1,atk:1,vida:2,name:"Recluta",art:"🙂"},
+  {cost:1,atk:2,vida:1,name:"Aprendiz",art:"📚"},
+  {cost:2,atk:2,vida:2,name:"Escudero",art:"🧑"},
+  {cost:2,atk:1,vida:3,name:"Cazador",art:"🏹"},
+  {cost:3,atk:3,vida:3,name:"Lancero",art:"🔱"},
+  {cost:3,atk:2,vida:4,name:"Centinela",art:"👁️"},
+  {cost:4,atk:4,vida:4,name:"Veterano",art:"🧔"},
+  {cost:4,atk:3,vida:5,name:"Guardia de Fila",art:"🪖"},
+  {cost:5,atk:5,vida:5,name:"Campeón",art:"🦁"},
+  {cost:5,atk:4,vida:6,name:"Portador del Estandarte",art:"🚩"},
+  {cost:6,atk:6,vida:6,name:"Coloso",art:"🗿"},
+  {cost:6,atk:5,vida:7,name:"Custodio Menor",art:"🛡️"},
 ];
+function soldierPool(fac){
+  return SOLDIER_RANKS.map((r,i)=>({
+    key:`sold_${fac}_${i}`,
+    def:{fac, name:`${r.name} de ${FACTIONS[fac].name}`, cost:r.cost, type:"criatura", atk:r.atk, vida:r.vida, kw:[], art:r.art, txt:"", vanilla:true, rarity:"soldado"}
+  }));
+}
+// Pool completo de una facción para el constructor/colección: cartas de LIB + los 12 Soldados.
+function poolForFaction(fac){
+  const list=[];
+  for(const k in LIB){ if(LIB[k].fac===fac) list.push({key:k, def:LIB[k]}); }
+  list.push(...soldierPool(fac));
+  return list;
+}
+function poolEntry(fac, key){
+  if(LIB[key]) return {key, def:LIB[key]};
+  return soldierPool(fac).find(e=>e.key===key);
+}
+// Límite de copias por rareza/tipo (sección 5.1). recuerdoOwnerHasHalvar: excepción de Halvar (+1 copia de Recuerdo).
+function copyLimit(key, recuerdoOwnerHasHalvar){
+  const def=LIB[key];
+  if(!def) return 3; // Soldado sintético (no vive en LIB)
+  if(def.type==="criatura"){
+    if(def.rarity==="heroe") return 1;
+    if(def.rarity==="especialista") return 2;
+    return 3;
+  }
+  if(def.type==="hechizo"||def.type==="reliquia") return 2;
+  if(def.type==="recuerdo") return recuerdoOwnerHasHalvar ? 2 : 1;
+  return 1; // runa
+}
 
 // Preguntas de "Recuerdo" — honran la filosofía de recompensa intelectual del diseño.
 const RECUERDOS = {
@@ -543,21 +676,38 @@ function foeOf(id){ return id==="p"?"a":"p"; }
 
 function newPlayer(id, fac){
   return {id, fac, life:20, manaMax:0, mana:0, tempMana:0, manaCapMax:10,
-    hand:[], deck:[], field:[], grave:[], ecoDiscount:0};
+    hand:[], deck:[], field:[], grave:[], ecoDiscount:0,
+    freeNextCard:false, attacksThisTurn:0};
 }
 
+// Mazo rápido por defecto (sin constructor): 2 copias de cada carta de diseño (1 si es Héroe) + relleno de Soldados hasta 20.
 function buildDeck(fac){
   const deck=[];
-  // 2 copias de cada carta de diseño de la facción
-  for(const k in LIB){ if(LIB[k].fac===fac){ for(let i=0;i<2;i++) deck.push(instantiate(k)); } }
-  // relleno vainilla hasta 20 cartas, coloreado por facción
+  for(const k in LIB){
+    if(LIB[k].fac===fac){
+      const n=Math.min(2, copyLimit(k));
+      for(let i=0;i<n;i++) deck.push(instantiate(k));
+    }
+  }
+  const pool=soldierPool(fac);
   let vi=0;
   while(deck.length<20){
-    const v=VANILLA[vi%VANILLA.length]; vi++;
-    deck.push(instantiate(null, {fac, name:v.name, cost:v.cost, type:"criatura", atk:v.atk, vida:v.vida, kw:[], art:v.art, txt:"", vanilla:true}));
+    const v=pool[vi%pool.length]; vi++;
+    deck.push(instantiate(null, v.def));
   }
   return shuffle(deck);
 }
+// Mazo real de 40 armado en el constructor a partir de una colección {key:count}.
+function buildDeckFromCounts(fac, counts){
+  const deck=[];
+  for(const key in counts){
+    const n=counts[key]; if(!n) continue;
+    const entry=poolEntry(fac,key); if(!entry) continue;
+    for(let i=0;i<n;i++) deck.push(entry.def.vanilla ? instantiate(null, entry.def) : instantiate(key));
+  }
+  return shuffle(deck);
+}
+function deckCount(counts){ let n=0; for(const k in counts) n+=counts[k]||0; return n; }
 
 function instantiate(libKey, override){
   const base = libKey ? LIB[libKey] : override;
@@ -567,8 +717,13 @@ function instantiate(libKey, override){
     baseAtk: base.atk||0, baseVida: base.vida||0,
     plusAtk:0, plusVida:0, damage:0,
     shield:false, sick:true, hidden:(base.kw||[]).includes("Oculto"),
-    aura: base.aura||false, etb: base.etb, death: base.death, cast: base.cast,
+    etb: base.etb, death: base.death, cast: base.cast,
     target: base.target, flag: base.flag, vanilla: base.vanilla||false,
+    rarity: base.rarity, // "heroe"|"especialista"|"soldado" (solo criaturas; ver copyLimit())
+    auraGuardian: base.auraGuardian||null, // {atk,vida} que da a OTROS Guardianes propios (Rhaen, Tiberon)
+    sleepTurns: base.sleepTurns||0, // dormido N turnos propios extra antes de poder atacar (El Astado del Valle)
+    activated: base.activated, activatedUsed:false, // habilidad activada 1x/turno (Nadira)
+    runaBonusVida: base.runaBonusVida||0, // +0/+X vida por cada Runa activa de cualquier jugador (El Custodio del Anillo)
     automataUsed:false, cristalHost:false,
   });
   return c;
@@ -577,14 +732,25 @@ function instantiate(libKey, override){
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
 
 // ---- Stats efectivas (auras + buffs) ----
-function auraBonusVida(p, c){
-  // Rhaen: otros Guardianes +0/+1
-  let b=0;
-  for(const o of p.field){ if(o.aura && o!==c && c.kw.includes("Guardián")) b+=1; }
-  return b;
+function auraGuardianBonus(p, c){
+  // Rhaen (+0/+1), Tiberon (+1/+1): auraGuardian se suma a OTROS Guardianes propios.
+  if(!c.kw.includes("Guardián")) return {atk:0, vida:0};
+  let atk=0, vida=0;
+  for(const o of p.field){ if(o!==c && o.auraGuardian){ atk+=o.auraGuardian.atk||0; vida+=o.auraGuardian.vida||0; } }
+  return {atk, vida};
 }
-function effAtk(c){ return Math.max(0, c.baseAtk + c.plusAtk); }
-function effMaxVida(p,c){ return c.baseVida + c.plusVida + auraBonusVida(p,c); }
+function countActiveRunas(){
+  // El Custodio del Anillo cuenta Runas de CUALQUIER jugador
+  let n=0;
+  for(const id of ["p","a"]){ const pl=S.players[id]; if(pl) n+=pl.field.filter(x=>x.type==="runa").length; }
+  return n;
+}
+function effAtk(c, p){ return Math.max(0, c.baseAtk + c.plusAtk + (p?auraGuardianBonus(p,c).atk:0)); }
+function effMaxVida(p,c){
+  let v = c.baseVida + c.plusVida + auraGuardianBonus(p,c).vida;
+  if(c.runaBonusVida) v += c.runaBonusVida * countActiveRunas();
+  return v;
+}
 function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
 
 // ============================================================
@@ -598,7 +764,13 @@ const CAMPAIGN_ORDER = ["alderium","qashir","brasshaven","koren","caelum","nomad
 // Progresión de campaña (sección 6.1): solo Alderium desbloqueada al inicio.
 // Sin motor de campaña completo todavía no hay forma de desbloquear el resto — se deja el estado listo para cuando lo haya.
 S.unlocked = {alderium:true};
+S.collection = {}; // {clave_de_carta: copias poseídas}
+S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facción
+S.campaignProgress = {}; // {facción: {nodeId, done}} — progreso persistente de campaña
+S.dungeonsUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
 function isUnlocked(k){ return !!S.unlocked[k]; }
+function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaignProgress[fac].done); }
+grantStartingAlderiumCollection();
 
 // Posiciones de los hotspots en el mapa mundial, en % del contenedor (mantienen su lugar relativo en cualquier pantalla).
 const MAP_HOTSPOTS = {
@@ -610,7 +782,8 @@ const MAP_HOTSPOTS = {
 const DUNGEON_TOTALS = {alderium:5, qashir:4, brasshaven:4, koren:4, caelum:4, nomadas:2};
 
 let currentCity=null, dungeonState=null, duelReturn=null;
-const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", dungeonMapScreen:"block", dungeonInterior:"block"};
+const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", dungeonMapScreen:"block", dungeonInterior:"block",
+  constructorScreen:"flex", campaignScreen:"block"};
 function showScreen(id){
   for(const x in SCREEN_DISPLAY){ document.getElementById(x).style.display = (x===id) ? SCREEN_DISPLAY[x] : "none"; }
 }
@@ -648,8 +821,13 @@ function openCity(fac){
     {t:"Taberna", d:"NPCs, rumores y pergaminos.", slot:"boton_taberna.jpg", soon:true},
     {t:"Entrenamiento", d:"Practicá sin consecuencias ni recompensas.", slot:"boton_entrenamiento.jpg", go:()=>openDuelPicker(fac)},
     {t:"Duelo", d:"Contra la IA, con "+f.name+" o cualquier facción desbloqueada.", slot:"boton_duelo.jpg", go:()=>openDuelPicker(fac)},
-    {t:"Administrar cartas", d:"Colección y constructor de mazos.", slot:"boton_cartas.jpg", soon:true},
-    {t:"Salir a mazmorras", d:"Mazmorras disponibles en este continente.", slot:"boton_mazmorras.jpg", go:()=>openDungeonMap(fac)},
+    {t:"Administrar cartas", d:"Colección y constructor de mazos.", slot:"boton_cartas.jpg", go:()=>openConstructor(fac,{type:"city"})},
+    {t:"Salir a mazmorras", d: CAMPAIGN_IDS[fac] && !isCampaignComplete(fac) ? "Primero completá tu campaña." : "Mazmorras disponibles en este continente.",
+      slot:"boton_mazmorras.jpg", go:()=>{
+        if(CAMPAIGN_IDS[fac] && !isCampaignComplete(fac)) openCampaign(fac);
+        else if(S.dungeonsUnlocked[fac]) openDungeonMap(fac);
+        else toast("Todavía no hay mazmorras disponibles en "+f.name+".");
+      }},
   ];
   for(const it of items){
     const b=document.createElement("div"); b.className="cityframe"+(it.soon?" soon":"");
@@ -704,6 +882,161 @@ function openDungeonMap(fac){
 }
 document.getElementById("dungeonMapBack").onclick=()=>showScreen("cityScreen");
 
+// ---- Campaña: pantalla de progreso (nodo X/6) que lanza al motor de mazmorra ----
+function openCampaign(fac){
+  const campaignId=CAMPAIGN_IDS[fac];
+  document.getElementById("campaignScreen").dataset.faction=fac;
+  document.getElementById("campaignBg").dataset.slotLabel=`campana_${fac}.jpg`;
+  document.getElementById("campaignTitle").textContent = DUNGEONS[campaignId].name;
+  const steps=CAMPAIGN_STEP_NAMES[fac]||[];
+  const progress=S.campaignProgress[fac];
+  const currentStep = progress ? (DUNGEONS[campaignId].nodes[progress.nodeId]||{}).step||1 : 1;
+  const done = isCampaignComplete(fac);
+  const el=document.getElementById("campaignProgress"); el.innerHTML="";
+  steps.forEach((name,i)=>{
+    const stepNum=i+1;
+    const st = done||stepNum<currentStep ? "done" : stepNum===currentStep ? "current" : "locked";
+    const row=document.createElement("div"); row.className="cnode "+st;
+    row.innerHTML=`<div class="cn-badge">${st==="done"?"✓":stepNum}</div>
+      <div><div class="cn-name">${name}</div><div class="cn-desc">${st==="done"?"Completado":st==="current"?"En curso":"Bloqueado"}</div></div>`;
+    el.appendChild(row);
+  });
+  const btn=document.createElement("button"); btn.className="btn play"; btn.style.marginTop="10px"; btn.style.width="100%";
+  btn.textContent = done ? "Campaña completada" : (progress ? "Continuar campaña" : "Comenzar campaña");
+  btn.disabled = done;
+  btn.onclick=()=>enterDungeon(campaignId);
+  el.appendChild(btn);
+  showScreen("campaignScreen");
+}
+document.getElementById("campaignBack").onclick=()=>showScreen("cityScreen");
+
+// ============================================================
+//  Colección y Constructor de Mazos
+//  Colección: {clave_de_carta: copias poseídas} (S.collection, inicializada
+//  más arriba junto a S.unlocked). El constructor SOLO muestra cartas que
+//  el jugador posee (no todo el pool).
+// ============================================================
+function grantCollection(key, n){ S.collection[key]=(S.collection[key]||0)+n; }
+function ownedCount(key){ return S.collection[key]||0; }
+
+// Colección inicial de Alderium (Parte 1 del pedido de campaña): 40 cartas ya poseídas
+// (Rhaen único héroe, Muralla y Decreto de Contención al tope, resto Soldados hasta 40).
+function grantStartingAlderiumCollection(){
+  grantCollection("rhaen",1); grantCollection("muralla",2); grantCollection("decreto_cont",2);
+  let total=5;
+  for(const entry of soldierPool("alderium")){
+    if(total>=40) break;
+    const add=Math.min(3,40-total);
+    grantCollection(entry.key, add);
+    total+=add;
+  }
+}
+
+let draftDeck={fac:null, counts:{}};
+let constructorReturn=null; // {type:"city"} | {type:"campaign"}
+function draftTotal(){ return deckCount(draftDeck.counts); }
+
+function openConstructor(fac, returnCtx){
+  constructorReturn = returnCtx || {type:"city"};
+  draftDeck = {fac, counts: Object.assign({}, S.savedDecks[fac]||{})};
+  document.getElementById("constructorScreen").dataset.faction=fac;
+  document.getElementById("constructorBg").dataset.slotLabel=`ui/constructor_${fac}.jpg`;
+  renderConstructor();
+  showScreen("constructorScreen");
+}
+document.getElementById("constructorBack").onclick=()=>{
+  if(constructorReturn && constructorReturn.type==="campaign") returnToCampaignFromConstructor();
+  else showScreen("cityScreen");
+};
+
+function renderConstructor(){
+  const fac=draftDeck.fac;
+  const list=document.getElementById("ctorList"); list.innerHTML="";
+  const pool=poolForFaction(fac).filter(e=>ownedCount(e.key)>0)
+    .sort((a,b)=> a.def.cost-b.def.cost || a.def.name.localeCompare(b.def.name));
+  if(!pool.length){
+    list.innerHTML=`<div class="ctor-empty">Todavía no tenés cartas de ${FACTIONS[fac].name} en tu colección.</div>`;
+  } else {
+    const hasHalvar=(draftDeck.counts["halvar"]||0)>0;
+    for(const entry of pool){
+      const n=draftDeck.counts[entry.key]||0;
+      const lim=Math.min(copyLimit(entry.key,hasHalvar), ownedCount(entry.key));
+      const statTxt = entry.def.type==="criatura" ? `${entry.def.atk}/${entry.def.vida} · ` : "";
+      const rarezaTxt = entry.def.type==="criatura" ? (entry.def.rarity||"soldado") : entry.def.type;
+      const row=document.createElement("div"); row.className="ctor-row";
+      row.innerHTML=`<div class="cr-cost">${entry.def.cost}</div>
+        <div class="cr-info"><div class="cr-name">${entry.def.name}</div><div class="cr-meta">${statTxt}${rarezaTxt} · poseés ${ownedCount(entry.key)}</div></div>
+        <div class="cr-count">${n}/${lim}</div>`;
+      row.onclick=()=>openCardZoom(entry.key);
+      list.appendChild(row);
+    }
+  }
+  renderCurve();
+  const total=draftTotal();
+  document.getElementById("ctorCount").textContent=`${total}/40`;
+  const saveBtn=document.getElementById("ctorSaveBtn");
+  saveBtn.textContent=`Guardar mazo (${total}/40)`;
+  saveBtn.disabled = total!==40;
+}
+function renderCurve(){
+  const buckets=[0,0,0,0,0,0,0];
+  for(const key in draftDeck.counts){
+    const n=draftDeck.counts[key]; if(!n) continue;
+    const entry=poolEntry(draftDeck.fac,key); if(!entry) continue;
+    buckets[Math.min(7,entry.def.cost)-1]+=n;
+  }
+  const max=Math.max(1,...buckets);
+  const el=document.getElementById("ctorCurve"); el.innerHTML="";
+  const labels=["1","2","3","4","5","6","7+"];
+  buckets.forEach((n,i)=>{
+    const bar=document.createElement("div"); bar.className="curve-bar";
+    bar.innerHTML=`<div class="cb-fill" style="height:${n?Math.max(6,n/max*100):2}%"></div><div class="cb-label">${labels[i]}·${n}</div>`;
+    el.appendChild(bar);
+  });
+}
+function openCardZoom(key){
+  const fac=draftDeck.fac;
+  const entry=poolEntry(fac,key);
+  const inst = entry.def.vanilla ? instantiate(null, entry.def) : instantiate(key);
+  const fakeOwner={id:"zoom", fac, mana:0, tempMana:0, field:[]};
+  const box=document.getElementById("mbox");
+  box.innerHTML=`<h3>${entry.def.name}</h3><div class="mq">Poseés ${ownedCount(key)} copia(s).</div><div class="zoomwrap" id="zoomCardHost"></div>`;
+  const host=document.getElementById("zoomCardHost");
+  const cardHost=document.createElement("div"); cardHost.style.width="min(60vw,220px)";
+  const cardElm=makeCardEl(inst, fakeOwner, "hand");
+  cardElm.onclick=null; cardElm.style.cursor="default"; cardElm.classList.remove("playable","unplayable");
+  cardHost.appendChild(cardElm);
+  host.appendChild(cardHost);
+  const ctrl=document.createElement("div"); ctrl.className="zoomctrl";
+  const hasHalvar=(draftDeck.counts["halvar"]||0)>0;
+  const lim=Math.min(copyLimit(key,hasHalvar), ownedCount(key));
+  const minus=document.createElement("button"); minus.className="zbtn"; minus.textContent="−";
+  const cnt=document.createElement("div"); cnt.className="zcount";
+  const plus=document.createElement("button"); plus.className="zbtn"; plus.textContent="+";
+  function refresh(){
+    const n=draftDeck.counts[key]||0;
+    cnt.textContent=`${n}/${lim}`;
+    minus.disabled = n<=0;
+    plus.disabled = n>=lim || draftTotal()>=40;
+  }
+  minus.onclick=()=>{ draftDeck.counts[key]=Math.max(0,(draftDeck.counts[key]||0)-1); refresh(); renderConstructor(); };
+  plus.onclick=()=>{ if((draftDeck.counts[key]||0)<lim && draftTotal()<40){ draftDeck.counts[key]=(draftDeck.counts[key]||0)+1; refresh(); renderConstructor(); } };
+  refresh();
+  ctrl.appendChild(minus); ctrl.appendChild(cnt); ctrl.appendChild(plus);
+  host.appendChild(ctrl);
+  const closeBtn=document.createElement("button"); closeBtn.className="btn ghost"; closeBtn.style.marginTop="4px"; closeBtn.textContent="Cerrar";
+  closeBtn.onclick=()=>closeModal();
+  host.appendChild(closeBtn);
+  openModal();
+}
+document.getElementById("ctorSaveBtn").onclick=()=>{
+  if(draftTotal()!==40) return;
+  S.savedDecks[draftDeck.fac]=Object.assign({}, draftDeck.counts);
+  toast("Mazo de "+FACTIONS[draftDeck.fac].name+" guardado ("+draftTotal()+"/40).");
+  if(constructorReturn && constructorReturn.type==="campaign") returnToCampaignFromConstructor();
+  else showScreen("cityScreen");
+};
+
 // ---- 4. Interior de mazmorra: grafo de nodos con swipe (estilo Reigns) ----
 // Mazmorra piloto (sección 11 + grafo en Veyra_Grafo_Mazmorra.mermaid + jefe de sección 8).
 const DUNGEONS = {
@@ -733,17 +1066,94 @@ const DUNGEONS = {
         text:"Una armadura vacía se yergue en el centro. El Juez Silente todavía ejecuta justicia, sin nadie dentro.",
         enemyFac:"alderium", boss:true, next:"exit"},
     }
-  }
+  },
+  // ---- Campaña "El Juramento de Alderium" (sección 6.1 del diseño) ----
+  // Reusa el mismo motor de nodos con swipe/tap; isCampaign:true activa recompensas y progreso persistente.
+  // Nota: el nodo 1 originalmente pedía dar "Eco del Primer Templo" como recompensa, pero esa carta es de
+  // Kóren (rompería la regla mono-facción). Se sustituyó por una copia de Decreto de Contención; lo mismo
+  // para la Reliquia del nodo 3 (Alderium todavía no tiene Reliquia diseñada) — queda avisado en el chat.
+  alderium_juramento: {
+    faction:"alderium", name:"El Juramento de Alderium", icon:"⚜️", isCampaign:true, startNode:"n1a",
+    nodes:{
+      n1a:{name:"El Juramento del Guardián", type:"decision", step:1,
+        text:"La catedral de Alderium huele a piedra fría y cera quemada. Hileras de armaduras vacías flanquean el altar donde generaciones de Guardianes hicieron su promesa antes que vos.",
+        left:"n1b", right:"n1b", leftHint:"Seguir leyendo", rightHint:"Seguir leyendo"},
+      n1b:{name:"El Juramento del Guardián", type:"decision", step:1,
+        text:"«No juro servir a un trono» — dicen las palabras talladas — «juro interponerme entre el filo y quien no puede defenderse.» Es la misma fórmula desde la fundación del reino.",
+        left:"n1q", right:"n1q", leftHint:"Continuar", rightHint:"Continuar"},
+      n1q:{name:"El Juramento del Guardián", type:"quiz", step:1, subtitle:"Recuerdo",
+        text:"¿Qué jura proteger un Guardián de Alderium, según el texto tallado en el altar?",
+        quiz:{q:"¿Qué jura proteger un Guardián de Alderium?",
+          opts:[["El trono y solo al trono",false],["A quienes no pueden defenderse",true],["Nada: es una ceremonia vacía",false]]},
+        reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}, next:"n2a"},
+      n2a:{name:"Lecciones de Guardia", type:"decision", step:2,
+        text:"Un instructor veterano te lleva aparte. «Tu maná sube solo, +1 cada turno que empieza. No hace falta invocarlo — así funciona en Alderium.»",
+        left:"n2b", right:"n2b", leftHint:"Seguir", rightHint:"Seguir"},
+      n2b:{name:"Lecciones de Guardia", type:"decision", step:2,
+        text:"«Atacá directo al rival si no hay Guardianes en tu camino. Ganás cuando su vida llega a 0. Ahora probalo — tenés un rival a tu altura.»",
+        left:"n2duel", right:"n2duel", leftHint:"Al duelo", rightHint:"Al duelo"},
+      n2duel:{name:"Recluta rival", type:"combat", step:2, subtitle:"Duelo tutorial",
+        text:"Un recluta tan nuevo como vos te espera en el patio de entrenamiento, con un mazo tan básico como el tuyo.",
+        enemyFac:"alderium", enemyDeckBuilder:buildVanillaOnlyDeck,
+        reward:{type:"collection",key:"muralla",n:1,fac:"alderium"}, next:"n3"},
+      n3:{name:"La Encrucijada", type:"decision", step:3,
+        text:"En el camino de vuelta al cuartel, un mercader con la carreta atascada te pide una mano — pero la guardia también te espera para entrenar antes del anochecer.",
+        left:"n4a", right:"n4a", leftHint:"Ayudar al mercader", rightHint:"Entrenar con la guardia",
+        leftReward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"},
+        rightReward:[{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"},{type:"collection",key:"sold_alderium_6",n:1,fac:"alderium"}]},
+      n4a:{name:"La Prueba del Escudo", type:"decision", step:4,
+        text:"«Guardián» es la palabra clave que define a Alderium: mientras el rival tenga uno en juego, tus ataques deben dirigirse a él primero. Rompelos o quedate atascado.",
+        left:"n4duel", right:"n4duel", leftHint:"Al duelo", rightHint:"Al duelo"},
+      n4duel:{name:"La Prueba del Escudo", type:"combat", step:4, subtitle:"Duelo",
+        text:"Un caballero de la guardia forma su línea de Guardianes frente a vos. No vas a poder ir directo a su vida.",
+        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
+        reward:{type:"collection",key:"isolde",n:1,fac:"alderium"}, next:"n5bridge"},
+      n5bridge:{name:"El Arsenal", type:"bridge", step:5,
+        text:"«Un Guardián arma su propio arsenal» — te dice tu mentor, señalando el registro de cartas. «Armá tu mazo antes del Juicio.»",
+        bridgeFac:"alderium", next:"n6a"},
+      n6a:{name:"El Juicio del Alba", type:"decision", step:6,
+        text:"El sol todavía no sale. En el patio central te espera el último desafío antes de ser reconocido como Guardián pleno de Alderium.",
+        left:"n6duel", right:"n6duel", leftHint:"Al duelo final", rightHint:"Al duelo final"},
+      n6duel:{name:"El Juicio del Alba", type:"combat", step:6, subtitle:"Final — Jefe de campaña",
+        text:"Un Guardián completo, con el mejor mazo que Alderium puede ofrecer, te espera para el Juicio.",
+        enemyFac:"alderium", enemyDeckBuilder:buildDeck,
+        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"}, campaignDone:true, next:"exit"},
+    }
+  },
 };
 const CONTINENT_DUNGEONS = {alderium:["alderium_piloto"]};
+const CAMPAIGN_IDS = {alderium:"alderium_juramento"};
+const CAMPAIGN_STEP_NAMES = {alderium:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"]};
+function buildVanillaOnlyDeck(fac){
+  const deck=[]; const pool=soldierPool(fac); let vi=0;
+  while(deck.length<20){ deck.push(instantiate(null, pool[vi%pool.length].def)); vi++; }
+  return shuffle(deck);
+}
+function buildGuardianHeavyDeck(fac){
+  const deck=[];
+  for(const k in LIB){
+    if(LIB[k].fac===fac && LIB[k].type==="criatura" && (LIB[k].kw||[]).includes("Guardián")){
+      const n=copyLimit(k); for(let i=0;i<n;i++) deck.push(instantiate(k));
+    }
+  }
+  for(const k in LIB){
+    if(LIB[k].fac===fac && LIB[k].type==="criatura" && !(LIB[k].kw||[]).includes("Guardián")){
+      const n=Math.min(2,copyLimit(k)); for(let i=0;i<n && deck.length<20;i++) deck.push(instantiate(k));
+    }
+  }
+  const pool=soldierPool(fac); let vi=0;
+  while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def)); vi++; }
+  return shuffle(deck);
+}
 
 function currentDungeonNode(){ return DUNGEONS[dungeonState.dungeonId].nodes[dungeonState.nodeId]; }
 
 function enterDungeon(dungeonId){
   const dg=DUNGEONS[dungeonId];
-  dungeonState={dungeonId, nodeId:dg.startNode};
+  const saved = dg.isCampaign && S.campaignProgress[dg.faction];
+  dungeonState={dungeonId, nodeId: (saved && saved.nodeId) || dg.startNode};
   document.getElementById("dungeonInterior").dataset.faction=dg.faction;
-  document.getElementById("dungeonBg").dataset.slotLabel=`mazmorra_${dungeonId}.jpg`;
+  document.getElementById("dungeonBg").dataset.slotLabel = dg.isCampaign ? `campana_${dg.faction}.jpg` : `mazmorra_${dungeonId}.jpg`;
   showScreen("dungeonInterior");
   renderDungeonNode();
 }
@@ -756,20 +1166,31 @@ function renderDungeonNode(){
   document.getElementById("dgName").textContent=node.name;
   document.getElementById("dgSub").textContent=node.subtitle||"";
   document.getElementById("dgText").textContent=node.text;
-  document.getElementById("dgHint").textContent = node.type==="combat" ? "Tocá para enfrentarlo" : "Deslizá para elegir tu camino";
+  document.getElementById("dgHint").textContent =
+    node.type==="combat" ? "Tocá para enfrentarlo" :
+    node.type==="quiz" ? "Tocá para responder" :
+    node.type==="bridge" ? "Tocá para abrir el constructor de mazos" :
+    "Deslizá para elegir tu camino";
   clearSwipeHints();
 }
 
 function dungeonAdvance(nextId){
   if(nextId==="exit"){ exitDungeonToMap(); return; }
   dungeonState.nodeId=nextId;
+  const dg=DUNGEONS[dungeonState.dungeonId];
+  if(dg.isCampaign){ S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {nodeId:nextId}); }
   renderDungeonNode();
 }
-function exitDungeonToMap(){ showScreen("dungeonMapScreen"); }
+function exitDungeonToMap(){
+  const dg = dungeonState && DUNGEONS[dungeonState.dungeonId];
+  showScreen(dg && dg.isCampaign ? "cityScreen" : "dungeonMapScreen");
+}
 
 function commitSwipe(dir){
   const node=currentDungeonNode();
   const dest = dir==="left" ? node.left : node.right;
+  const reward = dir==="left" ? node.leftReward : node.rightReward;
+  if(reward){ grantReward(reward); toast("Recompensa: "+rewardLabel(reward)); }
   const card=document.getElementById("dgCard");
   card.style.transition="transform .26s ease-in, opacity .26s ease-in";
   card.style.transform=`translateX(${dir==="left"?-620:620}px) rotate(${dir==="left"?-28:28}deg)`;
@@ -779,8 +1200,50 @@ function commitSwipe(dir){
 
 function engageDungeonCombat(node){
   const dg=DUNGEONS[dungeonState.dungeonId];
-  beginDuel(dg.faction, node.enemyFac, {type:"dungeon", next:node.next});
+  beginDuel(dg.faction, node.enemyFac, {type:"dungeon", next:node.next, reward:node.reward, campaignDone:node.campaignDone}, {enemyDeckBuilder: node.enemyDeckBuilder});
 }
+async function engageDungeonQuiz(node){
+  const ok = await askQuizModal(node.quiz);
+  if(ok){ grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); }
+  else { toast("No era así — seguís de todos modos."); }
+  dungeonAdvance(node.next);
+}
+function engageDungeonBridge(node){
+  const dg=DUNGEONS[dungeonState.dungeonId];
+  openConstructor(node.bridgeFac||dg.faction, {type:"campaign"});
+}
+function returnToCampaignFromConstructor(){
+  const dg=DUNGEONS[dungeonState.dungeonId];
+  const node=currentDungeonNode();
+  showScreen("dungeonInterior");
+  const savedOk = S.savedDecks[dg.faction] && deckCount(S.savedDecks[dg.faction])===40;
+  if(savedOk){ toast("Mazo válido: continuá tu camino."); dungeonAdvance(node.next); }
+  else { renderDungeonNode(); toast("Necesitás un mazo de 40 cartas guardado para continuar."); }
+}
+function grantReward(reward){
+  if(!reward) return;
+  for(const r of (Array.isArray(reward)?reward:[reward])){ if(r.type==="collection") grantCollection(r.key, r.n||1); }
+}
+function rewardLabel(reward){
+  if(!reward) return "";
+  return (Array.isArray(reward)?reward:[reward]).map(r=>{
+    const e=poolEntry(r.fac||"alderium", r.key); return e ? `+${r.n||1} ${e.def.name}` : "";
+  }).filter(Boolean).join(", ");
+}
+function askQuizModal(quiz){
+  return new Promise(res=>{
+    const box=document.getElementById("mbox");
+    box.innerHTML=`<h3>✦ Recuerdo</h3><div class="mq">${quiz.q}</div>`;
+    const opts=quiz.opts.slice(); shuffle(opts);
+    for(const [txt,ok] of opts){
+      const b=document.createElement("button"); b.className="mopt"; b.textContent=txt;
+      b.onclick=()=>{closeModal();res(ok)}; box.appendChild(b);
+    }
+    openModal();
+  });
+}
+
+const DUNGEON_TAP_HANDLERS = {combat:engageDungeonCombat, quiz:engageDungeonQuiz, bridge:engageDungeonBridge};
 
 function updateSwipeHints(dx){
   const node=currentDungeonNode();
@@ -815,9 +1278,9 @@ function initDungeonCardDrag(){
     card.style.transition="transform .22s ease-out";
     const node=currentDungeonNode();
     clearSwipeHints();
-    if(node.type==="combat"){
+    if(DUNGEON_TAP_HANDLERS[node.type]){
       card.style.transform="";
-      if(Math.abs(dx)<10){ engageDungeonCombat(node); }
+      if(Math.abs(dx)<10){ DUNGEON_TAP_HANDLERS[node.type](node); }
       return;
     }
     const TH=80;
@@ -866,13 +1329,17 @@ function initMenu(){
 }
 
 // ---- 5. Duelo: motor existente, ahora con contexto de retorno (ciudad o nodo de mazmorra) ----
-function beginDuel(playerFac, enemyFac, returnCtx){
+function getPlayerDeck(fac){
+  return S.savedDecks[fac] ? buildDeckFromCounts(fac, S.savedDecks[fac]) : buildDeck(fac);
+}
+function beginDuel(playerFac, enemyFac, returnCtx, opts){
+  opts = opts||{};
   duelReturn = returnCtx||null;
   chosenFac = playerFac;
   S.players.p=newPlayer("p",playerFac);
   S.players.a=newPlayer("a",enemyFac);
-  S.players.p.deck=buildDeck(playerFac);
-  S.players.a.deck=buildDeck(enemyFac);
+  S.players.p.deck = opts.playerDeck || getPlayerDeck(playerFac);
+  S.players.a.deck = opts.enemyDeckBuilder ? opts.enemyDeckBuilder(enemyFac) : buildDeck(enemyFac);
   for(let i=0;i<3;i++) drawCard(S.players.p);
   for(let i=0;i<4;i++) drawCard(S.players.a); // el segundo compensa con una carta extra
   showScreen(null);
@@ -906,8 +1373,22 @@ function startTurn(){
   p.manaCapMax=cap;
   p.manaMax=Math.min(p.manaMax+1, cap);
   p.mana=p.manaMax; p.tempMana=0; p.ecoDiscount=0;
-  // resetear cansancio de invocación
-  for(const c of p.field) c.sick=false;
+  p.attacksThisTurn=0; // Serena, Tejedora de Leyes
+  // resetear cansancio de invocación (respeta sleepTurns de El Astado del Valle) y habilidades activadas (Nadira)
+  for(const c of p.field){
+    if(c.sleepTurns>0) c.sleepTurns--;
+    else c.sick=false;
+    c.activatedUsed=false;
+  }
+  // Rasim, Príncipe de los Espejismos: los Espejismos se desvanecen al final de su próximo turno
+  p.field = p.field.filter(c=>{
+    if(c.expireAtTurnsTaken && p.turnsTaken && p.turnsTaken>=c.expireAtTurnsTaken){
+      const el=cardEl(c); if(el){ el.classList.add("dead"); }
+      log(`${c.name} se desvanece.`); return false;
+    }
+    return true;
+  });
+  p.turnsTaken=(p.turnsTaken||0)+1;
   if(S.turnNum>2 || S.turn==="a") {} // (nada extra)
   drawCard(p);
   render();
@@ -918,9 +1399,12 @@ function startTurn(){
 
 function runaActive(p){ return p.field.some(c=>c.type==="runa" && c.key==="ley"); }
 
-function endTurn(){
+async function endTurn(){
   if(S.turn!=="p"||S.busy) return;
   clearSelection();
+  S.busy=true;
+  await endOfTurnTriggers(P());
+  S.busy=false;
   S.turn="a"; startTurn();
 }
 function endAiTurn(){
@@ -934,9 +1418,15 @@ function canPlay(p,c){
   return effectiveCost(p,c) <= availMana(p) && !(c.type==="criatura" && p.field.length>=7);
 }
 function availMana(p){ return p.mana + p.tempMana; }
+function sendaActive(p){ return p.field.some(c=>c.type==="runa" && c.key==="senda"); }
 function effectiveCost(p,c){
+  if(p.freeNextCard) return 0; // Yesid, el Último Portador: al revelarse, la próxima carta cuesta 0
+  if(c.type==="recuerdo" && p.field.some(x=>x.flag==="halvar")) return 0; // Halvar, el que Recuerda
   let cost=c.cost;
-  if(c.type==="criatura") cost=Math.max(0, cost - p.ecoDiscount);
+  if(c.type==="criatura"){
+    cost=Math.max(0, cost - p.ecoDiscount);
+    if(sendaActive(p)) cost=Math.max(1, cost-1); // Senda de los Mil Pasos (mínimo 1)
+  }
   return cost;
 }
 function spendMana(p,n){
@@ -986,6 +1476,7 @@ async function playCard(p,c){
 
 function afterPlay(p,c){
   if(c.type==="criatura" && p.ecoDiscount>0){ p.ecoDiscount=0; } // el descuento aplica a la próxima criatura
+  if(p.freeNextCard){ p.freeNextCard=false; } // Yesid: el descuento a 0 se consume con la próxima carta jugada
 }
 
 function enterField(p,c){
@@ -1006,8 +1497,8 @@ async function runEtb(p,c){
     case "zahra":{
       const others=p.field.filter(x=>x!==c && x.type==="criatura");
       if(others.length){
-        const pick = await chooseCreature(p, others, "Zahra: ¿sacrificar una criatura por +1 maná?", true);
-        if(pick){ killCreature(p,pick,"sacrificada por Zahra"); p.tempMana+=1; toast("+1 maná este turno"); }
+        const pick = await chooseCreature(p, others, "Zahira: ¿sacrificar una criatura por +1 maná?", true);
+        if(pick){ killCreature(p,pick,"sacrificada por Zahira"); p.tempMana+=1; toast("+1 maná este turno"); }
       }
       break;
     }
@@ -1039,6 +1530,34 @@ async function runEtb(p,c){
       // permanece Oculto hasta atacar/ser atacada
       break;
     }
+    case "rasim":{
+      for(let i=0;i<2 && p.field.length<7;i++){
+        const tok=instantiate(null,{fac:p.fac,name:"Espejismo",cost:0,type:"criatura",atk:1,vida:1,kw:[],art:"👻",txt:"Desaparece al final de tu próximo turno."});
+        tok.sick=true; tok.justSummoned=true;
+        tok.expireAtTurnsTaken=(p.turnsTaken||0)+1;
+        p.field.push(tok);
+      }
+      log(`Rasim invoca dos Espejismos.`);
+      break;
+    }
+    case "magnus":{
+      const list=p.grave.filter(x=>x.key==="automata");
+      if(list.length && p.field.length<7){
+        const pick=list[list.length-1];
+        p.grave.splice(p.grave.indexOf(pick),1);
+        const rev=instantiate("automata"); rev.plusAtk=pick.plusAtk; rev.plusVida=pick.plusVida; rev.sick=true; rev.justSummoned=true;
+        p.field.push(rev); log(`Magnus Ferro devuelve a ${rev.name} al campo.`);
+      }
+      break;
+    }
+    case "mara":{
+      if(p.id==="p"){
+        const foe=other(p);
+        const top3=foe.deck.slice(-3).reverse();
+        await peekCards("Vessa, Cartógrafa de Rutas Muertas", "Las 3 cartas superiores del mazo rival (de arriba a abajo):", top3);
+      }
+      break;
+    }
   }
   render();
 }
@@ -1063,6 +1582,8 @@ async function resolveTargeted(p,c,tgt){
     case "cristal":{
       tgt.plusAtk+=2; tgt.cristalHost=true;
       log(`Cristal de Sobrecarga: ${tgt.name} gana +2/+0.`);
+      const prima=p.field.find(x=>x.flag==="unidad_prima");
+      if(prima){ prima.plusAtk+=1; prima.plusVida+=1; log(`Unidad Prima crece a +1/+1.`); }
       break;
     }
     case "vendaje":{
@@ -1084,6 +1605,7 @@ async function runCast(p,c,_){
       break;
     }
     case "ley":{ p.manaMax=Math.min(p.manaMax,12); log(`Ley de Terra Caelum: tope de maná ahora 12.`); break; }
+    case "senda":{ log(`Senda de los Mil Pasos: tus criaturas Nómadas cuestan 1 menos al jugarlas (mínimo 1).`); break; }
     case "equilibrio":{
       const o=other(p); const lo=Math.min(availMana(p),availMana(o));
       p.mana=Math.max(0,lo-p.tempMana>0?lo-p.tempMana:0); p.tempMana=Math.min(p.tempMana,lo); p.mana=Math.max(0,lo-p.tempMana);
@@ -1128,19 +1650,27 @@ async function attack(attacker, ownerP, target){
   const foe=other(ownerP);
   const dir = ownerP.id==="p" ? "up" : "down";
   const el=cardEl(attacker); if(el){ el.classList.add("attacking", dir); }
-  reveal(attacker);
+  reveal(attacker, ownerP);
   await sleep(180);
 
+  // Isolde, Voz del Decreto: inflige 1 al atacante antes de que se resuelva el combate.
+  const isolde = foe.field.find(c=>c.flag==="isolde" && c!==attacker);
+  if(isolde && effVida(ownerP,attacker)>0){
+    applyDamage(ownerP, attacker, 1, isolde);
+    impactFlash(cardEl(attacker), "var(--bad)");
+    log(`${isolde.name} inflige 1 a ${attacker.name} antes del combate.`);
+  }
+
   if(target.isHero){
-    dealToHero(foe, effAtk(attacker), attacker.name);
+    dealToHero(foe, effAtk(attacker,ownerP), attacker.name);
     const heroElId = foe.id==="p"?"playerHero":"enemyHero";
     impactFlash(document.getElementById(heroElId), "var(--vida)");
     heroHitFx(foe, heroElId);
-    floatDmg(document.getElementById(heroElId), effAtk(attacker));
+    floatDmg(document.getElementById(heroElId), effAtk(attacker,ownerP));
   } else {
-    reveal(target);
+    reveal(target, foe);
     const tel=cardEl(target), ael=cardEl(attacker);
-    const aAtk=effAtk(attacker), tAtk=effAtk(target);
+    const aAtk=effAtk(attacker,ownerP), tAtk=effAtk(target,foe);
     const targetHadShield=target.shield, attackerHadShield=attacker.shield;
     if(tel) tel.classList.add("struck");
     if(ael && tAtk>0) ael.classList.add("struck");
@@ -1150,13 +1680,14 @@ async function attack(attacker, ownerP, target){
     if(aAtk>0){ if(targetHadShield && !target.shield) burst(tel, "var(--shield)", 8); else impactFlash(tel, "var(--atk)"); }
     if(tAtk>0){ if(attackerHadShield && !attacker.shield) burst(ael, "var(--shield)", 8); else impactFlash(ael, "var(--atk)"); }
     floatDmg(cardEl(target), aAtk); floatDmg(cardEl(attacker), tAtk);
-    // Guardiana de las Alturas: sobrevive como Guardián -> +1/+1
+    // Guardiana de las Alturas / Elyon: sobrevive como Guardián -> +1/+1
     if(target.flag==="guardiana" && effVida(foe,target)>0 && target.kw.includes("Guardián")){
-      target.plusAtk+=1; target.plusVida+=1; log(`Guardiana de las Alturas crece a +1/+1.`);
+      target.plusAtk+=1; target.plusVida+=1; log(`${target.name} crece a +1/+1.`);
     }
   }
   attacker.attacked=true;
   attacker.sick=true; // ya atacó este turno
+  ownerP.attacksThisTurn=(ownerP.attacksThisTurn||0)+1; // Serena, Tejedora de Leyes cuenta esto en el rival
   await sleep(260);
   cleanupDeaths();
   render();
@@ -1223,6 +1754,9 @@ async function aiTurn(){
   if(S.phase!=="play") return;
   const p=S.players.a;
   S.busy=true;
+  // Nadira: la IA activa si tiene vida de sobra y le sirve una carta más
+  const nadira=p.field.find(c=>c.activated==="nadira" && !c.activatedUsed);
+  if(nadira && p.life>10){ p.life-=2; nadira.activatedUsed=true; drawCard(p); log(`${nadira.name} paga 2 de vida y roba una carta.`); render(); }
   // fase de juego: intentar bajar cartas por valor
   let played=true; let guard=0;
   while(played && guard++<20){
@@ -1242,6 +1776,7 @@ async function aiTurn(){
   // fase de ataque
   await aiAttacks(p);
   await sleep(300);
+  await endOfTurnTriggers(p);
   S.busy=false;
   if(S.phase==="play") endAiTurn();
 }
@@ -1272,7 +1807,7 @@ async function aiEtb(p,c){
     case "muralla":{ const o=p.field.find(x=>x!==c&&x.kw.includes("Guardián")); if(o)o.shield=true; break; }
     case "zahra":{
       const junk=p.field.filter(x=>x!==c&&x.type==="criatura"&&effVida(p,x)<=1 && !x.kw.includes("Guardián"));
-      if(junk.length){ killCreature(p,junk[0],"sacrificada por Zahra"); p.tempMana+=1; }
+      if(junk.length){ killCreature(p,junk[0],"sacrificada por Zahira"); p.tempMana+=1; }
       break;
     }
     case "lyra":{
@@ -1285,6 +1820,24 @@ async function aiEtb(p,c){
     }
     case "anciana":{ const ok=Math.random()<0.6; p.life=Math.min(30,p.life+(ok?4:2)); break; }
     case "forastero":{ const r=[[1,1],[3,3],[5,1]][(Math.random()*3)|0]; c.baseAtk=r[0]; c.baseVida=r[1]; break; }
+    case "rasim":{
+      for(let i=0;i<2 && p.field.length<7;i++){
+        const tok=instantiate(null,{fac:p.fac,name:"Espejismo",cost:0,type:"criatura",atk:1,vida:1,kw:[],art:"👻",txt:""});
+        tok.sick=true; tok.expireAtTurnsTaken=(p.turnsTaken||0)+1;
+        p.field.push(tok);
+      }
+      break;
+    }
+    case "magnus":{
+      const list=p.grave.filter(x=>x.key==="automata");
+      if(list.length && p.field.length<7){
+        const pick=list[list.length-1]; p.grave.splice(p.grave.indexOf(pick),1);
+        const rev=instantiate("automata"); rev.plusAtk=pick.plusAtk; rev.plusVida=pick.plusVida; rev.sick=true;
+        p.field.push(rev);
+      }
+      break;
+    }
+    case "mara": break; // la IA no necesita "ver" el mazo del rival para su lógica actual
   }
   render();
 }
@@ -1303,11 +1856,12 @@ function aiPickTarget(p,c){
 
 async function aiAttacks(p){
   const foe=other(p);
-  const attackers=()=>p.field.filter(c=>c.type==="criatura" && !c.sick && effAtk(c)>0 && !c.attacked);
+  const attackers=()=>p.field.filter(c=>c.type==="criatura" && !c.sick && effAtk(c,p)>0 && !c.attacked);
   let guard=0;
   let list=attackers();
   for(const atk of list){
     if(S.phase!=="play") return;
+    if(foe.field.some(x=>x.flag==="serena") && (p.attacksThisTurn||0)>=1) break; // Serena, Tejedora de Leyes
     const tg=legalTargets(p);
     let target;
     if(!tg.creatures.length && tg.hero){ target={isHero:true,p:foe}; }
@@ -1315,11 +1869,11 @@ async function aiAttacks(p){
       // hay guardianes o criaturas: preferir matar sin morir, o ir a la cara si no hay guardián
       if(tg.hero){
         // no hay guardián enemigo -> priorizar cara salvo trade muy bueno
-        const lethal = tg.creatures.find(t=> effAtk(atk)>=effVida(foe,t) && effAtk(t)<effVida(p,atk));
+        const lethal = tg.creatures.find(t=> effAtk(atk,p)>=effVida(foe,t) && effAtk(t,foe)<effVida(p,atk));
         target = lethal ? lethal : {isHero:true,p:foe};
       } else {
         // hay guardián: hay que romperlo. elegir el que pueda matar, si no el más débil
-        const kill=tg.creatures.find(t=>effAtk(atk)>=effVida(foe,t));
+        const kill=tg.creatures.find(t=>effAtk(atk,p)>=effVida(foe,t));
         target = kill || tg.creatures.slice().sort((a,b)=>effVida(foe,a)-effVida(foe,b))[0];
       }
     }
@@ -1345,15 +1899,48 @@ function onHandClick(c){
   }
   playCard(p,c);
 }
+function openActivatedChooser(c){
+  const p=S.players.p;
+  const box=document.getElementById("mbox");
+  box.innerHTML=`<h3>${c.name}</h3><div class="mq">&nbsp;</div>`;
+  const bAtk=document.createElement("button"); bAtk.className="mopt"; bAtk.textContent="Atacar";
+  bAtk.onclick=()=>{ closeModal(); trySelectAsAttacker(c); };
+  box.appendChild(bAtk);
+  if(c.activated==="nadira"){
+    const bAct=document.createElement("button"); bAct.className="mopt";
+    bAct.textContent="Activar: pagar 2 de vida, robar 1 carta";
+    if(p.life<=2) bAct.disabled=true;
+    bAct.onclick=()=>{ closeModal(); activateNadira(c); };
+    box.appendChild(bAct);
+  }
+  const bC=document.createElement("button"); bC.className="mopt"; bC.textContent="Cancelar";
+  bC.onclick=()=>{ closeModal(); };
+  box.appendChild(bC);
+  openModal();
+}
+function activateNadira(c){
+  const p=S.players.p;
+  if(p.life<=2||c.activatedUsed) return;
+  p.life-=2; c.activatedUsed=true;
+  drawCard(p);
+  log(`${c.name} paga 2 de vida y roba una carta.`);
+  render(); checkWin();
+}
 function onFieldClick(c, owner){
   if(S.turn!=="p"||S.busy) return;
   if(S.targeting){ tryTarget({creature:c, owner}); return; }
   if(owner!=="p") return;
-  // seleccionar atacante
   if(c.type!=="criatura") return;
-  if(effAtk(c)<=0){ guide("atk0","«"+c.name+"» tiene 0 de ataque: no puede atacar (pero sí puede defender o bloquear como Guardián).", cardEl(c)); return; }
+  if(c.activated && !c.activatedUsed){ openActivatedChooser(c); return; }
+  trySelectAsAttacker(c);
+}
+function trySelectAsAttacker(c){
+  if(effAtk(c,S.players.p)<=0){ guide("atk0","«"+c.name+"» tiene 0 de ataque: no puede atacar (pero sí puede defender o bloquear como Guardián).", cardEl(c)); return; }
   if(c.sick){ guide("sick","«"+c.name+"» entró este turno. Una criatura no puede atacar el mismo turno en que se juega, salvo que tenga Prisa.", cardEl(c)); return; }
   if(c.attacked){ guide("ataco","«"+c.name+"» ya atacó este turno. Cada criatura ataca una sola vez por turno.", cardEl(c)); return; }
+  if(S.players.a.field.some(x=>x.flag==="serena") && (S.players.p.attacksThisTurn||0)>=1){
+    guide("serena","Serena, Tejedora de Leyes impide más de un ataque por turno mientras esté en el campo rival.", cardEl(c)); return;
+  }
   if(S.selected===c){ clearSelection(); return; }
   S.selected=c; render();
 }
@@ -1441,18 +2028,58 @@ function chooseFromList(p,list,title){
     box.appendChild(sk); openModal();
   });
 }
+function peekCards(title, subtitle, list){
+  return new Promise(res=>{
+    const box=document.getElementById("mbox");
+    box.innerHTML=`<h3>${title}</h3><div class="mq">${subtitle}</div>`;
+    if(!list.length){ box.insertAdjacentHTML("beforeend", `<div class="mq">El mazo rival está vacío.</div>`); }
+    for(const c of list){
+      const d=document.createElement("div"); d.className="mopt"; d.style.cursor="default";
+      d.textContent=`${c.name} — ${c.cost}⬢ · ${c.type}`;
+      box.appendChild(d);
+    }
+    const ok=document.createElement("button"); ok.className="mopt"; ok.textContent="Cerrar";
+    ok.onclick=()=>{closeModal();res();}; box.appendChild(ok);
+    openModal();
+  });
+}
 async function chooseCreature(p,list,title,optional){
   const box=document.getElementById("mbox");
   return new Promise(res=>{
     box.innerHTML=`<h3>${title}</h3><div class="mq">&nbsp;</div>`;
     for(const it of list){
       const b=document.createElement("button"); b.className="mopt";
-      b.textContent=`${it.name} — ${effAtk(it)}/${effVida(p,it)}`;
+      b.textContent=`${it.name} — ${effAtk(it,p)}/${effVida(p,it)}`;
       b.onclick=()=>{closeModal();res(it)}; box.appendChild(b);
     }
     if(optional){ const sk=document.createElement("button"); sk.className="mopt"; sk.textContent="No sacrificar"; sk.onclick=()=>{closeModal();res(null)}; box.appendChild(sk); }
     openModal();
   });
+}
+function chooseHealTarget(p, hurtList){
+  return new Promise(res=>{
+    const box=document.getElementById("mbox");
+    box.innerHTML=`<h3>Bjorna, Madre de las Piedras</h3><div class="mq">Fin de turno: curá 2 a tu héroe o a una criatura aliada.</div>`;
+    const bh=document.createElement("button"); bh.className="mopt"; bh.textContent=`Curar a ${who(p)} (héroe) — ${p.life} vida`;
+    bh.onclick=()=>{closeModal();res(null)}; box.appendChild(bh);
+    for(const c of hurtList){
+      const b=document.createElement("button"); b.className="mopt";
+      b.textContent=`${c.name} — ${effVida(p,c)}/${effMaxVida(p,c)}`;
+      b.onclick=()=>{closeModal();res(c)}; box.appendChild(b);
+    }
+    openModal();
+  });
+}
+async function endOfTurnTriggers(p){
+  const bjorna = p.field.find(c=>c.flag==="bjorna");
+  if(!bjorna) return;
+  const hurt = p.field.filter(x=>x.type==="criatura" && x.damage>0);
+  let target=null;
+  if(p.id==="p" && hurt.length){ target = await chooseHealTarget(p, hurt); }
+  else if(p.id==="a" && hurt.length){ target = hurt.sort((a,b)=>b.damage-a.damage)[0]; }
+  if(target){ target.damage=Math.max(0,target.damage-2); log(`Bjorna cura 2 a ${target.name}.`); }
+  else { p.life=Math.min(30,p.life+2); log(`Bjorna cura 2 a ${who(p)}.`); }
+  render();
 }
 function askRecuerdo(key){
   const r=RECUERDOS[key]; if(!r) return Promise.resolve(false);
@@ -1533,7 +2160,7 @@ function makeCardEl(c, owner, mode){
   el.style.setProperty("--fc", fac.color);
   const isMine = owner.id==="p";
   const hideStats = c.hidden && !isMine; // el rival no ve stats de tus Ocultas… acá: vos no ves las de la IA
-  const showA = hideStats? "?" : effAtk(c);
+  const showA = hideStats? "?" : effAtk(c,owner);
   const showV = hideStats? "?" : effVida(owner,c);
 
   let kwHtml = c.kw.length? `<div class="kw">${c.kw.map(k=>`<span>${k}</span>`).join("")}</div>` : "";
@@ -1553,7 +2180,7 @@ function makeCardEl(c, owner, mode){
   `;
   if(c.type==="criatura"){
     const maxV=effMaxVida(owner,c);
-    const buffed = (effAtk(c)>c.baseAtk)?" buffed":"";
+    const buffed = (effAtk(c,owner)>c.baseAtk)?" buffed":"";
     const vbuff = (maxV>c.baseVida)?" buffed":"";
     const hurt = (!hideStats && effVida(owner,c) < maxV)?" hurt":"";
     el.insertAdjacentHTML("beforeend",
@@ -1577,7 +2204,7 @@ function makeCardEl(c, owner, mode){
       c.justSummoned=false;
     }
     if(c.type==="criatura" && c.sick && !c.attacked){ el.classList.add("summonsick"); el.insertAdjacentHTML("beforeend",`<div class="zzz">💤</div>`); }
-    if(owner.id==="p" && S.turn==="p" && c.type==="criatura" && !c.sick && !c.attacked && effAtk(c)>0 && !S.targeting){
+    if(owner.id==="p" && S.turn==="p" && c.type==="criatura" && !c.sick && !c.attacked && effAtk(c,owner)>0 && !S.targeting){
       el.classList.add("canattack");
     }
     if(S.selected===c) el.classList.add("selected");
@@ -1601,7 +2228,12 @@ function makeCardEl(c, owner, mode){
 }
 
 function cardEl(c){ return document.querySelector(`.card[data-uid="${c.uid}"]`); }
-function reveal(c){ if(c.hidden){ c.hidden=false; render(); } }
+function reveal(c, owner){
+  if(!c.hidden) return;
+  c.hidden=false;
+  if(c.flag==="yesid" && owner){ owner.freeNextCard=true; toast(`${c.name} revelado: tu próxima carta este turno es gratis.`); }
+  render();
+}
 
 // ============================================================
 //  Util UI
@@ -1690,6 +2322,13 @@ function checkWin(){
     // Contexto de retorno: duelo de mazmorra vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
     if(duelReturn && duelReturn.type==="dungeon" && win){
+      if(duelReturn.reward){ grantReward(duelReturn.reward); b.querySelector(".sub").textContent += " Recompensa: "+rewardLabel(duelReturn.reward)+"."; }
+      if(duelReturn.campaignDone && dungeonState){
+        const dg=DUNGEONS[dungeonState.dungeonId];
+        S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {done:true});
+        S.dungeonsUnlocked[dg.faction]=true;
+        b.querySelector(".sub").textContent += " ¡Mazmorras de "+FACTIONS[dg.faction].name+" desbloqueadas!";
+      }
       contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("dungeonInterior"); dungeonAdvance(duelReturn.next); };
       replayBtn.style.display="none";
       backBtn.textContent="Abandonar mazmorra"; backBtn.onclick=()=>{ b.style.display="none"; exitDungeonToMap(); };

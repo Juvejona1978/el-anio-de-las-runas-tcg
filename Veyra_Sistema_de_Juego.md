@@ -76,6 +76,8 @@ Texto de efecto:
 
 ## 5. Cartas de prueba de concepto: Sigrun y Eratiel
 
+**Nota canónica:** la Piedra de Sigrun y Sigrun, Runa de la Victoria son **contenido de la primera expansión, no del set base** (ver sección 5.1). Pertenecen a **Nómadas** — no a Alderium ni a ninguna otra facción; es intencional que sea la única Runa nómada y que rompa la regla de "una Runa por facción" (su gracia narrativa es justamente esa excepción). Eratiel sí es del set base (sección 5.2, héroe #16).
+
 ### Piedra de Sigrun
 ```
 Facción: Nómadas
@@ -113,6 +115,131 @@ para costo 3, pega más fuerte y muere más fácil que el promedio,
 reforzando la idea de "guerrero sin historia" impredecible en vez
 de un vainilla prolijo. Rompe la curva en ambas direcciones a la
 vez, coherente con la identidad Nómada de la sección 4.
+
+---
+
+## 5.1 Estructura oficial del set base (canónico)
+
+Esto fija la forma del pool coleccionable. **No es provisional** — a diferencia de números sueltos de balance (que sí se ajustan en playtest), la estructura de rareza y cantidades es diseño cerrado.
+
+**Pool por facción: 30 cartas** (180 en el set base completo, 6 facciones). Composición exacta, igual en las seis:
+
+| Rareza / tipo | Cantidad | Copias máx. por mazo |
+|---|---|---|
+| Soldados (criatura común, sin nombre propio) | 12 | 3 |
+| Especialistas (criatura poco común, con oficio) | 5 | 2 |
+| Héroes (criatura legendaria única, con nombre y lore) | 3 | 1 |
+| Hechizos | 5 | 2 |
+| Reliquias | 3 | 2 |
+| Recuerdos | 1 | 1 |
+| Runas | 1 | 1 |
+| **Total** | **30** | — |
+
+Los "Soldados" son el equivalente a las cartas "vainilla" ya usadas en el prototipo (ej. "Recluta", "Guerrero") — mismo rol de curva de maná, ahora con nombre de rareza oficial. Los Héroes de las 18 cartas de prueba (sección 17) y los 18 nuevos de la sección 5.2 son la rareza más alta del juego.
+
+**Regla de mazo (ya vigente, sección 6): 40 cartas exactas, mono-facción.** Con un pool de 30 por facción y estos límites de copia, un mazo de 40 nunca puede ser "todo lo mismo" — obliga a variedad natural sin necesitar una regla de mínimos artificial.
+
+**Runa base de los Nómadas (nueva, set base — no confundir con Sigrun, que es de expansión):**
+```
+Nombre: Senda de los Mil Pasos
+Facción: Nómadas | Costo: 4 | Tipo: Runa
+Texto: Mientras esté en juego, tus criaturas Nómadas cuestan 1
+maná menos el turno en que se juegan (mínimo 1).
+```
+*A balancear en playtest — mismo espíritu que "Ley de Terra Caelum": una Runa por facción, efecto de sistema, no de stats puntuales.*
+
+---
+
+## 5.2 Los 18 héroes del set base (3 por facción)
+
+Máxima rareza del juego: 1 copia por mazo. Cinco ya existían como cartas de prueba (sección 17) y se **promueven** a héroe sin cambiar su mecánica (excepto Guardiana de las Alturas, que se renombra). Los otros 13 son nuevos — stats y textos sugeridos, a balancear en playtest como el resto del set.
+
+### Alderium
+```
+1. Rhaen, Escudo del Trono — YA EXISTE (sección 17). Costo 4 | 2/6 | Guardián.
+   Tus otros Guardianes ganan +0/+1.
+   Nota de canon (Veyra_Lore_Notas.md sección 3): esta carta representa
+   la etapa temprana de Rhaen en Alderium — su arco en el libro lo saca
+   de la facción. Expansión futura: "Rhaen, Portador de la Hoja Solar".
+
+2. Isolde, Voz del Decreto — NUEVA. Costo 5 | 3/5.
+   Cuando una criatura enemiga ataca (a Isolde, a otra criatura o al
+   jugador), Isolde le inflige 1 de daño antes de que se resuelva el combate.
+
+3. Tiberon, Portaestandarte del Alba — NUEVA. Costo 4 | 2/4.
+   Tus otros Guardianes ganan +1/+1 (en vez del +0/+1 de Rhaen — si
+   tenés ambos en juego, un Guardián puede llegar a +1/+2).
+```
+
+### Qashir
+```
+4. Zahira, la Apostadora — YA EXISTE (sección 17, renombrada — ver Veyra_Lore_Notas.md sección 3). Costo 3 | 4/2.
+   Al entrar: podés sacrificar otra criatura para ganar +1 maná este turno.
+
+5. Rasim, Príncipe de los Espejismos — NUEVA. Costo 5 | 3/3.
+   Al entrar, creá dos Espejismos 1/1 que desaparecen al final de tu
+   próximo turno.
+
+6. Nadira, la que Vende el Viento — NUEVA. Costo 4 | 2/3.
+   Habilidad activada, una vez por turno: pagá 2 de vida para robar una carta.
+```
+
+### Brasshaven
+```
+7. Lyra Vale, la Inventora — YA EXISTE (sección 17). Costo 4 | 3/3.
+   Al entrar: devolvé una criatura de tu cementerio al campo con -1/-1.
+
+8. Magnus Ferro, Capataz de la Franja — NUEVA. Costo 6 | 4/4.
+   Al entrar, devolvé al campo al último Autómata aliado destruido.
+
+9. Unidad Prima, el Primer Autómata — NUEVA. Costo 3 | 1/3.
+   Gana +1/+1 permanente cada vez que ligás una Reliquia a una
+   criatura aliada (incluida ella misma).
+```
+
+### Kóren
+```
+10. Bjorna, Madre de las Piedras — NUEVA. Costo 5 | 2/6.
+    Al final de tu turno, curá 2 a tu héroe o a una criatura aliada.
+
+11. Halvar, el que Recuerda — NUEVA. Costo 4 | 3/4.
+    Tus cartas de Recuerdo cuestan 0. Mientras Halvar esté en tu mazo,
+    podés incluir 1 copia adicional de Recuerdo (2 en total en vez de 1).
+
+12. El Astado del Valle — NUEVA. Costo 7 | 8/8.
+    Entra dormido: no puede atacar durante tus dos primeros turnos
+    con él en el campo (ni siquiera con Prisa).
+    Nota de canon (Veyra_Lore_Notas.md sección 3): candidato a ser el
+    único Espíritu que Kóren acepta (pendiente de confirmación del
+    autor). Si lo es, la mecánica ya está alineada: entrar dormido es
+    esperar como forma de fe.
+```
+*Nota: ninguna de las 3 cartas de prueba de Kóren (sección 17) era candidata natural a héroe — Anciana del Río Callado queda como Especialista del pool.*
+
+### Caelum / Terra Caelum
+```
+13. Elyon, Juez del Cielo — PROMUEVE "Guardiana de las Alturas"
+    (sección 17), renombrada. Costo 4 | 3/5 | Guardián.
+    Cada vez que es atacada como Guardián y sobrevive, gana +1/+1 permanente.
+
+14. Serena, Tejedora de Leyes — NUEVA. Costo 5 | 2/5.
+    Mientras esté en el campo, el rival solo puede declarar un ataque por turno.
+
+15. El Custodio del Anillo — NUEVA. Costo 6 | 3/7 | Guardián.
+    Gana +0/+2 por cada Runa activa en juego (de cualquiera de los dos jugadores).
+```
+
+### Nómadas
+```
+16. Eratiel, el Guerrero sin Historia — YA EXISTE (sección 5). Costo 3 | 4/2 | Oculto.
+
+17. Vessa, Cartógrafa de Rutas Muertas — NUEVA (renombrada — ver Veyra_Lore_Notas.md sección 3: colisión con Mara, madre de Nael en el libro). Costo 4 | 3/3.
+    Al entrar, mirás las 3 cartas superiores del mazo del rival (sin alterarlas).
+
+18. Yesid, el Último Portador — NUEVA. Costo 5 | 3/4 | Oculto.
+    Cuando se revela (al atacar o ser atacado), la próxima carta que
+    juegues este turno cuesta 0.
+```
 
 ---
 
@@ -156,7 +283,7 @@ Este orden es una propuesta inicial — se puede reordenar cuando tengamos más 
 
 Esto significa, en la práctica:
 
-- **Los personajes del libro son utilizables como piezas, no como guion.** Podés jugar con Rhaen, Zahra o Eratiel en cualquier combinación, en cualquier momento, sin que eso implique "esto pasa antes o después" de algo del libro.
+- **Los personajes del libro son utilizables como piezas, no como guion.** Podés jugar con Rhaen, Zahira o Eratiel en cualquier combinación, en cualquier momento, sin que eso implique "esto pasa antes o después" de algo del libro.
 - **Los lugares son mapas, no capítulos.** Cada continente/región (Alderium, Qashir, Brasshaven, Kóren, Caelum, La Franja) es un mapa explorable de forma libre, con sus propias mazmorras y actividades adentro. El jugador elige a dónde ir, no sigue un orden 1-2-3.
 - **La novela sigue existiendo en paralelo**, como lore ambiental: se puede contar historia de personajes, del mundo, de eventos — mediante Recuerdos, bibliotecas, diálogos — pero es opcional y nunca condiciona el avance del jugador ni lo obliga a una secuencia.
 - **El canon crece sin atarse a la trama.** Justo como pediste antes ("cada capítulo nuevo puede volverse contenido jugable"), pero ahora explícitamente: contenido *nuevo e inventado para el juego* (monstruos, jefes, mazmorras) puede alimentar de vuelta al lore del libro más adelante, no solo al revés.
@@ -466,7 +593,7 @@ Escudo a dos criaturas en vez de una.
 
 ### Qashir — recursos y riesgo
 ```
-Nombre: Zahra, la Apostadora
+Nombre: Zahira, la Apostadora (renombrada desde "Zahra" — ver Veyra_Lore_Notas.md sección 3)
 Costo: 3 | Tipo: Criatura | ATK/VIDA: 4/2
 Texto: Al entrar en juego, podés sacrificar otra criatura tuya:
 si lo hacés, ganás +1 tope de maná este turno.
@@ -596,3 +723,24 @@ Partida simulada Alderium (control) vs Qashir (agro/sacrificio), usando mazos re
 4. Definir el "costo de fallo" en encuentros de mazmorra (ej. la Emboscada de Ladrones del grafo) — por ahora se fijó como propuesta "pierde la carta superior del mazo", a validar junto con el punto 3.
 5. Revisar el combo de sacrificio de Zahra (Qashir) a la luz del hallazgo #2 del Playtest #1 — puede necesitar un ajuste de texto.
 6. Agregar al menos una carta con Silencio y una con Vínculo al set de prueba, para completar la cobertura de palabras clave antes del segundo playtest.
+
+---
+
+## 20. Principios de arquitectura
+
+**Mazmorras y mapas son datos extensibles.** El motor debe soportar agregar nodos, conexiones y condiciones de desbloqueo (campaña completada, carta poseída, pregunta de Recuerdo acertada) **sin modificar código** — es la forma en que ya está construido `DUNGEONS`/`CAMPAIGNS` en `Veyra.html`: cada mazmorra o campaña es una entrada de datos (nodos, tipo, texto, recompensa, próximo nodo), no una función a medida. Esto es intencional y no debe romperse al agregar contenido: **el lore va a abrir pasadizos nuevos en mazmorras ya jugadas** como estrategia de contenido deliberada (un nodo puede aparecer o desbloquearse más adelante sin tocar el grafo existente).
+
+**Estructura de facciones preparada para una séptima.** `FACTIONS` y el resto del modelo de datos deben poder aceptar una entrada más (Terra Caelum, ver Veyra_Lore_Notas.md sección 1) el día que se diseñe la primera expansión, sin necesitar refactor — simplemente no se expone en la UI (mapa mundial, selector de facción) hasta ese momento.
+
+---
+
+## 21. Filosofía comercial
+
+Cuatro principios fijados, no negociables al momento de diseñar cualquier sistema de progreso, tienda o monetización:
+
+1. **La historia completa es jugable gratis y progresiva.** Ninguna campaña ni capítulo del modo Historia/Exploración se paga.
+2. **La tienda es un lugar del mundo** — un puesto, un mercader, una taberna — **nunca** un popup, un banner ni un ícono de venta flotante sobre la UI de juego.
+3. **Se monetiza el cariño y la colección, no el progreso.** El que vio el sacrificio de un personaje quiere su carta; no la necesita para avanzar.
+4. **El lore se infiltra jugando** — Recuerdos, pasadizos que solo encuentra quien conoce la historia, textos de carta — **nunca se impone.**
+
+Merchandise (prints, camisetas) queda como fase futura, cuando ya exista comunidad — es cosecha, no semilla.
