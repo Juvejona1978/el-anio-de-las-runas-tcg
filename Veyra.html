@@ -193,20 +193,17 @@
   .zbtn:disabled{opacity:.35;cursor:not-allowed}
   .zcount{font-family:Georgia,serif;font-size:16px;font-weight:700;min-width:56px;text-align:center}
 
-  /* ---------- Campaña ---------- */
-  #campaignScreen{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
-  .campaign-progress{position:absolute;left:0;right:0;bottom:0;top:30%;overflow-y:auto;z-index:2;
-    padding:10px 16px calc(16px + env(safe-area-inset-bottom))}
-  .cnode{display:flex;align-items:center;gap:12px;background:rgba(10,9,7,.6);border:1.5px solid var(--frame);
-    border-radius:10px;padding:12px 14px;margin-bottom:8px;backdrop-filter:blur(3px)}
-  .cnode.done{opacity:.55}
-  .cnode.locked{opacity:.4}
-  .cnode .cn-badge{width:30px;height:30px;border-radius:50%;background:var(--panel2);border:1px solid var(--frame);
-    display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto;font-weight:800}
-  .cnode.done .cn-badge{background:var(--good);color:#0b0a08}
-  .cnode.current .cn-badge{background:var(--fc,var(--gold));color:#0b0a08}
-  .cnode .cn-name{font-family:Georgia,serif;font-weight:700;font-size:14px;color:var(--text)}
-  .cnode .cn-desc{font-size:11px;color:var(--text-dim);margin-top:1px}
+  /* ---------- Campaña: hotspot destacado dentro del mapa de mazmorras (no es pantalla propia) ---------- */
+  .campaign-hotspot .hs-circle{border-color:var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.65),0 0 0 1px rgba(216,180,106,.4) inset}
+  .campaign-hotspot .hs-init{font-size:26px}
+  .campaign-hotspot:not(.locked) .hs-circle{animation:hspulse-gold 2.2s ease-in-out infinite}
+  @keyframes hspulse-gold{
+    0%,100%{box-shadow:0 0 0 0 rgba(216,180,106,.55), 0 4px 16px rgba(0,0,0,.65)}
+    50%{box-shadow:0 0 18px 8px rgba(216,180,106,0), 0 4px 16px rgba(0,0,0,.65)}
+  }
+  .campaign-hotspot .hs-label{border-color:var(--gold);color:var(--gold2)}
+  .dungeon-hotspot.locked .hs-diamond{filter:grayscale(.85) brightness(.5)}
+  .dungeon-hotspot .hs-lock{transform:rotate(-45deg)}
 
   /* ---------- Board layout (mobile-first, vertical) ---------- */
   .herobar{display:flex;align-items:center;gap:10px;padding:6px 12px;flex:0 0 auto;
@@ -375,11 +372,11 @@
   .logline.out{opacity:0;transform:translateY(-6px)}
   @keyframes fade{from{opacity:0;transform:translateY(8px) scale(.96)}}
 
-  #banner{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  #banner{position:fixed;inset:0;z-index:65;display:none;align-items:center;justify-content:center;
     background:rgba(8,7,12,.85);flex-direction:column;gap:8px;padding:20px;text-align:center}
   #banner .big{font-size:clamp(42px,13vw,60px);font-weight:800;letter-spacing:4px}
   #banner .sub{color:var(--dim);letter-spacing:1px;font-size:14px}
-  #toast{position:fixed;top:calc(60px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:35;
+  #toast{position:fixed;top:calc(60px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:75;
     background:rgba(30,26,40,.96);border:1px solid var(--gold);border-radius:10px;padding:9px 16px;
     font-weight:700;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:80vw;text-align:center;font-size:13px}
   #toast.rule{border-color:#e6b23c;background:rgba(38,29,20,.97);color:#f4dca0;max-width:88vw;
@@ -388,7 +385,8 @@
   #toast.out{opacity:0}
 
   /* ---------- Modal ---------- */
-  #modal{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:rgba(8,7,12,.72);padding:16px}
+  /* z-index por encima de las pantallas-lugar (48) y del menú de duelo (50) — bug: antes quedaba detrás */
+  #modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(8,7,12,.72);padding:16px}
   .mbox{width:min(440px,100%);max-height:88vh;overflow:auto;background:linear-gradient(#1c1826,#141120);border:1px solid var(--gold);
     border-radius:14px;padding:20px 20px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
   .mbox h3{margin:0 0 4px;color:var(--gold2);font-size:18px}
@@ -490,14 +488,6 @@
   <div class="ctor-curve" id="ctorCurve"></div>
   <div class="ctor-list" id="ctorList"></div>
   <button class="btn play ctor-save" id="ctorSaveBtn" disabled>Guardar mazo (0/40)</button>
-</div>
-
-<!-- ===================== CAMPAÑA (mazmorra especial con recompensas) ===================== -->
-<div id="campaignScreen">
-  <div class="scene-bg" id="campaignBg"></div>
-  <button class="compass-btn" id="campaignBack" title="Volver a mazmorras">‹</button>
-  <div class="scene-title" id="campaignTitle"></div>
-  <div class="campaign-progress" id="campaignProgress"></div>
 </div>
 
 <!-- ===================== SELECCIÓN DE DUELO ===================== -->
@@ -770,7 +760,36 @@ S.campaignProgress = {}; // {facción: {nodeId, done}} — progreso persistente 
 S.dungeonsUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
 function isUnlocked(k){ return !!S.unlocked[k]; }
 function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaignProgress[fac].done); }
-grantStartingAlderiumCollection();
+
+// ---- Persistencia (localStorage, clave versionada) ----
+const SAVE_KEY = "veyra_save_v1";
+function saveGame(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      unlocked: S.unlocked, collection: S.collection, savedDecks: S.savedDecks,
+      campaignProgress: S.campaignProgress, dungeonsUnlocked: S.dungeonsUnlocked,
+    }));
+  } catch(e){ /* localStorage no disponible (modo privado, cuota, etc.): seguir solo en memoria */ }
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const data=JSON.parse(raw);
+    if(!data || typeof data!=="object") return false;
+    if(data.unlocked && typeof data.unlocked==="object") Object.assign(S.unlocked, data.unlocked);
+    if(data.collection && typeof data.collection==="object") Object.assign(S.collection, data.collection);
+    if(data.savedDecks && typeof data.savedDecks==="object") Object.assign(S.savedDecks, data.savedDecks);
+    if(data.campaignProgress && typeof data.campaignProgress==="object") Object.assign(S.campaignProgress, data.campaignProgress);
+    if(data.dungeonsUnlocked && typeof data.dungeonsUnlocked==="object") Object.assign(S.dungeonsUnlocked, data.dungeonsUnlocked);
+    return true;
+  } catch(e){
+    try{ localStorage.removeItem(SAVE_KEY); } catch(e2){} // save corrupto: descartar y arrancar limpio
+    return false;
+  }
+}
+const HAD_SAVE = loadGame();
+if(!HAD_SAVE){ grantStartingAlderiumCollection(); saveGame(); }
 
 // Posiciones de los hotspots en el mapa mundial, en % del contenedor (mantienen su lugar relativo en cualquier pantalla).
 const MAP_HOTSPOTS = {
@@ -783,7 +802,7 @@ const DUNGEON_TOTALS = {alderium:5, qashir:4, brasshaven:4, koren:4, caelum:4, n
 
 let currentCity=null, dungeonState=null, duelReturn=null;
 const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", dungeonMapScreen:"block", dungeonInterior:"block",
-  constructorScreen:"flex", campaignScreen:"block"};
+  constructorScreen:"flex"};
 function showScreen(id){
   for(const x in SCREEN_DISPLAY){ document.getElementById(x).style.display = (x===id) ? SCREEN_DISPLAY[x] : "none"; }
 }
@@ -822,12 +841,7 @@ function openCity(fac){
     {t:"Entrenamiento", d:"Practicá sin consecuencias ni recompensas.", slot:"boton_entrenamiento.jpg", go:()=>openDuelPicker(fac)},
     {t:"Duelo", d:"Contra la IA, con "+f.name+" o cualquier facción desbloqueada.", slot:"boton_duelo.jpg", go:()=>openDuelPicker(fac)},
     {t:"Administrar cartas", d:"Colección y constructor de mazos.", slot:"boton_cartas.jpg", go:()=>openConstructor(fac,{type:"city"})},
-    {t:"Salir a mazmorras", d: CAMPAIGN_IDS[fac] && !isCampaignComplete(fac) ? "Primero completá tu campaña." : "Mazmorras disponibles en este continente.",
-      slot:"boton_mazmorras.jpg", go:()=>{
-        if(CAMPAIGN_IDS[fac] && !isCampaignComplete(fac)) openCampaign(fac);
-        else if(S.dungeonsUnlocked[fac]) openDungeonMap(fac);
-        else toast("Todavía no hay mazmorras disponibles en "+f.name+".");
-      }},
+    {t:"Salir a mazmorras", d:"Mazmorras y campaña disponibles en este continente.", slot:"boton_mazmorras.jpg", go:()=>openDungeonMap(fac)},
   ];
   for(const it of items){
     const b=document.createElement("div"); b.className="cityframe"+(it.soon?" soon":"");
@@ -851,24 +865,48 @@ function backToCityFlow(){
   showScreen(currentCity ? "cityScreen" : "mapScreen");
 }
 
-// ---- 3. Mapa de mazmorras del continente ----
+// ---- 3. Mapa de mazmorras del continente — "Salir a mazmorras" abre SIEMPRE esta pantalla.
+// La campaña (si existe y no está completa) aparece como hotspot destacado; las mazmorras
+// normales quedan bloqueadas (candado) hasta completarla.
 function openDungeonMap(fac){
   currentCity=fac;
   document.getElementById("dungeonMapScreen").dataset.faction=fac;
   document.getElementById("dungeonMapBg").dataset.slotLabel=`mapa_${fac}.jpg`;
   document.getElementById("dungeonMapTitle").textContent=FACTIONS[fac].name.toUpperCase()+" — MAZMORRAS";
   const el=document.getElementById("dungeonHotspots"); el.innerHTML="";
+  let any=false;
+
+  const campaignId=CAMPAIGN_IDS[fac];
+  const campaignPending = campaignId && !isCampaignComplete(fac);
+  if(campaignPending){
+    any=true;
+    const dg=DUNGEONS[campaignId];
+    const progress=S.campaignProgress[fac];
+    const step = progress ? (dg.nodes[progress.nodeId]||{}).step||1 : 1;
+    const totalSteps=(CAMPAIGN_STEP_NAMES[fac]||[]).length||6;
+    const d=document.createElement("div");
+    d.className="hotspot campaign-hotspot";
+    d.style.left="50%"; d.style.top="28%";
+    d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_campana_${fac}.png"><span class="hs-init">⚜️</span></div>
+      <div class="hs-label">${dg.name} — ${step}/${totalSteps}</div>`;
+    d.onclick=()=>enterDungeon(campaignId);
+    el.appendChild(d);
+  }
+
   const list=CONTINENT_DUNGEONS[fac]||[];
-  if(!list.length){
-    el.innerHTML=`<div class="dg-empty">Sin mazmorras todavía en ${FACTIONS[fac].name}.</div>`;
-  } else {
+  const dungeonsLocked = campaignId ? !isCampaignComplete(fac) : false;
+  if(list.length){
+    any=true;
     for(const id of list){
       const dg=DUNGEONS[id];
       const d=document.createElement("div");
-      d.className="hotspot dungeon-hotspot";
+      d.className="hotspot dungeon-hotspot"+(dungeonsLocked?" locked":"");
       d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
-      d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/mazmorra/icono_mazmorra_${id}.png"><span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
-      d.onclick=()=>enterDungeon(id);
+      d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/mazmorra/icono_mazmorra_${id}.png">${dungeonsLocked?'<span class="hs-lock">🔒</span>':""}<span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
+      d.onclick=()=>{
+        if(dungeonsLocked){ toast("🔒 Completá la campaña de "+FACTIONS[fac].name+" para desbloquear sus mazmorras."); return; }
+        enterDungeon(id);
+      };
       el.appendChild(d);
     }
     const total=DUNGEON_TOTALS[fac];
@@ -878,37 +916,10 @@ function openDungeonMap(fac){
       el.appendChild(more);
     }
   }
+  if(!any){ el.innerHTML=`<div class="dg-empty">Sin mazmorras todavía en ${FACTIONS[fac].name}.</div>`; }
   showScreen("dungeonMapScreen");
 }
 document.getElementById("dungeonMapBack").onclick=()=>showScreen("cityScreen");
-
-// ---- Campaña: pantalla de progreso (nodo X/6) que lanza al motor de mazmorra ----
-function openCampaign(fac){
-  const campaignId=CAMPAIGN_IDS[fac];
-  document.getElementById("campaignScreen").dataset.faction=fac;
-  document.getElementById("campaignBg").dataset.slotLabel=`campana_${fac}.jpg`;
-  document.getElementById("campaignTitle").textContent = DUNGEONS[campaignId].name;
-  const steps=CAMPAIGN_STEP_NAMES[fac]||[];
-  const progress=S.campaignProgress[fac];
-  const currentStep = progress ? (DUNGEONS[campaignId].nodes[progress.nodeId]||{}).step||1 : 1;
-  const done = isCampaignComplete(fac);
-  const el=document.getElementById("campaignProgress"); el.innerHTML="";
-  steps.forEach((name,i)=>{
-    const stepNum=i+1;
-    const st = done||stepNum<currentStep ? "done" : stepNum===currentStep ? "current" : "locked";
-    const row=document.createElement("div"); row.className="cnode "+st;
-    row.innerHTML=`<div class="cn-badge">${st==="done"?"✓":stepNum}</div>
-      <div><div class="cn-name">${name}</div><div class="cn-desc">${st==="done"?"Completado":st==="current"?"En curso":"Bloqueado"}</div></div>`;
-    el.appendChild(row);
-  });
-  const btn=document.createElement("button"); btn.className="btn play"; btn.style.marginTop="10px"; btn.style.width="100%";
-  btn.textContent = done ? "Campaña completada" : (progress ? "Continuar campaña" : "Comenzar campaña");
-  btn.disabled = done;
-  btn.onclick=()=>enterDungeon(campaignId);
-  el.appendChild(btn);
-  showScreen("campaignScreen");
-}
-document.getElementById("campaignBack").onclick=()=>showScreen("cityScreen");
 
 // ============================================================
 //  Colección y Constructor de Mazos
@@ -916,7 +927,7 @@ document.getElementById("campaignBack").onclick=()=>showScreen("cityScreen");
 //  más arriba junto a S.unlocked). El constructor SOLO muestra cartas que
 //  el jugador posee (no todo el pool).
 // ============================================================
-function grantCollection(key, n){ S.collection[key]=(S.collection[key]||0)+n; }
+function grantCollection(key, n){ S.collection[key]=(S.collection[key]||0)+n; saveGame(); }
 function ownedCount(key){ return S.collection[key]||0; }
 
 // Colección inicial de Alderium (Parte 1 del pedido de campaña): 40 cartas ya poseídas
@@ -1032,6 +1043,7 @@ function openCardZoom(key){
 document.getElementById("ctorSaveBtn").onclick=()=>{
   if(draftTotal()!==40) return;
   S.savedDecks[draftDeck.fac]=Object.assign({}, draftDeck.counts);
+  saveGame();
   toast("Mazo de "+FACTIONS[draftDeck.fac].name+" guardado ("+draftTotal()+"/40).");
   if(constructorReturn && constructorReturn.type==="campaign") returnToCampaignFromConstructor();
   else showScreen("cityScreen");
@@ -1178,12 +1190,13 @@ function dungeonAdvance(nextId){
   if(nextId==="exit"){ exitDungeonToMap(); return; }
   dungeonState.nodeId=nextId;
   const dg=DUNGEONS[dungeonState.dungeonId];
-  if(dg.isCampaign){ S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {nodeId:nextId}); }
+  if(dg.isCampaign){ S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {nodeId:nextId}); saveGame(); }
   renderDungeonNode();
 }
 function exitDungeonToMap(){
   const dg = dungeonState && DUNGEONS[dungeonState.dungeonId];
-  showScreen(dg && dg.isCampaign ? "cityScreen" : "dungeonMapScreen");
+  if(dg) openDungeonMap(dg.faction); // re-renderiza hotspots (progreso de campaña, desbloqueos) y muestra la pantalla
+  else showScreen("dungeonMapScreen");
 }
 
 function commitSwipe(dir){
@@ -1202,8 +1215,12 @@ function engageDungeonCombat(node){
   const dg=DUNGEONS[dungeonState.dungeonId];
   beginDuel(dg.faction, node.enemyFac, {type:"dungeon", next:node.next, reward:node.reward, campaignDone:node.campaignDone}, {enemyDeckBuilder: node.enemyDeckBuilder});
 }
+let quizModalOpen=false;
 async function engageDungeonQuiz(node){
+  if(quizModalOpen) return; // evita apilar modales si se toca la carta varias veces
+  quizModalOpen=true;
   const ok = await askQuizModal(node.quiz);
+  quizModalOpen=false;
   if(ok){ grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); }
   else { toast("No era así — seguís de todos modos."); }
   dungeonAdvance(node.next);
@@ -2327,6 +2344,7 @@ function checkWin(){
         const dg=DUNGEONS[dungeonState.dungeonId];
         S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {done:true});
         S.dungeonsUnlocked[dg.faction]=true;
+        saveGame();
         b.querySelector(".sub").textContent += " ¡Mazmorras de "+FACTIONS[dg.faction].name+" desbloqueadas!";
       }
       contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("dungeonInterior"); dungeonAdvance(duelReturn.next); };

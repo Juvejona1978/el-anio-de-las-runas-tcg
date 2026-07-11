@@ -484,6 +484,9 @@ Ejemplos concretos ya con tu lore:
 ### Iconos de mazmorra (carpeta `/icons/mazmorra`, sugerido 128×128, fondo transparente) — hotspot rombo del mapa de mazmorras del continente
 - `icono_mazmorra_<id>.png` (ej. `icono_mazmorra_alderium_piloto.png`)
 
+### Icono de campaña (carpeta `/icons/faccion`, sugerido 128×128, fondo transparente) — hotspot circular destacado (dorado) en el mapa de mazmorras, uno por facción con campaña
+- `icono_campana_<facción>.png` (ej. `icono_campana_alderium.png`)
+
 ### Fondos de mapa (carpeta `/backgrounds/mapas`, sugerido 1920×1080)
 - `mapa_alderium.jpg`
 - `mapa_qashir.jpg`
