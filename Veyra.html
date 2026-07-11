@@ -153,6 +153,18 @@
   .dg-card-text{font-size:14px;line-height:1.55;color:var(--text);flex:1;text-align:center;display:flex;
     align-items:center;justify-content:center}
   .dg-card-hint{font-size:11px;color:var(--text-dim);text-align:center;margin-top:12px;letter-spacing:.3px}
+  /* Nodo "lugar" (lore ambiental): mismo criterio de fallback dual-capa que el arte de cartas —
+     si assets/places/<id>.jpg no existe, .dg-place-real queda transparente y se ve el glifo debajo. */
+  .dg-place-img{position:relative;width:100%;aspect-ratio:16/10;border-radius:10px;overflow:hidden;
+    margin-bottom:12px;display:none;flex:0 0 auto;border:1px solid var(--frame)}
+  .dg-place-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:34px;background:linear-gradient(160deg,#2a2216,#141008);opacity:.6}
+  .dg-place-real{position:absolute;inset:0;background-size:cover;background-position:center}
+  /* Nodos con más de 2 salidas (sección "Sistemas de Mazmorra Profunda" #1): direcciones como botones. */
+  .dg-card-exits{display:none;flex-direction:column;gap:7px;margin-top:10px}
+  .dg-exit-btn{font-family:Georgia,serif;font-size:12.5px;color:var(--text);background:rgba(255,255,255,.05);
+    border:1px solid var(--frame);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:center}
+  .dg-exit-btn:active{background:rgba(255,255,255,.12)}
   .dg-swipe-hints{position:absolute;inset:0;pointer-events:none;z-index:3}
   .dg-hint-l,.dg-hint-r{position:absolute;top:20%;font-family:Georgia,serif;font-size:12px;color:var(--text);
     background:rgba(0,0,0,.65);border:1px solid var(--frame);border-radius:6px;padding:6px 11px;opacity:0;
@@ -376,6 +388,14 @@
   .card .zzz{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;z-index:6}
   .shieldring{position:absolute;inset:-3px;border-radius:11px;border:2px solid var(--shield);box-shadow:0 0 12px var(--shield);pointer-events:none;animation:pulse 1.6s infinite}
   @keyframes pulse{50%{opacity:.5}}
+  /* Badge persistente de Reliquia ligada (Cristal de Sobrecarga) — el estado (cristalHost) sobrevive
+     al re-render; el acople físico (coupleEffect) es solo el flourish del momento en que se liga. */
+  .cristalring{position:absolute;top:-7px;left:-7px;font-size:13px;z-index:6;filter:drop-shadow(0 0 3px var(--gold))}
+  .card.coupling{filter:brightness(1.15)}
+  /* Hilo de luz de auras globales (Rhaen/Tiberon): conecta el aura con sus beneficiados sin apilar
+     nada — updateAuraLines() redibuja el set completo en cada render(), nunca lo acumula. */
+  #auraLines{position:fixed;inset:0;z-index:3;pointer-events:none;width:100%;height:100%}
+  #auraLines line{stroke:var(--gold);stroke-width:1.4;opacity:.4}
   .card.dead{animation:die .45s forwards}
   @keyframes die{to{transform:scale(.6) rotate(8deg);opacity:0}}
   .card.attacking{z-index:10}
@@ -521,6 +541,7 @@
   <div class="hand" id="playerHand"></div>
   <div class="herobar player" id="playerHero"></div>
 </div>
+<svg id="auraLines"></svg>
 <div id="vignette"></div>
 <button id="cancel">Cancelar</button>
 <div id="log"></div>
@@ -599,9 +620,14 @@
   <button class="compass-btn" id="dungeonExitBtn" title="Abandonar mazmorra">✕</button>
   <div class="dg-card-wrap">
     <div class="dg-card" id="dgCard">
+      <div class="dg-place-img" id="dgPlaceImg">
+        <div class="dg-place-fallback" id="dgPlaceFallback"></div>
+        <div class="dg-place-real" id="dgPlaceReal"></div>
+      </div>
       <div class="dg-card-name" id="dgName"></div>
       <div class="dg-card-sub" id="dgSub"></div>
       <div class="dg-card-text" id="dgText"></div>
+      <div class="dg-card-exits" id="dgExits"></div>
       <div class="dg-card-hint" id="dgHint"></div>
     </div>
   </div>
@@ -794,6 +820,7 @@ const S = {
   players:{}, turn:"p", turnNum:0, phase:"menu", busy:false,
   selected:null, targeting:null, // targeting = {resolve, filter}
   hints:{}, // conteo de veces que se explicó cada regla (guía interactiva)
+  aiDifficulty:1, // nivel 1-5 de la mazmorra activa (sección "Sistemas de Mazmorra Profunda" #5)
 };
 function P(){ return S.players[S.turn]; }
 function foeOf(id){ return id==="p"?"a":"p"; }
@@ -893,6 +920,8 @@ S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facció
 S.campaignProgress = {}; // {facción: {nodeId, done}} — progreso persistente de campaña
 S.dungeonsUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
 S.audio = {musicVol:0.6, sfxVol:0.8, muted:false}; // preferencias de audio (sección 5 del motor de audio)
+S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar" (sección Mazmorra Profunda #2)
+S.dungeonCleared = {}; // {dungeonId: true} — jefe vencido al menos una vez (sección Mazmorra Profunda #4)
 function isUnlocked(k){ return !!S.unlocked[k]; }
 function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaignProgress[fac].done); }
 
@@ -903,7 +932,7 @@ function saveGame(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       unlocked: S.unlocked, collection: S.collection, savedDecks: S.savedDecks,
       campaignProgress: S.campaignProgress, dungeonsUnlocked: S.dungeonsUnlocked,
-      audio: S.audio,
+      audio: S.audio, loreSeen: S.loreSeen, dungeonCleared: S.dungeonCleared,
     }));
   } catch(e){ /* localStorage no disponible (modo privado, cuota, etc.): seguir solo en memoria */ }
 }
@@ -919,6 +948,8 @@ function loadGame(){
     if(data.campaignProgress && typeof data.campaignProgress==="object") Object.assign(S.campaignProgress, data.campaignProgress);
     if(data.dungeonsUnlocked && typeof data.dungeonsUnlocked==="object") Object.assign(S.dungeonsUnlocked, data.dungeonsUnlocked);
     if(data.audio && typeof data.audio==="object") Object.assign(S.audio, data.audio);
+    if(data.loreSeen && typeof data.loreSeen==="object") Object.assign(S.loreSeen, data.loreSeen);
+    if(data.dungeonCleared && typeof data.dungeonCleared==="object") Object.assign(S.dungeonCleared, data.dungeonCleared);
     return true;
   } catch(e){
     try{ localStorage.removeItem(SAVE_KEY); } catch(e2){} // save corrupto: descartar y arrancar limpio
@@ -1342,33 +1373,112 @@ document.getElementById("ctorSaveBtn").onclick=()=>{
 
 // ---- 4. Interior de mazmorra: grafo de nodos con swipe (estilo Reigns) ----
 // Mazmorra piloto (sección 11 + grafo en Veyra_Grafo_Mazmorra.mermaid + jefe de sección 8).
+
+// ---- Plantillas de topología reutilizables (sección "Sistemas de Mazmorra Profunda" #1) ----
+// Cada plantilla es solo DATOS: un mapa id -> [ids de destino] que describe la FORMA del grafo,
+// sin contenido. buildDungeonGraph(shape, content) la combina con el contenido real (texto, tipo,
+// enemigos, recompensas...) que da cada autor vía content:{id:{...}} y arma el objeto `nodes` final:
+//  - un id con 1 solo destino queda como nodo de paso (combat/quiz/bridge/place/decision-continua):
+//    se le agrega `next` con ese destino.
+//  - un id con 2+ destinos se resuelve como `type:"decision"` con `exits:[{dest,hint,reward}]`,
+//    tomando `content[id].hints`/`content[id].rewards` (alineados por índice con los destinos).
+// `shape` puede ser la clave de una plantilla de abajo, o un objeto de aristas ya armado a mano
+// (por ejemplo clonando una plantilla y agregándole un desvío propio) — así una mazmorra puede
+// "usar" una forma base y todavía sumarle un callejón sin salida puntual.
+const DUNGEON_TOPOLOGIES = {
+  // (a) Lineal con un desvío: cadena principal con un tramo que se bifurca y reconecta antes del jefe.
+  linear_detour: {n1:["n2"], n2:["n3a","n3b"], n3a:["n4"], n3b:["n4"], n4:["n5"], n5:["n6a","n6b"],
+    n6a:["n7"], n6b:["n7"], n7:["n8"], n8:["boss"], boss:["exit"]},
+  // (b) Bifurcación temprana que NO reconecta hasta el jefe: dos ramas totalmente separadas (8-10 nodos c/u en uso real).
+  early_fork_no_reconnect: {n1:["a1","b1"],
+    a1:["a2"], a2:["a3"], a3:["a4"], a4:["boss"],
+    b1:["b2"], b2:["b3"], b3:["b4"], b4:["boss"],
+    boss:["exit"]},
+  // (c) Dos anillos unidos: dos bifurcaciones-que-reconectan encadenadas una tras otra.
+  double_ring: {n1:["r1a","r1b"], r1a:["join1"], r1b:["join1"],
+    join1:["r2a","r2b"], r2a:["join2"], r2b:["join2"], join2:["boss"], boss:["exit"]},
+  // (d) Árbol con 2 callejones sin salida premiados: dos ramas, cada una con un desvío que TERMINA
+  //     la mazmorra con recompensa (sin jefe) en vez de reconectar.
+  tree_two_deadends: {n1:["a1","b1"],
+    a1:["a2","deadendA"], a2:["join"], deadendA:["exit"],
+    b1:["b2","deadendB"], b2:["join"], deadendB:["exit"],
+    join:["boss"], boss:["exit"]},
+  // (e) Laberinto con atajo oculto: recorrido largo con un atajo que se salta varios nodos.
+  maze_shortcut: {n1:["n2"], n2:["n3"], n3:["n4","shortcut"], n4:["n5"], n5:["n6"], n6:["n7"],
+    n7:["boss"], shortcut:["boss"], boss:["exit"]},
+};
+function buildDungeonGraph(shape, content){
+  const edges = typeof shape==="string" ? DUNGEON_TOPOLOGIES[shape] : shape;
+  const nodes={};
+  for(const id in edges){
+    const dests=edges[id]; const base=content[id]||{};
+    if(dests.length<=1){ nodes[id]=Object.assign({}, base, {next: dests[0]}); }
+    else {
+      const hints=base.hints||[], rewards=base.rewards||[];
+      nodes[id]=Object.assign({type:"decision"}, base, {
+        exits: dests.map((d,i)=>({dest:d, hint:hints[i]||"Avanzar", reward:rewards[i]||null}))
+      });
+    }
+  }
+  return nodes;
+}
+
+// ---- Registro de rivales nombrados (jefes evadibles en revisita) ----
+const OPPONENTS = {
+  juez_silente:{name:"El Juez Silente",
+    avoidLine:"La armadura vacía gira despacio, como si te reconociera, y no se mueve del centro de la cámara: te deja pasar sin una palabra."},
+};
+
+// ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
+// reconexión hasta el jefe. 2 nodos "lugar" de ejemplo (uno por rama) + 1 quiz que referencia un
+// fact del propio palacio (los quiz cross-mazmorra reales llegan con el contenido nuevo).
+const _piloteEdges = Object.assign({}, DUNGEON_TOPOLOGIES.early_fork_no_reconnect, {
+  b3:["b4","corredor"], corredor:["exit"], // desvío de tesoro sin salida — no forma parte de la plantilla base
+});
+const _piloteContent = {
+  n1:{name:"Entrada al Palacio en Ruinas", type:"decision",
+    text:"Las puertas de bronce yacen entreabiertas. El viento trae olor a polvo y a algo más viejo. Dos caminos se abren ante vos.",
+    hints:["El Jardín Oscuro","Los Pasos Quebrados"]},
+  a1:{name:"El Jardín Oscuro", type:"place", subtitle:"Lugar",
+    text:"Estatuas cubiertas de enredaderas observan en silencio. Entre las sombras, algo se mueve.",
+    placeId:"palacio_jardin", placeIcon:"🌿",
+    loreFacts:[{id:"palacio_jardin_estatuas", texto:"TODO(autor): qué son en verdad estas estatuas y qué presenciaron."}]},
+  a2:{name:"Emboscada de Ladrones", type:"combat", subtitle:"Encuentro",
+    text:"Mercenarios sin bandera saltan de entre los escombros.", enemyFac:"qashir"},
+  a3:{name:"Recuerdo del Jardín", type:"quiz", subtitle:"Recuerdo",
+    text:"Con la luz justa, los símbolos tallados en la base de las estatuas vuelven a tener sentido.",
+    quiz:{requires:["palacio_jardin_estatuas"],
+      pendingText:"Los símbolos en la base de las estatuas te resultan ilegibles todavía — algo en este mundo debe explicarlos primero.",
+      q:"TODO(autor): pregunta real sobre las estatuas del Jardín Oscuro.",
+      opts:[["TODO(autor) opción correcta",true],["TODO(autor) opción incorrecta",false],["TODO(autor) opción incorrecta",false]]},
+    reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}},
+  a4:{name:"Los Pasadizos del Ala Oeste", type:"decision",
+    text:"TODO(autor): tramo final antes de llegar a la Cámara Sellada por el ala del jardín."},
+  b1:{name:"Los Pasos Quebrados", type:"place", subtitle:"Lugar",
+    text:"Escalones rotos suben hacia una galería derrumbada. El camino es más largo, pero más tranquilo.",
+    placeId:"palacio_pasos", placeIcon:"🪨",
+    loreFacts:[{id:"palacio_pasos_historia", texto:"TODO(autor): qué ocurrió realmente en estos pasos quebrados."}]},
+  b2:{name:"Bestias Salvajes", type:"combat", subtitle:"Encuentro",
+    text:"Algo enorme y hambriento bloquea el corredor hundido.", enemyFac:"nomadas"},
+  b3:{name:"El Cruce Bajo", type:"decision",
+    text:"Ambos caminos posibles se separan aquí: uno sigue de frente hacia la Cámara Sellada, el otro se hunde hacia un corredor olvidado.",
+    hints:["Ir a la Cámara Sellada","El Corredor Hundido"]},
+  b4:{name:"Los Túneles Bajos", type:"decision",
+    text:"TODO(autor): tramo final antes de llegar a la Cámara Sellada por los pasos."},
+  corredor:{name:"El Corredor Hundido", type:"decision", subtitle:"Final B — Tesoro Oculto",
+    text:"Más allá de las bestias, un cofre cubierto de óxido descansa intacto.",
+    reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
+  boss:{name:"La Cámara Sellada", type:"combat", subtitle:"Final A — Jefe de facción",
+    text:"Una armadura vacía se yergue en el centro. El Juez Silente todavía ejecuta justicia, sin nadie dentro.",
+    enemyFac:"alderium", boss:true, bossId:"juez_silente",
+    reward:{type:"collection",key:"sold_alderium_6",n:2,fac:"alderium"},
+    repeatReward:{type:"collection",key:"sold_alderium_0",n:1,fac:"alderium"}},
+};
+
 const DUNGEONS = {
   alderium_piloto: {
-    faction:"alderium", name:"El Palacio en Ruinas", icon:"🏛️", mapPos:{left:50,top:45}, startNode:"start",
-    nodes:{
-      start:{name:"Entrada al Palacio en Ruinas", type:"decision",
-        text:"Las puertas de bronce yacen entreabiertas. El viento trae olor a polvo y a algo más viejo. Dos caminos se abren ante vos.",
-        left:"jardin", right:"pasos", leftHint:"El Jardín Oscuro", rightHint:"Los Pasos Quebrados"},
-      jardin:{name:"El Jardín Oscuro", type:"decision",
-        text:"Estatuas cubiertas de enredaderas observan en silencio. Entre las sombras, algo se mueve.",
-        left:"emboscada", right:"emboscada", leftHint:"Avanzar", rightHint:"Avanzar"},
-      pasos:{name:"Los Pasos Quebrados", type:"decision",
-        text:"Escalones rotos suben hacia una galería derrumbada. El camino es más largo, pero más tranquilo.",
-        left:"cruce", right:"cruce", leftHint:"Avanzar", rightHint:"Avanzar"},
-      emboscada:{name:"Emboscada de Ladrones", type:"combat", subtitle:"Encuentro",
-        text:"Mercenarios sin bandera saltan de entre los escombros.", enemyFac:"qashir", next:"cruce"},
-      cruce:{name:"El Cruce del Río Seco", type:"decision",
-        text:"Ambos caminos se encuentran junto al cauce seco de un río olvidado. Más allá, el aire se vuelve pesado.",
-        left:"camara", right:"bestias", leftHint:"La Cámara Sellada", rightHint:"El Corredor Hundido"},
-      bestias:{name:"Bestias Salvajes", type:"combat", subtitle:"Encuentro",
-        text:"Algo enorme y hambriento bloquea el corredor hundido.", enemyFac:"nomadas", next:"corredor"},
-      corredor:{name:"El Corredor Hundido", type:"decision", subtitle:"Final B — Tesoro Oculto",
-        text:"Más allá de las bestias, un cofre cubierto de óxido descansa intacto.",
-        left:"exit", right:"exit", leftHint:"Salir con el tesoro", rightHint:"Salir con el tesoro"},
-      camara:{name:"La Cámara Sellada", type:"combat", subtitle:"Final A — Jefe de facción: El Juez Silente",
-        text:"Una armadura vacía se yergue en el centro. El Juez Silente todavía ejecuta justicia, sin nadie dentro.",
-        enemyFac:"alderium", boss:true, next:"exit"},
-    }
+    faction:"alderium", name:"El Palacio en Ruinas", icon:"🏛️", mapPos:{left:50,top:45}, startNode:"n1", level:2,
+    nodes: buildDungeonGraph(_piloteEdges, _piloteContent),
   },
   // ---- Campaña "El Juramento de Alderium" (sección 6.1 del diseño) ----
   // Reusa el mismo motor de nodos con swipe/tap; isCampaign:true activa recompensas y progreso persistente.
@@ -1376,14 +1486,14 @@ const DUNGEONS = {
   // Kóren (rompería la regla mono-facción). Se sustituyó por una copia de Decreto de Contención; lo mismo
   // para la Reliquia del nodo 3 (Alderium todavía no tiene Reliquia diseñada) — queda avisado en el chat.
   alderium_juramento: {
-    faction:"alderium", name:"El Juramento de Alderium", icon:"⚜️", isCampaign:true, startNode:"n1a",
+    faction:"alderium", name:"El Juramento de Alderium", icon:"⚜️", isCampaign:true, startNode:"n1a", level:1,
     nodes:{
       n1a:{name:"El Juramento del Guardián", type:"decision", step:1,
         text:"La catedral de Alderium huele a piedra fría y cera quemada. Hileras de armaduras vacías flanquean el altar donde generaciones de Guardianes hicieron su promesa antes que vos.",
-        left:"n1b", right:"n1b", leftHint:"Seguir leyendo", rightHint:"Seguir leyendo"},
+        exits:[{dest:"n1b", hint:"Seguir leyendo"}]},
       n1b:{name:"El Juramento del Guardián", type:"decision", step:1,
         text:"«No juro servir a un trono» — dicen las palabras talladas — «juro interponerme entre el filo y quien no puede defenderse.» Es la misma fórmula desde la fundación del reino.",
-        left:"n1q", right:"n1q", leftHint:"Continuar", rightHint:"Continuar"},
+        exits:[{dest:"n1q", hint:"Continuar"}]},
       n1q:{name:"El Juramento del Guardián", type:"quiz", step:1, subtitle:"Recuerdo",
         text:"¿Qué jura proteger un Guardián de Alderium, según el texto tallado en el altar?",
         quiz:{q:"¿Qué jura proteger un Guardián de Alderium?",
@@ -1391,22 +1501,23 @@ const DUNGEONS = {
         reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}, next:"n2a"},
       n2a:{name:"Lecciones de Guardia", type:"decision", step:2,
         text:"Un instructor veterano te lleva aparte. «Tu maná sube solo, +1 cada turno que empieza. No hace falta invocarlo — así funciona en Alderium.»",
-        left:"n2b", right:"n2b", leftHint:"Seguir", rightHint:"Seguir"},
+        exits:[{dest:"n2b", hint:"Seguir"}]},
       n2b:{name:"Lecciones de Guardia", type:"decision", step:2,
         text:"«Atacá directo al rival si no hay Guardianes en tu camino. Ganás cuando su vida llega a 0. Ahora probalo — tenés un rival a tu altura.»",
-        left:"n2duel", right:"n2duel", leftHint:"Al duelo", rightHint:"Al duelo"},
+        exits:[{dest:"n2duel", hint:"Al duelo"}]},
       n2duel:{name:"Recluta rival", type:"combat", step:2, subtitle:"Duelo tutorial",
         text:"Un recluta tan nuevo como vos te espera en el patio de entrenamiento, con un mazo tan básico como el tuyo.",
         enemyFac:"alderium", enemyDeckBuilder:buildVanillaOnlyDeck,
         reward:{type:"collection",key:"muralla",n:1,fac:"alderium"}, next:"n3"},
       n3:{name:"La Encrucijada", type:"decision", step:3,
         text:"En el camino de vuelta al cuartel, un mercader con la carreta atascada te pide una mano — pero la guardia también te espera para entrenar antes del anochecer.",
-        left:"n4a", right:"n4a", leftHint:"Ayudar al mercader", rightHint:"Entrenar con la guardia",
-        leftReward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"},
-        rightReward:[{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"},{type:"collection",key:"sold_alderium_6",n:1,fac:"alderium"}]},
+        exits:[
+          {dest:"n4a", hint:"Ayudar al mercader", reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}},
+          {dest:"n4a", hint:"Entrenar con la guardia", reward:[{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"},{type:"collection",key:"sold_alderium_6",n:1,fac:"alderium"}]},
+        ]},
       n4a:{name:"La Prueba del Escudo", type:"decision", step:4,
         text:"«Guardián» es la palabra clave que define a Alderium: mientras el rival tenga uno en juego, tus ataques deben dirigirse a él primero. Rompelos o quedate atascado.",
-        left:"n4duel", right:"n4duel", leftHint:"Al duelo", rightHint:"Al duelo"},
+        exits:[{dest:"n4duel", hint:"Al duelo"}]},
       n4duel:{name:"La Prueba del Escudo", type:"combat", step:4, subtitle:"Duelo",
         text:"Un caballero de la guardia forma su línea de Guardianes frente a vos. No vas a poder ir directo a su vida.",
         enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
@@ -1416,7 +1527,7 @@ const DUNGEONS = {
         bridgeFac:"alderium", next:"n6a"},
       n6a:{name:"El Juicio del Alba", type:"decision", step:6,
         text:"El sol todavía no sale. En el patio central te espera el último desafío antes de ser reconocido como Guardián pleno de Alderium.",
-        left:"n6duel", right:"n6duel", leftHint:"Al duelo final", rightHint:"Al duelo final"},
+        exits:[{dest:"n6duel", hint:"Al duelo final"}]},
       n6duel:{name:"El Juicio del Alba", type:"combat", step:6, subtitle:"Final — Jefe de campaña",
         text:"Un Guardián completo, con el mejor mazo que Alderium puede ofrecer, te espera para el Juicio.",
         enemyFac:"alderium", enemyDeckBuilder:buildDeck,
@@ -1448,8 +1559,58 @@ function buildGuardianHeavyDeck(fac){
   while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
   return shuffle(deck);
 }
+// ---- Dificultad progresiva (sección "Sistemas de Mazmorra Profunda" #5): nivel 1-5 por mazmorra.
+// Nivel 1 = la IA actual (sin cambios). Niveles altos: mazo con mejor curva/impacto (buildLeveledDeck)
+// y la IA evita con más frecuencia un intercambio de combate perdedor (tradeSkip, ver aiAttacks).
+const AI_LEVEL = {
+  1:{curve:0, tradeSkip:0}, 2:{curve:0.3, tradeSkip:0.15}, 3:{curve:0.55, tradeSkip:0.3},
+  4:{curve:0.8, tradeSkip:0.45}, 5:{curve:1, tradeSkip:0.6},
+};
+function buildLeveledDeck(fac, level){
+  const knob=AI_LEVEL[level]||AI_LEVEL[1];
+  if(knob.curve<=0) return buildDeck(fac); // nivel 1: mazo estándar, sin cambios de comportamiento
+  const deck=[];
+  for(const k in LIB){
+    if(LIB[k].fac!==fac) continue;
+    const n=copyLimit(k); for(let i=0;i<n;i++) deck.push(instantiate(k)); // niveles altos: todas las copias permitidas, no solo 2
+  }
+  const pool=soldierPool(fac);
+  const sorted=pool.slice().sort((a,b)=>(b.def.atk+b.def.vida)-(a.def.atk+a.def.vida)); // mejor costo/eficiencia primero
+  let vi=0;
+  while(deck.length<20){
+    const v = knob.curve>=0.5 ? sorted[vi%sorted.length] : pool[vi%pool.length];
+    vi++; deck.push(instantiate(null, v.def, v.key));
+  }
+  return shuffle(deck);
+}
 
-function currentDungeonNode(){ return DUNGEONS[dungeonState.dungeonId].nodes[dungeonState.nodeId]; }
+// ---- Boss evadible en revisita (sección "JEFE OPCIONAL EN REVISITA"): si la mazmorra ya fue
+// vencida una vez, el nodo de jefe se resuelve como una decisión swipeable en vez de combate directo.
+function synthesizeBossRevisit(raw){
+  const opp = OPPONENTS[raw.bossId] || {name:"El rival", avoidLine:"Te deja pasar sin decir palabra."};
+  return Object.assign({}, raw, {
+    type:"decision", subtitle:"Revisita",
+    text:`${opp.name} está aquí otra vez. ¿Qué hacés?`,
+    exits:[
+      {dest:"__fight__", hint:"Enfrentarlo de nuevo"},
+      {dest:raw.next, hint:"Rodearlo", avoidLine:true},
+    ],
+    _raw: raw, _opp: opp,
+  });
+}
+// Cualquier nodo con un solo destino (que no exija tap para "enganchar" — combate/quiz/puente) se
+// resuelve con un `exits` de una sola entrada: ambos lados del swipe llevan al mismo próximo nodo
+// (mismo comportamiento que ya tenían los nodos "lugar"/de paso antes de generalizar el motor).
+function resolveDungeonNode(raw){
+  if(raw.type==="combat" && raw.boss && dungeonState && S.dungeonCleared[dungeonState.dungeonId]){
+    return synthesizeBossRevisit(raw);
+  }
+  if(!raw.exits && raw.next && !DUNGEON_TAP_HANDLERS[raw.type]){
+    return Object.assign({}, raw, {exits:[{dest:raw.next, reward:raw.reward||null}]});
+  }
+  return raw;
+}
+function currentDungeonNode(){ return resolveDungeonNode(DUNGEONS[dungeonState.dungeonId].nodes[dungeonState.nodeId]); }
 
 function enterDungeon(dungeonId){
   playSfx("mazmorra_entrar");
@@ -1460,6 +1621,13 @@ function enterDungeon(dungeonId){
   document.getElementById("dungeonBg").dataset.slotLabel = dg.isCampaign ? `campana_${dg.faction}.jpg` : `mazmorra_${dungeonId}.jpg`;
   showScreen("dungeonInterior");
   renderDungeonNode();
+}
+
+function registerLoreFacts(node){
+  if(!node.loreFacts) return;
+  let changed=false;
+  for(const f of node.loreFacts){ if(!S.loreSeen[f.id]){ S.loreSeen[f.id]=true; changed=true; } }
+  if(changed) saveGame();
 }
 
 function renderDungeonNode(){
@@ -1474,7 +1642,27 @@ function renderDungeonNode(){
     node.type==="combat" ? "Tocá para enfrentarlo" :
     node.type==="quiz" ? "Tocá para responder" :
     node.type==="bridge" ? "Tocá para abrir el constructor de mazos" :
+    (node.exits && node.exits.length>2) ? "Elegí tu camino" :
+    (node.exits && node.exits.length===1) ? "Deslizá para continuar" :
     "Deslizá para elegir tu camino";
+  const placeImg=document.getElementById("dgPlaceImg");
+  if(node.type==="place"){
+    placeImg.style.display="block";
+    document.getElementById("dgPlaceFallback").textContent = node.placeIcon||"📍";
+    document.getElementById("dgPlaceReal").style.backgroundImage = `url('assets/places/${node.placeId}.jpg')`;
+    registerLoreFacts(node);
+  } else { placeImg.style.display="none"; }
+  const exitsBox=document.getElementById("dgExits");
+  exitsBox.innerHTML=""; exitsBox.style.display="none";
+  if(node.exits && node.exits.length>2){
+    exitsBox.style.display="flex";
+    node.exits.forEach((ex,i)=>{
+      const b=document.createElement("button"); b.className="dg-exit-btn";
+      b.textContent = ex.hint || ("Camino "+(i+1));
+      b.onclick=()=>commitChoiceButton(i);
+      exitsBox.appendChild(b);
+    });
+  }
   clearSwipeHints();
 }
 
@@ -1491,26 +1679,54 @@ function exitDungeonToMap(){
   else showScreen("dungeonMapScreen");
 }
 
-function commitSwipe(dir){
-  playSfx("swipe");
+// commitExit(): resuelve UNA salida concreta de node.exits[idx] — otorga su recompensa (si tiene),
+// dispara la línea de ficción de "Rodearlo" (si aplica), anima la carta deslizándose fuera y
+// finalmente avanza al destino (o reengancha el combate si dest es el sentinel "__fight__", usado
+// por la decisión de revisita de jefe — ver synthesizeBossRevisit).
+function commitExit(idx, dirSign){
   const node=currentDungeonNode();
-  const dest = dir==="left" ? node.left : node.right;
-  const reward = dir==="left" ? node.leftReward : node.rightReward;
-  if(reward){ grantReward(reward); toast("Recompensa: "+rewardLabel(reward)); showRewardCardPopup(reward); }
+  const exit=(node.exits||[])[idx]; if(!exit) return;
+  playSfx("swipe");
+  if(exit.reward){ grantReward(exit.reward); toast("Recompensa: "+rewardLabel(exit.reward)); showRewardCardPopup(exit.reward); }
+  if(exit.avoidLine && node._opp && node._opp.avoidLine){ toast(node._opp.avoidLine); }
   const card=document.getElementById("dgCard");
   card.style.transition="transform .26s ease-in, opacity .26s ease-in";
-  card.style.transform=`translateX(${dir==="left"?-620:620}px) rotate(${dir==="left"?-28:28}deg)`;
+  card.style.transform=`translateX(${dirSign*620}px) rotate(${dirSign*28}deg)`;
   card.style.opacity="0";
-  setTimeout(()=>dungeonAdvance(dest), 220);
+  setTimeout(()=>{
+    if(exit.dest==="__fight__"){ engageDungeonCombat(node._raw); }
+    else { dungeonAdvance(exit.dest); }
+  }, 220);
 }
+function commitSwipe(dir){
+  const node=currentDungeonNode();
+  const exits=node.exits||[];
+  const idx = exits.length===1 ? 0 : (dir==="left"?0:1);
+  commitExit(idx, dir==="left"?-1:1);
+}
+function commitChoiceButton(idx){ commitExit(idx, idx%2===0?-1:1); }
 
 function engageDungeonCombat(node){
   const dg=DUNGEONS[dungeonState.dungeonId];
-  beginDuel(dg.faction, node.enemyFac, {type:"dungeon", next:node.next, reward:node.reward, campaignDone:node.campaignDone}, {enemyDeckBuilder: node.enemyDeckBuilder});
+  const alreadyCleared = !!S.dungeonCleared[dungeonState.dungeonId];
+  const reward = (node.boss && alreadyCleared) ? (node.repeatReward||null) : node.reward;
+  beginDuel(dg.faction, node.enemyFac, {
+    type:"dungeon", next:node.next, reward, campaignDone:node.campaignDone,
+    boss: !!node.boss, dungeonId: dungeonState.dungeonId,
+  }, {enemyDeckBuilder: node.enemyDeckBuilder || (fac=>buildLeveledDeck(fac, dg.level||1)), difficulty: dg.level||1});
 }
 let quizModalOpen=false;
 async function engageDungeonQuiz(node){
   if(quizModalOpen) return; // evita apilar modales si se toca la carta varias veces
+  const required=(node.quiz.requires)||[];
+  const known = required.every(fid=>S.loreSeen[fid]);
+  if(required.length && !known){
+    // quiz cross-mazmorra (sección "Sistemas de Mazmorra Profunda" #3): el fact todavía no se vio en
+    // ningún lugar — no falla, queda pendiente en ficción y el jugador sigue de todos modos.
+    toast(node.quiz.pendingText || "Los símbolos te resultan ilegibles todavía — algo en este mundo debe explicarlos.");
+    dungeonAdvance(node.next);
+    return;
+  }
   quizModalOpen=true;
   const ok = await askQuizModal(node.quiz);
   quizModalOpen=false;
@@ -1558,10 +1774,13 @@ const DUNGEON_TAP_HANDLERS = {combat:engageDungeonCombat, quiz:engageDungeonQuiz
 function updateSwipeHints(dx){
   const node=currentDungeonNode();
   const l=document.getElementById("dgHintL"), r=document.getElementById("dgHintR");
-  if(node.type!=="decision"){ l.classList.remove("show"); r.classList.remove("show"); return; }
-  l.textContent=node.leftHint||""; r.textContent=node.rightHint||"";
-  l.classList.toggle("show", dx<-24 && !!node.leftHint);
-  r.classList.toggle("show", dx>24 && !!node.rightHint);
+  const exits=node.exits;
+  if(!exits || exits.length>2){ l.classList.remove("show"); r.classList.remove("show"); return; }
+  const leftHint = (exits[0]&&exits[0].hint)||"";
+  const rightHint = exits.length>1 ? ((exits[1]&&exits[1].hint)||"") : leftHint;
+  l.textContent=leftHint; r.textContent=rightHint;
+  l.classList.toggle("show", dx<-24 && !!leftHint);
+  r.classList.toggle("show", dx>24 && !!rightHint);
 }
 function clearSwipeHints(){
   document.getElementById("dgHintL").classList.remove("show");
@@ -1593,6 +1812,7 @@ function initDungeonCardDrag(){
       if(Math.abs(dx)<10){ DUNGEON_TAP_HANDLERS[node.type](node); }
       return;
     }
+    if(!node.exits || node.exits.length>2){ card.style.transform=""; return; } // navegación por botones (dgExits), no por swipe
     const TH=80;
     if(Math.abs(dx)>TH){ commitSwipe(dx>0?"right":"left"); }
     else { card.style.transform=""; }
@@ -1646,6 +1866,7 @@ function beginDuel(playerFac, enemyFac, returnCtx, opts){
   opts = opts||{};
   duelReturn = returnCtx||null;
   chosenFac = playerFac;
+  S.aiDifficulty = opts.difficulty||1; // nivel 1-5 de la mazmorra (perillas simples, ver AI_LEVEL/aiAttacks)
   S.players.p=newPlayer("p",playerFac);
   S.players.a=newPlayer("a",enemyFac);
   S.players.p.deck = opts.playerDeck || getPlayerDeck(playerFac);
@@ -1805,7 +2026,12 @@ async function runEtb(p,c){
   switch(c.etb){
     case "muralla":{
       const other=p.field.find(x=>x!==c && x.kw.includes("Guardián"));
-      if(other){ other.shield=true; playSfx("escudo_ganar"); log(`Muralla Viviente da Escudo a ${other.name}.`); }
+      if(other){
+        other.shield=true;
+        render(); // asegura que Muralla y el Guardián objetivo ya existan en el DOM antes de animar el acople
+        await coupleEffect(c, other, {color:"var(--shield)"});
+        playSfx("escudo_ganar"); log(`Muralla Viviente da Escudo a ${other.name}.`);
+      }
       break;
     }
     case "zahra":{
@@ -1880,10 +2106,16 @@ async function runEtb(p,c){
 async function resolveTargeted(p,c,tgt){
   switch(c.cast){
     case "decreto_cont":{
-      tgt.shield=true; playSfx("escudo_ganar");
+      tgt.shield=true;
+      await coupleEffect(c, tgt, {color:"var(--shield)"});
+      playSfx("escudo_ganar");
       if(tgt.kw.includes("Guardián")){
         const others=p.field.concat(other(p).field).filter(x=>x!==tgt);
-        if(others.length){ const t2=others.find(x=>!x.shield)||others[0]; t2.shield=true; log(`Decreto: Escudo a ${tgt.name} y ${t2.name}.`);}
+        if(others.length){
+          const t2=others.find(x=>!x.shield)||others[0]; t2.shield=true;
+          await coupleEffect(c, t2, {color:"var(--shield)"});
+          log(`Decreto: Escudo a ${tgt.name} y ${t2.name}.`);
+        }
       } else log(`Decreto: Escudo a ${tgt.name}.`);
       break;
     }
@@ -1895,6 +2127,7 @@ async function resolveTargeted(p,c,tgt){
     }
     case "cristal":{
       tgt.plusAtk+=2; tgt.cristalHost=true;
+      await coupleEffect(c, tgt, {color:"var(--gold)", persist:true}); // "ligá a una criatura": queda unida (badge propio en el render, no offset eterno)
       log(`Cristal de Sobrecarga: ${tgt.name} gana +2/+0.`);
       const prima=p.field.find(x=>x.flag==="unidad_prima");
       if(prima){ prima.plusAtk+=1; prima.plusVida+=1; log(`Unidad Prima crece a +1/+1.`); }
@@ -1902,7 +2135,11 @@ async function resolveTargeted(p,c,tgt){
     }
     case "vendaje":{
       if(tgt.isHero){ tgt.p.life=Math.min(30,tgt.p.life+3); log(`Vendaje: cura 3 a ${who(tgt.p)}.`); }
-      else { tgt.damage=Math.max(0,tgt.damage-3); log(`Vendaje: cura 3 a ${tgt.name}.`); }
+      else {
+        tgt.damage=Math.max(0,tgt.damage-3);
+        await coupleEffect(c, tgt, {color:"var(--good)"});
+        log(`Vendaje: cura 3 a ${tgt.name}.`);
+      }
       break;
     }
   }
@@ -2124,7 +2361,7 @@ async function aiEtb(p,c){
   // versión IA de ETB (sin prompts)
   if(c.rarity==="heroe" && c.etb) playSfx("heroe_habilidad");
   switch(c.etb){
-    case "muralla":{ const o=p.field.find(x=>x!==c&&x.kw.includes("Guardián")); if(o){ o.shield=true; playSfx("escudo_ganar"); } break; }
+    case "muralla":{ const o=p.field.find(x=>x!==c&&x.kw.includes("Guardián")); if(o){ o.shield=true; render(); await coupleEffect(c,o,{color:"var(--shield)"}); playSfx("escudo_ganar"); } break; }
     case "zahra":{
       const junk=p.field.filter(x=>x!==c&&x.type==="criatura"&&effVida(p,x)<=1 && !x.kw.includes("Guardián"));
       if(junk.length){ killCreature(p,junk[0],"sacrificada por Zahira"); p.tempMana+=1; }
@@ -2195,6 +2432,13 @@ async function aiAttacks(p){
         // hay guardián: hay que romperlo. elegir el que pueda matar, si no el más débil
         const kill=tg.creatures.find(t=>effAtk(atk,p)>=effVida(foe,t));
         target = kill || tg.creatures.slice().sort((a,b)=>effVida(foe,a)-effVida(foe,b))[0];
+        // Dificultad progresiva (nivel 1-5): si no hay muerte garantizada y el atacante moriría sin
+        // llevarse al objetivo, una IA de nivel alto a veces prefiere guardarlo en vez de perderlo gratis.
+        if(target && !kill){
+          const knob=AI_LEVEL[S.aiDifficulty]||AI_LEVEL[1];
+          const wouldDie = effAtk(target,foe) >= effVida(p,atk);
+          if(wouldDie && Math.random()<knob.tradeSkip) continue;
+        }
       }
     }
     if(!target) continue;
@@ -2435,6 +2679,32 @@ function render(){
   const et=document.getElementById("endturn");
   if(S.turn==="p"){ et.classList.remove("enemy"); et.innerHTML="Terminar<br>turno"; et.disabled=false; }
   else { et.classList.add("enemy"); et.innerHTML="Turno<br>rival…"; }
+  updateAuraLines();
+}
+// Auras globales (Rhaen/Tiberon: auraGuardian) no se apilan visualmente — en vez de un glow por
+// beneficiado, un solo hilo de luz sutil conecta la fuente con cada Guardián que recibe el bono.
+// Se redibuja entero en cada render(): nunca acumula líneas de renders anteriores.
+function updateAuraLines(){
+  const svg=document.getElementById("auraLines");
+  if(!svg) return;
+  svg.innerHTML="";
+  for(const id of ["p","a"]){
+    const pl=S.players[id]; if(!pl) continue;
+    for(const src of pl.field){
+      if(!src.auraGuardian) continue;
+      const srcEl=cardEl(src); if(!srcEl) continue;
+      const sr=srcEl.getBoundingClientRect();
+      for(const ben of pl.field){
+        if(ben===src || !ben.kw.includes("Guardián")) continue;
+        const benEl=cardEl(ben); if(!benEl) continue;
+        const br=benEl.getBoundingClientRect();
+        const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1", sr.left+sr.width/2); line.setAttribute("y1", sr.top+sr.height/2);
+        line.setAttribute("x2", br.left+br.width/2); line.setAttribute("y2", br.top+br.height/2);
+        svg.appendChild(line);
+      }
+    }
+  }
 }
 
 function renderHero(elid, p, enemy){
@@ -2532,6 +2802,7 @@ function makeCardEl(c, owner, mode){
       </div>`);
   }
   if(c.shield) el.insertAdjacentHTML("beforeend",`<div class="shieldring"></div>`);
+  if(c.cristalHost) el.insertAdjacentHTML("beforeend",`<div class="cristalring" title="Cristal de Sobrecarga ligado">💎</div>`);
 
   // estados de interacción — mantener presionada (sección 4) reemplaza el click directo en mano/campo.
   if(mode==="hand"){
@@ -2712,6 +2983,40 @@ function burst(el, color, count){
     setTimeout(()=>s.remove(),540);
   }
 }
+// Animación de acople (sección "Sistemas de Mazmorra Profunda" #6): cuando una carta aplica un
+// efecto dirigido a UNA carta concreta (dar Escudo, ligar una Reliquia, curar), la carta origen se
+// desliza hasta quedar parcialmente metida junto/bajo la objetivo (offset tipo cartas apoyadas en
+// una mesa), destella al contacto, y vuelve a su lugar (persist:true la deja en la posición de acople
+// — usar solo si la mecánica es realmente permanente; lo normal es que el estado persistente lo
+// muestre un badge propio en el render, no un offset físico eterno). Si source/target ya no están en
+// el DOM en este instante, no hace nada — no rompe la mecánica, solo omite el flourish visual.
+async function coupleEffect(source, target, opts){
+  opts = opts||{};
+  if(!source || !target || source===target) return;
+  const srcEl=cardEl(source), tgtEl=cardEl(target);
+  if(!srcEl || !tgtEl) return;
+  const sr=srcEl.getBoundingClientRect(), tr=tgtEl.getBoundingClientRect();
+  const dx=(tr.left+tr.width/2)-(sr.left+sr.width/2);
+  const dy=(tr.top+tr.height/2)-(sr.top+sr.height/2);
+  const offX = dx*0.72 + (dx>=0?-16:16);
+  const offY = dy*0.72 + (dy>=0?-10:10);
+  const prevZ=srcEl.style.zIndex;
+  srcEl.classList.add("coupling");
+  srcEl.style.zIndex="9";
+  srcEl.style.transition="transform .32s cubic-bezier(.3,.7,.4,1)";
+  srcEl.style.transform=`translate(${offX}px,${offY}px) rotate(${dx>=0?-6:6}deg)`;
+  await sleep(320);
+  impactFlash(tgtEl, opts.color||"var(--shield)");
+  burst(tgtEl, opts.color||"var(--gold)", 6);
+  await sleep(180);
+  if(!opts.persist){
+    srcEl.style.transition="transform .26s ease-in";
+    srcEl.style.transform="translate(0,0)";
+    await sleep(260);
+  }
+  srcEl.classList.remove("coupling");
+  srcEl.style.zIndex=prevZ||"";
+}
 // Reacción del héroe al recibir un golpe directo; vignette solo si es el propio jugador
 function heroHitFx(p, elId){
   const el=document.getElementById(elId);
@@ -2739,6 +3044,7 @@ function checkWin(){
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
     if(duelReturn && duelReturn.type==="dungeon" && win){
       if(duelReturn.reward){ grantReward(duelReturn.reward); b.querySelector(".sub").textContent += " Recompensa: "+rewardLabel(duelReturn.reward)+"."; showRewardCardPopup(duelReturn.reward); }
+      if(duelReturn.boss && duelReturn.dungeonId){ S.dungeonCleared[duelReturn.dungeonId]=true; saveGame(); } // sección "dungeonCleared" — jefe vencido al menos una vez
       if(duelReturn.campaignDone && dungeonState){
         const dg=DUNGEONS[dungeonState.dungeonId];
         S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {done:true});
