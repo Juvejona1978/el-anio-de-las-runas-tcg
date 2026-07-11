@@ -470,6 +470,26 @@
     100%{transform:scale(1) rotate(0);opacity:1}}
   @keyframes rewardGlow{0%{opacity:1;transform:scale(.6)}100%{opacity:0;transform:scale(1.6)}}
 
+  /* ---------- Ajustes de audio (sección 5) ----------
+     Ícono discreto y persistente, z-index bajo la capa de overlays (68) pero por
+     encima de pantallas-lugar/menú/tablero de duelo. */
+  #audioBtn{position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:6px;z-index:66;
+    width:30px;height:30px;border-radius:50%;border:1px solid rgba(216,180,106,.4);
+    background:rgba(10,8,14,.55);color:var(--gold2,#f0d59a);font-size:14px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(2px);
+    padding:0}
+  /* z-index 76: por encima del toast (75) — el ícono en reposo queda bajo los overlays (66),
+     pero el panel abierto es una acción deliberada del jugador y no debe quedar tapado por un
+     toast transitorio (ej. "Tu turno") que puede coincidir en pantalla. */
+  #audioPanel{position:fixed;top:calc(env(safe-area-inset-top) + 40px);right:6px;z-index:76;display:none;
+    flex-direction:column;gap:9px;background:rgba(16,13,22,.96);border:1px solid var(--gold,#d8b46a);
+    border-radius:10px;padding:12px 14px;box-shadow:0 10px 28px rgba(0,0,0,.55);min-width:168px}
+  #audioPanel.show{display:flex}
+  .ap-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink,#e9e6f2)}
+  .ap-row input[type=range]{flex:1;margin-left:8px;accent-color:var(--gold,#d8b46a)}
+  .ap-mute{cursor:pointer}
+  .ap-mute input[type=checkbox]{accent-color:var(--gold,#d8b46a);width:16px;height:16px}
+
   /* ---------- Modal ---------- */
   /* z-index por encima de las pantallas-lugar (48) y del menú de duelo (50) — bug: antes quedaba detrás */
   #modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(8,7,12,.72);padding:16px}
@@ -505,6 +525,14 @@
 <button id="cancel">Cancelar</button>
 <div id="log"></div>
 <div class="hint">Tocá una carta de la mano para jugarla · tocá tu criatura y luego el objetivo para atacar · Espacio termina turno</div>
+
+<!-- Ajustes de audio (sección 5): ícono persistente + mini panel. z-index bajo la capa de overlays. -->
+<button id="audioBtn" title="Audio">🔊</button>
+<div id="audioPanel">
+  <div class="ap-row"><span>Música</span><input type="range" id="volMusic" min="0" max="100"></div>
+  <div class="ap-row"><span>Efectos</span><input type="range" id="volSfx" min="0" max="100"></div>
+  <label class="ap-row ap-mute"><span>Silenciar todo</span><input type="checkbox" id="muteAll"></label>
+</div>
 
 <div id="toast"></div>
 <div id="banner"><div class="big"></div><div class="sub"></div>
@@ -864,6 +892,7 @@ S.collection = {}; // {clave_de_carta: copias poseídas}
 S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facción
 S.campaignProgress = {}; // {facción: {nodeId, done}} — progreso persistente de campaña
 S.dungeonsUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
+S.audio = {musicVol:0.6, sfxVol:0.8, muted:false}; // preferencias de audio (sección 5 del motor de audio)
 function isUnlocked(k){ return !!S.unlocked[k]; }
 function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaignProgress[fac].done); }
 
@@ -874,6 +903,7 @@ function saveGame(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       unlocked: S.unlocked, collection: S.collection, savedDecks: S.savedDecks,
       campaignProgress: S.campaignProgress, dungeonsUnlocked: S.dungeonsUnlocked,
+      audio: S.audio,
     }));
   } catch(e){ /* localStorage no disponible (modo privado, cuota, etc.): seguir solo en memoria */ }
 }
@@ -888,6 +918,7 @@ function loadGame(){
     if(data.savedDecks && typeof data.savedDecks==="object") Object.assign(S.savedDecks, data.savedDecks);
     if(data.campaignProgress && typeof data.campaignProgress==="object") Object.assign(S.campaignProgress, data.campaignProgress);
     if(data.dungeonsUnlocked && typeof data.dungeonsUnlocked==="object") Object.assign(S.dungeonsUnlocked, data.dungeonsUnlocked);
+    if(data.audio && typeof data.audio==="object") Object.assign(S.audio, data.audio);
     return true;
   } catch(e){
     try{ localStorage.removeItem(SAVE_KEY); } catch(e2){} // save corrupto: descartar y arrancar limpio
@@ -896,6 +927,162 @@ function loadGame(){
 }
 const HAD_SAVE = loadGame();
 if(!HAD_SAVE){ grantStartingAlderiumCollection(); saveGame(); }
+
+// ============================================================
+//  Motor de audio — Web Audio API pura (sin <audio> tags).
+//  Todo tolera archivos ausentes en silencio: fetch() no tira excepción
+//  por un 404 (solo chequeamos response.ok), y decodeAudioData/red se
+//  atajan en un catch que jamás loguea ni reintenta. Ver Veyra_Audio_Plan.md.
+// ============================================================
+const Audio_ = {
+  ctx:null, unlocked:false,
+  masterGain:null, musicBus:null, sfxBus:null,
+  buffers:{}, // url -> AudioBuffer | "missing" | Promise<AudioBuffer|null>
+  music:{trackName:null, iterations:[], token:0}, // iterations: {source,gain,timer,done}
+  desiredTrack:null,
+};
+function effMusicVol(){ return S.audio.muted?0:S.audio.musicVol; }
+function effSfxVol(){ return S.audio.muted?0:S.audio.sfxVol; }
+function applyAudioVolumes(){
+  if(!Audio_.ctx) return;
+  const now=Audio_.ctx.currentTime;
+  Audio_.musicBus.gain.cancelScheduledValues(now);
+  Audio_.musicBus.gain.setValueAtTime(effMusicVol(), now);
+  Audio_.sfxBus.gain.setValueAtTime(effSfxVol(), now);
+}
+function ensureAudioCtx(){
+  if(Audio_.ctx) return;
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx) return; // navegador sin Web Audio: todo queda silencioso, sin excepción
+  try{
+    Audio_.ctx=new Ctx();
+    Audio_.masterGain=Audio_.ctx.createGain();
+    Audio_.musicBus=Audio_.ctx.createGain();
+    Audio_.sfxBus=Audio_.ctx.createGain();
+    Audio_.musicBus.connect(Audio_.masterGain);
+    Audio_.sfxBus.connect(Audio_.masterGain);
+    Audio_.masterGain.connect(Audio_.ctx.destination);
+    applyAudioVolumes();
+  } catch(e){ Audio_.ctx=null; }
+}
+// Desbloqueo móvil (sección 2): crear/retomar el AudioContext dentro del primer gesto real
+// del usuario es lo que exigen las políticas de autoplay — no hace falta ningún <audio> mudo
+// aparte porque acá todo se reproduce vía Web Audio (AudioBufferSourceNode), no <audio> tags.
+function unlockAudio(){
+  if(Audio_.unlocked) return;
+  Audio_.unlocked=true;
+  ensureAudioCtx();
+  if(Audio_.ctx && Audio_.ctx.state==="suspended") Audio_.ctx.resume().catch(()=>{});
+  if(Audio_.desiredTrack) playTrack(Audio_.desiredTrack);
+}
+document.addEventListener("pointerdown", unlockAudio, {once:true, capture:true});
+
+function loadAudioBuffer(url){
+  const cached=Audio_.buffers[url];
+  if(cached==="missing") return Promise.resolve(null);
+  if(cached instanceof Promise) return cached;
+  if(cached) return Promise.resolve(cached);
+  const p = fetch(url).then(r=>{
+      if(!r.ok) throw 0;
+      return r.arrayBuffer();
+    })
+    .then(ab=>Audio_.ctx.decodeAudioData(ab))
+    .then(buf=>{ Audio_.buffers[url]=buf; return buf; })
+    .catch(()=>{ Audio_.buffers[url]="missing"; return null; });
+  Audio_.buffers[url]=p;
+  return p;
+}
+
+// ---- Música (sección 3): una pista por pantalla, crossfade entre pistas y loop con crossfade propio ----
+function playTrack(name){
+  Audio_.desiredTrack=name;
+  if(!Audio_.unlocked || !Audio_.ctx) return;
+  if(Audio_.music.trackName===name){ restoreMusicLevel(); return; } // ya suena: no reiniciar, solo asegurar volumen
+  const url=`assets/audio/musica/${name}.mp3`;
+  const myToken=++Audio_.music.token;
+  loadAudioBuffer(url).then(buf=>{
+    if(!buf || Audio_.music.token!==myToken || !Audio_.ctx) return; // ausente o superado por otro cambio de pantalla
+    fadeOutCurrentMusic(1.0);
+    startMusicIteration(name, buf, Audio_.ctx.currentTime, 1.0);
+  });
+}
+function startMusicIteration(name, buf, when, fadeIn){
+  const ctx=Audio_.ctx;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(0, when);
+  g.gain.linearRampToValueAtTime(1, when+fadeIn);
+  src.connect(g); g.connect(Audio_.musicBus);
+  try{ src.start(when); }catch(e){ return; }
+  const iter={source:src, gain:g, done:false};
+  src.onended=()=>{ iter.done=true; };
+  Audio_.music.trackName=name;
+  Audio_.music.iterations = Audio_.music.iterations.filter(x=>!x.done);
+  Audio_.music.iterations.push(iter);
+  // Loop con crossfade propio (~1.5s): programar la próxima vuelta antes de que termine la actual.
+  const seam=1.5;
+  const nextWhen = when + Math.max(0.5, buf.duration-seam);
+  const delayMs = Math.max(0, (nextWhen-ctx.currentTime)*1000);
+  iter.timer=setTimeout(()=>{
+    if(Audio_.music.trackName!==name) return; // cambiaron de pista mientras tanto
+    g.gain.cancelScheduledValues(nextWhen);
+    g.gain.setValueAtTime(g.gain.value, nextWhen);
+    g.gain.linearRampToValueAtTime(0, nextWhen+seam);
+    try{ src.stop(nextWhen+seam+0.05); }catch(e){}
+    startMusicIteration(name, buf, nextWhen, seam);
+  }, delayMs);
+}
+function fadeOutCurrentMusic(fadeSec){
+  if(!Audio_.ctx) return;
+  const now=Audio_.ctx.currentTime;
+  for(const iter of Audio_.music.iterations){
+    clearTimeout(iter.timer);
+    iter.gain.cancelScheduledValues(now);
+    iter.gain.setValueAtTime(iter.gain.value, now);
+    iter.gain.linearRampToValueAtTime(0, now+fadeSec);
+    try{ iter.source.stop(now+fadeSec+0.05); }catch(e){}
+  }
+  Audio_.music.iterations=[];
+}
+function restoreMusicLevel(){
+  if(!Audio_.ctx) return;
+  const now=Audio_.ctx.currentTime;
+  Audio_.musicBus.gain.cancelScheduledValues(now);
+  Audio_.musicBus.gain.setValueAtTime(Audio_.musicBus.gain.value, now);
+  Audio_.musicBus.gain.linearRampToValueAtTime(effMusicVol(), now+0.4);
+}
+function musicDuck(){
+  if(!Audio_.ctx) return;
+  const now=Audio_.ctx.currentTime;
+  Audio_.musicBus.gain.cancelScheduledValues(now);
+  Audio_.musicBus.gain.setValueAtTime(Audio_.musicBus.gain.value, now);
+  Audio_.musicBus.gain.linearRampToValueAtTime(effMusicVol()*0.22, now+0.3);
+}
+// Mapa pantalla → pista (sección 3). "menu" (picker de facción/rival) no tiene pista propia:
+// se deja sonando lo que ya sonaba. Ciudad: Alderium usa su tema propio, el resto tema_ciudad_central.
+const SCREEN_TRACK = {
+  mapScreen:"tema_mapa_mundial", dungeonMapScreen:"tema_mazmorra", dungeonInterior:"tema_mazmorra",
+  constructorScreen:"tema_constructor",
+};
+function setScreenMusic(screenId){
+  let track;
+  if(screenId==="cityScreen") track = currentCity==="alderium" ? "tema_alderium" : "tema_ciudad_central";
+  else if(screenId===null) track = "tema_duelo"; // showScreen(null) = tablero de duelo revelado
+  else track = SCREEN_TRACK[screenId];
+  if(track) playTrack(track);
+}
+
+// ---- SFX (sección 4): cada reproducción es un AudioBufferSourceNode nuevo, así se solapan sin cortarse ----
+function playSfx(name){
+  if(!Audio_.unlocked || !Audio_.ctx) return; // antes del primer gesto: silencioso, no se encola
+  const url=`assets/audio/sfx/${name}.mp3`;
+  loadAudioBuffer(url).then(buf=>{
+    if(!buf || !Audio_.ctx) return;
+    const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
+    src.connect(Audio_.sfxBus);
+    try{ src.start(); }catch(e){}
+  });
+}
 
 // Posiciones de los hotspots en el mapa mundial, en % del contenedor (mantienen su lugar relativo en cualquier pantalla).
 const MAP_HOTSPOTS = {
@@ -911,6 +1098,7 @@ const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", dung
   constructorScreen:"flex"};
 function showScreen(id){
   for(const x in SCREEN_DISPLAY){ document.getElementById(x).style.display = (x===id) ? SCREEN_DISPLAY[x] : "none"; }
+  setScreenMusic(id);
 }
 
 // ---- 1. Mapa mundial ----
@@ -1264,6 +1452,7 @@ function buildGuardianHeavyDeck(fac){
 function currentDungeonNode(){ return DUNGEONS[dungeonState.dungeonId].nodes[dungeonState.nodeId]; }
 
 function enterDungeon(dungeonId){
+  playSfx("mazmorra_entrar");
   const dg=DUNGEONS[dungeonId];
   const saved = dg.isCampaign && S.campaignProgress[dg.faction];
   dungeonState={dungeonId, nodeId: (saved && saved.nodeId) || dg.startNode};
@@ -1303,6 +1492,7 @@ function exitDungeonToMap(){
 }
 
 function commitSwipe(dir){
+  playSfx("swipe");
   const node=currentDungeonNode();
   const dest = dir==="left" ? node.left : node.right;
   const reward = dir==="left" ? node.leftReward : node.rightReward;
@@ -1324,8 +1514,8 @@ async function engageDungeonQuiz(node){
   quizModalOpen=true;
   const ok = await askQuizModal(node.quiz);
   quizModalOpen=false;
-  if(ok){ grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); showRewardCardPopup(node.reward); }
-  else { toast("No era así — seguís de todos modos."); }
+  if(ok){ playSfx("quiz_correcto"); grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); showRewardCardPopup(node.reward); }
+  else { playSfx("quiz_incorrecto"); toast("No era así — seguís de todos modos."); }
   dungeonAdvance(node.next);
 }
 function engageDungeonBridge(node){
@@ -1480,6 +1670,7 @@ function drawCard(p){
     checkWin(); return;
   }
   p.hand.push(p.deck.pop());
+  playSfx("carta_robar");
 }
 
 // ============================================================
@@ -1565,6 +1756,7 @@ async function playCard(p,c){
     removeFromHand(p,c);
     if(c.type==="criatura"){ /* n/a */ }
     log(`${who(p)} juega ${c.name}.`);
+    playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
     if(c.type==="criatura"){ enterField(p,c); }
     await resolveTargeted(p,c,tgt);
     if(c.type!=="criatura" && c.type!=="reliquia" && c.type!=="runa") p.grave.push(c);
@@ -1575,6 +1767,7 @@ async function playCard(p,c){
   spendMana(p,cost);
   removeFromHand(p,c);
   log(`${who(p)} juega ${c.name}.`);
+  playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
 
   if(c.type==="criatura"){
     enterField(p,c);
@@ -1608,10 +1801,11 @@ function removeFromHand(p,c){ const i=p.hand.indexOf(c); if(i>=0) p.hand.splice(
 
 // ---- ETB (al entrar) ----
 async function runEtb(p,c){
+  if(c.rarity==="heroe" && c.etb) playSfx("heroe_habilidad"); // mecánica de héroe al entrar (sección 4)
   switch(c.etb){
     case "muralla":{
       const other=p.field.find(x=>x!==c && x.kw.includes("Guardián"));
-      if(other){ other.shield=true; log(`Muralla Viviente da Escudo a ${other.name}.`); }
+      if(other){ other.shield=true; playSfx("escudo_ganar"); log(`Muralla Viviente da Escudo a ${other.name}.`); }
       break;
     }
     case "zahra":{
@@ -1686,7 +1880,7 @@ async function runEtb(p,c){
 async function resolveTargeted(p,c,tgt){
   switch(c.cast){
     case "decreto_cont":{
-      tgt.shield=true;
+      tgt.shield=true; playSfx("escudo_ganar");
       if(tgt.kw.includes("Guardián")){
         const others=p.field.concat(other(p).field).filter(x=>x!==tgt);
         if(others.length){ const t2=others.find(x=>!x.shield)||others[0]; t2.shield=true; log(`Decreto: Escudo a ${tgt.name} y ${t2.name}.`);}
@@ -1778,6 +1972,7 @@ async function attack(attacker, ownerP, target){
   if(isolde && effVida(ownerP,attacker)>0){
     applyDamage(ownerP, attacker, 1, isolde);
     impactFlash(cardEl(attacker), "var(--bad)");
+    playSfx("heroe_habilidad");
     log(`${isolde.name} inflige 1 a ${attacker.name} antes del combate.`);
   }
 
@@ -1786,6 +1981,7 @@ async function attack(attacker, ownerP, target){
     const heroElId = foe.id==="p"?"playerHero":"enemyHero";
     impactFlash(document.getElementById(heroElId), "var(--vida)");
     heroHitFx(foe, heroElId);
+    playSfx("ataque_impacto");
     floatDmg(document.getElementById(heroElId), effAtk(attacker,ownerP));
   } else {
     reveal(target, foe);
@@ -1797,8 +1993,8 @@ async function attack(attacker, ownerP, target){
     // daño simultáneo (combate mutuo, sección 1)
     applyDamage(foe, target, aAtk, attacker);
     applyDamage(ownerP, attacker, tAtk, target);
-    if(aAtk>0){ if(targetHadShield && !target.shield) burst(tel, "var(--shield)", 8); else impactFlash(tel, "var(--atk)"); }
-    if(tAtk>0){ if(attackerHadShield && !attacker.shield) burst(ael, "var(--shield)", 8); else impactFlash(ael, "var(--atk)"); }
+    if(aAtk>0){ if(targetHadShield && !target.shield){ burst(tel, "var(--shield)", 8); playSfx("escudo_romper"); } else { impactFlash(tel, "var(--atk)"); playSfx("ataque_impacto"); } }
+    if(tAtk>0){ if(attackerHadShield && !attacker.shield){ burst(ael, "var(--shield)", 8); playSfx("escudo_romper"); } else { impactFlash(ael, "var(--atk)"); playSfx("ataque_impacto"); } }
     floatDmg(cardEl(target), aAtk); floatDmg(cardEl(attacker), tAtk);
     // Guardiana de las Alturas / Elyon: sobrevive como Guardián -> +1/+1
     if(target.flag==="guardiana" && effVida(foe,target)>0 && target.kw.includes("Guardián")){
@@ -1836,6 +2032,7 @@ function killCreature(p, c, reason, fromCombat){
   const i=p.field.indexOf(c); if(i<0) return;
   const el=cardEl(c);
   if(el){ el.classList.add("dead"); const fac=FACTIONS[c.fac]; burst(el, fac?fac.color:"var(--gold)", 10); }
+  playSfx("criatura_morir");
   p.field.splice(i,1);
   log(`${c.name} ${reason}.`);
   // muerte de host de cristal
@@ -1908,12 +2105,14 @@ async function aiPlay(p,c){
     if(tgt===null && c.type!=="criatura") return;
     spendMana(p,cost); removeFromHand(p,c);
     log(`${who(p)} juega ${c.name}.`);
+    playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
     if(tgt!==null) await resolveTargeted(p,c,tgt);
     if(c.type==="hechizo"||c.type==="recuerdo") p.grave.push(c);
     render(); checkWin(); return;
   }
   spendMana(p,cost); removeFromHand(p,c);
   log(`${who(p)} juega ${c.name}.`);
+  playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
   if(c.type==="criatura"){ enterField(p,c); await aiEtb(p,c); }
   else if(c.type==="runa"){ p.field.push(c); if(c.cast) await runCast(p,c,null); }
   else if(c.type==="reliquia"){ p.grave.push(c); }
@@ -1923,8 +2122,9 @@ async function aiPlay(p,c){
 
 async function aiEtb(p,c){
   // versión IA de ETB (sin prompts)
+  if(c.rarity==="heroe" && c.etb) playSfx("heroe_habilidad");
   switch(c.etb){
-    case "muralla":{ const o=p.field.find(x=>x!==c&&x.kw.includes("Guardián")); if(o)o.shield=true; break; }
+    case "muralla":{ const o=p.field.find(x=>x!==c&&x.kw.includes("Guardián")); if(o){ o.shield=true; playSfx("escudo_ganar"); } break; }
     case "zahra":{
       const junk=p.field.filter(x=>x!==c&&x.type==="criatura"&&effVida(p,x)<=1 && !x.kw.includes("Guardián"));
       if(junk.length){ killCreature(p,junk[0],"sacrificada por Zahira"); p.tempMana+=1; }
@@ -2041,6 +2241,7 @@ function openActivatedChooser(c){
 function activateNadira(c){
   const p=S.players.p;
   if(p.life<=2||c.activatedUsed) return;
+  playSfx("heroe_habilidad");
   p.life-=2; c.activatedUsed=true;
   drawCard(p);
   log(`${c.name} paga 2 de vida y roba una carta.`);
@@ -2345,6 +2546,7 @@ function makeCardEl(c, owner, mode){
       el.classList.add("summonIn");
       el.insertAdjacentHTML("beforeend", `<div class="summonring" style="--sc:${fac?fac.color:"var(--gold)"}"></div>`);
       c.justSummoned=false;
+      playSfx("invocar");
     }
     if(c.type==="criatura" && c.sick && !c.attacked){ el.classList.add("summonsick"); el.insertAdjacentHTML("beforeend",`<div class="zzz">💤</div>`); }
     else if(c.type==="criatura" && c.attacked){ el.classList.add("spent"); } // agotada: ya atacó este turno
@@ -2426,6 +2628,7 @@ function showRewardCardPopup(reward){
   const items = Array.isArray(reward) ? reward : [reward];
   const first = items.find(r=>r.type==="collection"); if(!first) return;
   const entry = poolEntry(first.fac||"alderium", first.key); if(!entry) return;
+  playSfx("recompensa");
   const inst = entry.def.vanilla ? instantiate(null, entry.def, first.key) : instantiate(first.key);
   const fakeOwner={id:"reward", fac:entry.def.fac, mana:0, tempMana:0, field:[]};
   const popup=document.getElementById("rewardPopup");
@@ -2442,6 +2645,7 @@ function showRewardCardPopup(reward){
 function reveal(c, owner){
   if(!c.hidden) return;
   c.hidden=false;
+  playSfx("oculto_revelar");
   if(c.flag==="yesid" && owner){ owner.freeNextCard=true; toast(`${c.name} revelado: tu próxima carta este turno es gratis.`); }
   render();
 }
@@ -2529,6 +2733,7 @@ function checkWin(){
     b.querySelector(".big").textContent = win? "VICTORIA" : "DERROTA";
     b.querySelector(".big").style.color = win? "var(--gold2)":"var(--vida)";
     b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
+    musicDuck(); playSfx(win?"stinger_victoria":"stinger_derrota"); // la próxima showScreen() retoma el tema normal
 
     // Contexto de retorno: duelo de mazmorra vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
@@ -2567,6 +2772,33 @@ document.addEventListener("pointerdown",e=>{
     setTimeout(()=>{ t.style.display="none"; t.classList.remove("out"); }, 220);
   }
 }, true);
+
+// SFX genérico de UI (sección 4): un solo listener delegado en vez de tocar cada handler.
+const UI_TAP_SELECTOR = ".hotspot,.cityframe,.compass-btn,.btn,.backbtn,.mopt,.zbtn,.ctor-row,.fac,#endturn,#cancel,#audioBtn";
+document.addEventListener("click", e=>{
+  if(e.target.closest(UI_TAP_SELECTOR)) playSfx("ui_tap");
+});
+
+// ---- Panel de audio (sección 5): ícono + mini panel, guarda en S.audio (mismo save versionado) ----
+function initAudioUI(){
+  const btn=document.getElementById("audioBtn"), panel=document.getElementById("audioPanel");
+  const volMusic=document.getElementById("volMusic"), volSfx=document.getElementById("volSfx"), muteAll=document.getElementById("muteAll");
+  function syncUI(){
+    volMusic.value=Math.round(S.audio.musicVol*100);
+    volSfx.value=Math.round(S.audio.sfxVol*100);
+    muteAll.checked=S.audio.muted;
+    btn.textContent = S.audio.muted ? "🔇" : "🔊";
+  }
+  syncUI();
+  btn.onclick=()=>panel.classList.toggle("show");
+  volMusic.oninput=()=>{ S.audio.musicVol=volMusic.value/100; applyAudioVolumes(); saveGame(); };
+  volSfx.oninput=()=>{ S.audio.sfxVol=volSfx.value/100; applyAudioVolumes(); saveGame(); };
+  muteAll.onchange=()=>{ S.audio.muted=muteAll.checked; applyAudioVolumes(); btn.textContent=S.audio.muted?"🔇":"🔊"; saveGame(); };
+  document.addEventListener("pointerdown", e=>{
+    if(panel.classList.contains("show") && !panel.contains(e.target) && e.target!==btn) panel.classList.remove("show");
+  }, true);
+}
+initAudioUI();
 
 initMenu();
 renderMap();
