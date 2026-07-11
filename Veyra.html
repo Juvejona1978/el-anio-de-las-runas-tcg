@@ -241,34 +241,69 @@
     padding:8px 10px 10px;flex:0 0 auto;scrollbar-width:none;scroll-snap-type:x proximity}
   .hand::-webkit-scrollbar{display:none}
 
-  /* ---------- Card ---------- */
+  /* ---------- Card: full-art (sección 1 del rediseño visual) ----------
+     El arte (JPG que sube el autor) es el fondo completo de la carta.
+     .art-real y .art-fallback son dos capas de background superpuestas:
+     si el JPG en assets/cards/<fac>/<key>.jpg no existe, .art-real queda
+     transparente y .art-fallback (gradiente + glifo grande) se ve debajo
+     — sin JS de detección, es el comportamiento nativo de background-image
+     cuando falla la carga. Todo el texto vive en capas HTML encima. */
   .card{width:var(--handW);aspect-ratio:5/7;border-radius:9px;
-    background:linear-gradient(#211d2d,#17141f);
-    background:linear-gradient(165deg, color-mix(in srgb, var(--fc,#2c2838) 20%, #211d2d), #17141f 65%);
-    border:1.5px solid var(--fc,var(--line));position:relative;transition:transform .12s, box-shadow .12s;
+    background:#14111c;
+    border:1.5px solid var(--fc,var(--line));position:relative;transition:transform .12s, box-shadow .12s, filter .15s;
     box-shadow:0 4px 12px rgba(0,0,0,.45);flex:0 1 auto;container-type:inline-size;
     display:flex;flex-direction:column;overflow:visible}
-  .card>.name{overflow:hidden}
-  .card .top{display:flex;justify-content:flex-start;padding:4cqw 4cqw 0}
-  .card .name{font-size:10cqw;font-weight:800;line-height:1.02;padding:2cqw 5cqw 0;min-height:20cqw;color:var(--gold2);
-    overflow:hidden}
-  .card .art{margin:3cqw 5cqw;height:38cqw;border-radius:6px;display:flex;align-items:center;justify-content:center;
-    font-size:24cqw;background:radial-gradient(circle at 50% 35%, #2c2740, #151220);border:1px solid #2c2838}
-  .card .type{font-size:8cqw;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);text-align:center}
-  .card .txt{font-size:8.4cqw;line-height:1.2;color:#cfc9dc;padding:3cqw 6cqw;overflow:hidden;flex:1}
-  .card .kw{display:flex;gap:3cqw;flex-wrap:wrap;padding:1cqw 6cqw;justify-content:center}
-  .card .kw span{font-size:7.5cqw;background:#2a2540;color:var(--gold2);border:1px solid #3a3455;border-radius:4px;padding:0 4cqw}
-  .pip{width:20cqw;height:20cqw;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:12cqw;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.5)}
-  .pip.mana{background:radial-gradient(circle at 35% 30%,#7cc3f2,#2f7fc0);border:1px solid #9fd4f7}
-  .stats{position:absolute;bottom:-6cqw;left:0;right:0;display:flex;justify-content:space-between;padding:0 4cqw}
-  .badge{width:24cqw;height:24cqw;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:13cqw;color:#fff;border:2px solid rgba(0,0,0,.4)}
-  .badge.atk{background:radial-gradient(circle at 35% 30%,#f2cd6a,#c48f28)}
-  .badge.vida{background:radial-gradient(circle at 35% 30%,#f07a6a,#b23429)}
-  .badge.buffed{box-shadow:0 0 0 2px var(--good)}
+  .card-face{position:absolute;inset:0;border-radius:inherit;overflow:hidden}
+  .art-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:40cqw;line-height:1;
+    background:radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--fc,#4a4266) 42%, #241f33), #120f19 82%)}
+  .art-real{position:absolute;inset:0;background-size:cover;background-position:center}
+  .card.onfield .art-fallback{font-size:46cqw}
+  .card-face::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:
+      linear-gradient(to bottom, rgba(9,7,13,.7) 0%, rgba(9,7,13,.05) 22%, transparent 38%),
+      linear-gradient(to top, rgba(7,5,11,.92) 0%, rgba(7,5,11,.55) 24%, transparent 48%)}
+  .card.fac-caelum .card-face::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    background-image:radial-gradient(circle at 14% 12%, rgba(240,213,154,.45) 1px, transparent 1.6px),
+      radial-gradient(circle at 78% 16%, rgba(240,213,154,.35) 1px, transparent 1.6px),
+      radial-gradient(circle at 30% 82%, rgba(240,213,154,.3) 1px, transparent 1.6px),
+      radial-gradient(circle at 62% 68%, rgba(240,213,154,.25) 1px, transparent 1.6px);
+    background-repeat:no-repeat}
+  /* pip de maná + iconos de palabra clave van juntos a la izquierda: la esquina superior derecha
+     queda reservada para el sello de facción (.facsig), si no se pisan */
+  .face-top{position:absolute;z-index:2;top:0;left:0;right:26cqw;display:flex;align-items:flex-start;gap:2cqw;padding:3.5cqw}
+  .name-plate{position:absolute;z-index:2;left:0;right:0;top:26cqw;padding:0 6cqw;max-height:24cqw;
+    font-size:10cqw;font-weight:800;line-height:1.05;color:var(--gold2);overflow:hidden;
+    text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.7)}
+  .card.rarity-heroe .name-plate::before{content:"✦ ";color:var(--gold)}
+  .rules-band{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:2cqw 6cqw 3.5cqw}
+  .type-line{font-size:6.5cqw;letter-spacing:.5px;text-transform:uppercase;color:#c9c2dc;opacity:.85;margin-bottom:.6cqw}
+  .type-icon{width:8cqw;height:8cqw;min-width:9px;min-height:9px;fill:var(--gold2);vertical-align:-1.5px;margin-right:3px;display:inline-block}
+  .card .txt{font-size:7.6cqw;line-height:1.22;color:#f1eef9;overflow:hidden;max-height:22cqw;
+    text-shadow:0 1px 2px rgba(0,0,0,.85)}
+  .card.onfield .rules-band{display:none}
+  .kwrow{display:flex;gap:1.5cqw}
+  .kwchip{width:15cqw;height:15cqw;min-width:14px;min-height:14px;border-radius:50%;flex:0 0 auto;
+    background:rgba(10,8,14,.75);border:1px solid var(--fc,var(--gold));
+    display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .kwchip svg{width:60%;height:60%;fill:var(--gold2)}
+  .pip{width:20cqw;height:20cqw;min-width:19px;min-height:19px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:11cqw;color:#fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+  .pip.mana{background:radial-gradient(circle at 35% 30%,#7cc3f2,#2266a8);
+    clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+  .stats{position:absolute;bottom:-6cqw;left:0;right:0;display:flex;justify-content:space-between;padding:0 4cqw;z-index:3}
+  .badge{width:24cqw;height:24cqw;min-width:22px;min-height:22px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:12cqw;color:#fff;border:2px solid rgba(0,0,0,.45);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+  .badge.atk{background:radial-gradient(circle at 35% 30%,#f2cd6a,#c48f28);
+    clip-path:polygon(50% 0%,100% 30%,84% 100%,16% 100%,0% 30%)}
+  .badge.vida{background:radial-gradient(circle at 35% 30%,#f07a6a,#b23429);border-radius:50% 50% 50% 4px;transform:rotate(45deg)}
+  .badge.buffed{border-color:var(--good)}
   .badge.hurt{background:radial-gradient(circle at 35% 30%,#f2b0a6,#9c2418)}
-  .facbar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:9px 9px 0 0}
+  /* icono SVG apagado detrás del número, para que mana/ataque/vida también tengan marca propia */
+  .pip-inner{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  .badge.vida .pip-inner{transform:rotate(-45deg)}
+  .pipicon{position:absolute;width:66%;height:66%;opacity:.32;fill:#fff;pointer-events:none}
+  .pip-num{position:relative}
 
   /* Sello de facción (esquina superior derecha, solo en mano: en mesa las cartas son chicas) */
   .facsig{position:absolute;top:5px;right:5px;width:16cqw;height:16cqw;min-width:15px;min-height:15px;
@@ -276,34 +311,59 @@
     font-size:10cqw;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.6);z-index:4}
   .card.onfield .facsig{display:none}
 
-  /* Marcos por facción: cada casa deja una marca propia en el borde de sus cartas */
-  .card.fac-alderium{border-radius:4px}
-  .card.fac-alderium .facbar{border-radius:3px 3px 0 0}
-  .card.fac-koren{border-radius:16px}
-  .card.fac-koren .facbar{border-radius:15px 15px 0 0}
-  .card.fac-qashir{box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 0 1px rgba(198,91,58,.4), inset 0 0 16px rgba(198,91,58,.2)}
-  .card.fac-qashir .facbar{background:repeating-linear-gradient(115deg, var(--fc) 0 6px, #1a1420 6px 10px)!important}
-  .card.fac-nomadas{border-style:dashed}
+  /* Marcos épicos por facción (sección 2): identidad por paleta + forma + tratamiento del borde,
+     no solo color. Cada casa se distingue de un vistazo. */
+  .card.fac-alderium{border-radius:5px;border-width:2px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 0 1px rgba(240,213,154,.35)}
+  .card.fac-alderium::before,.card.fac-alderium::after{content:"";position:absolute;top:3px;width:5px;height:5px;
+    background:var(--fc);transform:rotate(45deg);box-shadow:0 0 3px rgba(0,0,0,.7);z-index:4}
+  .card.fac-alderium::before{left:3px}
+  .card.fac-alderium::after{right:3px}
+  .card.fac-qashir{border-width:1.5px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 0 1px rgba(198,91,58,.4), inset 0 0 14px rgba(198,91,58,.18)}
+  .card.fac-qashir .card-face::before{content:"";position:absolute;inset:3px;z-index:1;pointer-events:none;
+    border:1px dotted rgba(240,213,154,.4);border-radius:3px}
+  .card.fac-brasshaven{border-radius:6px;border-width:2px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.35), inset 0 0 0 4px rgba(184,134,63,.25)}
   .card.fac-brasshaven::before,.card.fac-brasshaven::after{
     content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--fc);
     box-shadow:0 0 3px rgba(0,0,0,.6);z-index:4}
   .card.fac-brasshaven::before{bottom:4px;left:4px}
   .card.fac-brasshaven::after{bottom:4px;right:4px}
-  .card.fac-caelum{background-image:radial-gradient(circle at 14% 10%, rgba(240,213,154,.35) 1px, transparent 1.6px),
-    radial-gradient(circle at 32% 16%, rgba(240,213,154,.25) 1px, transparent 1.6px),
-    radial-gradient(circle at 22% 24%, rgba(240,213,154,.2) 1px, transparent 1.6px);
-    background-repeat:no-repeat}
+  .card.fac-koren{border-radius:16px;border-width:2px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 16px rgba(79,170,134,.22)}
+  .card.fac-caelum{border-width:1.5px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), 0 0 14px rgba(111,127,216,.32), inset 0 0 0 1px rgba(217,207,168,.3)}
+  .card.fac-nomadas{border-style:dashed;border-width:2px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 0 0 1px rgba(155,111,196,.25)}
+
+  /* Variación por tipo de carta (sección 2): ornamento adicional, elementos propios
+     (no pseudo-clases del marco de facción, para no pisarlas). */
+  .type-orn{position:absolute;pointer-events:none;z-index:5}
+  .type-orn-hechizo{top:-1px;right:-1px;width:0;height:0;
+    border-style:solid;border-width:0 13px 13px 0;border-color:transparent var(--fc,var(--gold)) transparent transparent;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+  .type-orn-reliquia{top:-4px;left:-4px;width:9px;height:9px;background:var(--fc,var(--gold));
+    transform:rotate(45deg);box-shadow:0 0 4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.4)}
+  .type-orn-recuerdo{inset:-3px;border:1px solid var(--fc,var(--gold));border-radius:inherit;opacity:.55}
+  .type-orn-runa{inset:-4px;border-radius:inherit;border:1.5px solid var(--gold2);
+    box-shadow:0 0 10px rgba(216,180,106,.5), inset 0 0 10px rgba(216,180,106,.2);
+    animation:runaGlow 2.4s ease-in-out infinite}
+  @keyframes runaGlow{0%,100%{opacity:.65}50%{opacity:1}}
 
   /* mano: tamaño fijo grande y legible; se desliza en carrusel (no se encoge) */
   .card.inhand{flex:0 0 var(--handW);scroll-snap-align:center}
   /* field cards = compact tokens; se encogen un poco si hay muchos, pero más grandes */
   .card.onfield{flex:0 1 var(--fieldW);min-width:52px}
-  .card.onfield .txt,.card.onfield .type{display:none}
-  .card.onfield .name{font-size:11cqw;min-height:22cqw;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical}
-  .card.onfield .art{height:44cqw;font-size:30cqw}
+  .card.onfield .name-plate{font-size:11cqw;max-height:22cqw;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical}
+  /* ampliada (inspección, recompensa, zoom del constructor): misma carta, más grande — el resto
+     escala solo porque todo el interior usa unidades cqw relativas al contenedor. */
+  .card.zoom{width:min(78vw,320px)}
+  .card.zoom .art-real::after{content:attr(data-slot);position:absolute;bottom:3px;right:5px;z-index:1;
+    font-size:9.5px;font-family:"Courier New",monospace;color:rgba(255,255,255,.32)}
 
   /* interactive states */
-  .card.inhand.playable{cursor:pointer}
+  .card.inhand.playable{cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.45), 0 0 0 1px color-mix(in srgb, var(--fc,#d8b46a) 55%, transparent)}
   .card.inhand.playable:active{transform:translateY(-10px)}
   @media(hover:hover){.card.inhand.playable:hover{transform:translateY(-14px);box-shadow:0 16px 30px rgba(0,0,0,.6);border-color:var(--gold)}}
   .card.inhand.unplayable{opacity:.5;filter:grayscale(.4)}
@@ -312,7 +372,8 @@
   .card.targetable{cursor:crosshair;box-shadow:0 0 0 2px var(--bad), 0 0 18px rgba(224,90,77,.6)}
   .card.targetable.friendly{box-shadow:0 0 0 2px var(--good), 0 0 18px rgba(91,196,106,.6)}
   .card.summonsick{filter:saturate(.6) brightness(.9)}
-  .card .zzz{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;z-index:2}
+  .card.spent{filter:saturate(.55) brightness(.75)}
+  .card .zzz{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;z-index:6}
   .shieldring{position:absolute;inset:-3px;border-radius:11px;border:2px solid var(--shield);box-shadow:0 0 12px var(--shield);pointer-events:none;animation:pulse 1.6s infinite}
   @keyframes pulse{50%{opacity:.5}}
   .card.dead{animation:die .45s forwards}
@@ -384,6 +445,31 @@
   #toast{transition:opacity .2s}
   #toast.out{opacity:0}
 
+  /* ---------- Inspección ampliada (sección 4) y momento de recompensa (sección 5) ----------
+     Por debajo de #modal(70)/#toast(75), por encima de todo lo demás (pantallas-lugar 48, menú 50,
+     tablero de duelo, botón terminar turno 31). */
+  #inspectOverlay{position:fixed;inset:0;z-index:68;display:none;align-items:center;justify-content:center;
+    background:rgba(6,5,9,.66);padding:24px}
+  #inspectOverlay.show{display:flex}
+  #inspectOverlay .card{animation:inspectIn .15s ease-out}
+  @keyframes inspectIn{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
+
+  #rewardPopup{position:fixed;inset:0;z-index:68;display:none;align-items:center;justify-content:center;
+    background:rgba(6,5,9,.72);padding:24px;cursor:pointer}
+  #rewardPopup.show{display:flex}
+  #rewardPopup .reward-inner{display:flex;flex-direction:column;align-items:center;gap:12px}
+  #rewardPopup .reward-label{font-family:Georgia,serif;color:var(--gold2);font-size:13px;letter-spacing:2px;
+    text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.9)}
+  #rewardPopup .reward-frame{position:relative}
+  #rewardPopup .reward-frame::after{content:"";position:absolute;inset:-16px;border-radius:18px;pointer-events:none;
+    background:radial-gradient(circle, rgba(216,180,106,.5), transparent 70%);
+    animation:rewardGlow .9s ease-out forwards}
+  #rewardPopup .card{animation:rewardPop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes rewardPop{0%{transform:scale(.4) rotate(-6deg);opacity:0}
+    60%{transform:scale(1.08) rotate(2deg);opacity:1}
+    100%{transform:scale(1) rotate(0);opacity:1}}
+  @keyframes rewardGlow{0%{opacity:1;transform:scale(.6)}100%{opacity:0;transform:scale(1.6)}}
+
   /* ---------- Modal ---------- */
   /* z-index por encima de las pantallas-lugar (48) y del menú de duelo (50) — bug: antes quedaba detrás */
   #modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(8,7,12,.72);padding:16px}
@@ -427,6 +513,26 @@
   <button class="btn ghost" id="bannerBack" style="max-width:220px">Volver</button>
 </div>
 <div id="modal"><div class="mbox" id="mbox"></div></div>
+
+<!-- Inspección ampliada (mantener presionada una carta) y momento de recompensa de campaña — sección 4 y 5 -->
+<div id="inspectOverlay"></div>
+<div id="rewardPopup"><div class="reward-inner"><div class="reward-label">Recompensa</div><div class="reward-frame" id="rewardFrame"></div></div></div>
+
+<!-- Set de iconos SVG propios de Veyrá (sección 3) — un solo sprite, <use> en cartas/chips/pips -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-guardian" viewBox="0 0 24 24"><path d="M12 2 20 5.2V11.5C20 16.6 16.7 20.4 12 22 7.3 20.4 4 16.6 4 11.5V5.2Z"/></symbol>
+  <symbol id="i-prisa" viewBox="0 0 24 24"><path d="M13 1 3 14h7l-1.5 9L21 10h-7.5z"/></symbol>
+  <symbol id="i-oculto" viewBox="0 0 24 24"><path d="M12 2c-4.4 0-8 4-8 9 0 4.6 3.3 8.4 7.3 9 .5-2 .7-3.8.7-5.5 0-2.7-1.6-4.6-4-5.3C8.7 7.2 10.2 6 12 6s3.3 1.2 4 3.2c-2.4.7-4 2.6-4 5.3 0 1.7.2 3.5.7 5.5 4-.6 7.3-4.4 7.3-9 0-5-3.6-9-8-9z"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a9 9 0 0 1 9 5c0 7-4 11-9 13-5-2-9-6-9-13a9 9 0 0 1 9-5zM11 8h2v3h3v2h-3v3h-2v-3H8v-2h3z"/></symbol>
+  <symbol id="i-recuerdo" viewBox="0 0 24 24"><path d="M12 4.4C9.6 2.9 5.8 2.4 3 3.3v14.9c2.8-.9 6.6-.4 9 1.1 2.4-1.5 6.2-2 9-1.1V3.3c-2.8-.9-6.6-.4-9 1.1zm-1 2.2v10.6c-1.8-.7-4.3-1-6.5-.7V5.1c2.2-.3 4.7 0 6.5 1.5zm2 0c1.8-1.5 4.3-1.8 6.5-1.5v11.4c-2.2-.3-4.7 0-6.5.7V6.6z"/></symbol>
+  <symbol id="i-mana" viewBox="0 0 24 24"><path d="M12 2 20 8l-2.4 12H6.4L4 8z"/></symbol>
+  <symbol id="i-vida" viewBox="0 0 24 24"><path d="M12 21C7 17.6 3 13.9 3 9.6 3 6.6 5.3 4.5 8 4.5c1.7 0 3.2.9 4 2.3.8-1.4 2.3-2.3 4-2.3 2.7 0 5 2.1 5 5.1 0 4.3-4 8-9 11.4z"/></symbol>
+  <symbol id="i-atk" viewBox="0 0 24 24"><g transform="rotate(45 12 12)">
+    <rect x="10.5" y="2" width="3" height="13" rx=".5"/>
+    <rect x="9" y="15" width="6" height="2.4"/>
+    <rect x="10.7" y="17.4" width="2.6" height="5" rx=".6"/>
+  </g></symbol>
+</svg>
 
 <!-- ===================== MAPA MUNDIAL =====================
      Pantalla-lugar: la imagen de fondo ES el mapa. data-img-slot:
@@ -683,7 +789,7 @@ function buildDeck(fac){
   let vi=0;
   while(deck.length<20){
     const v=pool[vi%pool.length]; vi++;
-    deck.push(instantiate(null, v.def));
+    deck.push(instantiate(null, v.def, v.key));
   }
   return shuffle(deck);
 }
@@ -693,16 +799,16 @@ function buildDeckFromCounts(fac, counts){
   for(const key in counts){
     const n=counts[key]; if(!n) continue;
     const entry=poolEntry(fac,key); if(!entry) continue;
-    for(let i=0;i<n;i++) deck.push(entry.def.vanilla ? instantiate(null, entry.def) : instantiate(key));
+    for(let i=0;i<n;i++) deck.push(entry.def.vanilla ? instantiate(null, entry.def, key) : instantiate(key));
   }
   return shuffle(deck);
 }
 function deckCount(counts){ let n=0; for(const k in counts) n+=counts[k]||0; return n; }
 
-function instantiate(libKey, override){
+function instantiate(libKey, override, poolKey){
   const base = libKey ? LIB[libKey] : override;
   const c = mk({
-    key: libKey, fac: base.fac, name: base.name, cost: base.cost, type: base.type,
+    key: libKey || poolKey || null, fac: base.fac, name: base.name, cost: base.cost, type: base.type,
     art: base.art, txt: base.txt||"", kw:(base.kw||[]).slice(),
     baseAtk: base.atk||0, baseVida: base.vida||0,
     plusAtk:0, plusVida:0, damage:0,
@@ -1008,16 +1114,13 @@ function renderCurve(){
 function openCardZoom(key){
   const fac=draftDeck.fac;
   const entry=poolEntry(fac,key);
-  const inst = entry.def.vanilla ? instantiate(null, entry.def) : instantiate(key);
+  const inst = entry.def.vanilla ? instantiate(null, entry.def, key) : instantiate(key);
   const fakeOwner={id:"zoom", fac, mana:0, tempMana:0, field:[]};
   const box=document.getElementById("mbox");
   box.innerHTML=`<h3>${entry.def.name}</h3><div class="mq">Poseés ${ownedCount(key)} copia(s).</div><div class="zoomwrap" id="zoomCardHost"></div>`;
   const host=document.getElementById("zoomCardHost");
-  const cardHost=document.createElement("div"); cardHost.style.width="min(60vw,220px)";
-  const cardElm=makeCardEl(inst, fakeOwner, "hand");
-  cardElm.onclick=null; cardElm.style.cursor="default"; cardElm.classList.remove("playable","unplayable");
-  cardHost.appendChild(cardElm);
-  host.appendChild(cardHost);
+  const cardElm=makeCardEl(inst, fakeOwner, "zoom");
+  host.appendChild(cardElm);
   const ctrl=document.createElement("div"); ctrl.className="zoomctrl";
   const hasHalvar=(draftDeck.counts["halvar"]||0)>0;
   const lim=Math.min(copyLimit(key,hasHalvar), ownedCount(key));
@@ -1138,7 +1241,7 @@ const CAMPAIGN_IDS = {alderium:"alderium_juramento"};
 const CAMPAIGN_STEP_NAMES = {alderium:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"]};
 function buildVanillaOnlyDeck(fac){
   const deck=[]; const pool=soldierPool(fac); let vi=0;
-  while(deck.length<20){ deck.push(instantiate(null, pool[vi%pool.length].def)); vi++; }
+  while(deck.length<20){ deck.push(instantiate(null, pool[vi%pool.length].def, pool[vi%pool.length].key)); vi++; }
   return shuffle(deck);
 }
 function buildGuardianHeavyDeck(fac){
@@ -1154,7 +1257,7 @@ function buildGuardianHeavyDeck(fac){
     }
   }
   const pool=soldierPool(fac); let vi=0;
-  while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def)); vi++; }
+  while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
   return shuffle(deck);
 }
 
@@ -1203,7 +1306,7 @@ function commitSwipe(dir){
   const node=currentDungeonNode();
   const dest = dir==="left" ? node.left : node.right;
   const reward = dir==="left" ? node.leftReward : node.rightReward;
-  if(reward){ grantReward(reward); toast("Recompensa: "+rewardLabel(reward)); }
+  if(reward){ grantReward(reward); toast("Recompensa: "+rewardLabel(reward)); showRewardCardPopup(reward); }
   const card=document.getElementById("dgCard");
   card.style.transition="transform .26s ease-in, opacity .26s ease-in";
   card.style.transform=`translateX(${dir==="left"?-620:620}px) rotate(${dir==="left"?-28:28}deg)`;
@@ -1221,7 +1324,7 @@ async function engageDungeonQuiz(node){
   quizModalOpen=true;
   const ok = await askQuizModal(node.quiz);
   quizModalOpen=false;
-  if(ok){ grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); }
+  if(ok){ grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); showRewardCardPopup(node.reward); }
   else { toast("No era así — seguís de todos modos."); }
   dungeonAdvance(node.next);
 }
@@ -2170,31 +2273,52 @@ function renderHand(p){
   el.innerHTML="";
   for(const c of p.hand){ el.appendChild(makeCardEl(c,p,"hand")); }
 }
+// Ruta esperada del arte full-bleed (sección 1): assets/cards/<facción>/<clave>.jpg.
+// Sin clave (tokens como Espejismo) no hay archivo esperado: queda solo el fallback.
+function cardArtPath(c){ return c.key ? `assets/cards/${c.fac}/${c.key}.jpg` : null; }
+// Iconos de palabra clave (sección 3) — mismo sprite que Escudo/Recuerdo/pips.
+const KW_ICON = {"Guardián":"i-guardian", "Prisa":"i-prisa", "Oculto":"i-oculto"};
+
 function makeCardEl(c, owner, mode){
   const el=document.createElement("div");
-  el.className="card fac-"+c.fac; el.dataset.uid=c.uid;
   const fac=FACTIONS[c.fac];
+  const heroTag = (c.type==="criatura" && c.rarity==="heroe") ? " rarity-heroe" : "";
+  el.className="card fac-"+c.fac+heroTag; el.dataset.uid=c.uid;
   el.style.setProperty("--fc", fac.color);
   const isMine = owner.id==="p";
   const hideStats = c.hidden && !isMine; // el rival no ve stats de tus Ocultas… acá: vos no ves las de la IA
   const showA = hideStats? "?" : effAtk(c,owner);
   const showV = hideStats? "?" : effVida(owner,c);
 
-  let kwHtml = c.kw.length? `<div class="kw">${c.kw.map(k=>`<span>${k}</span>`).join("")}</div>` : "";
+  let chips = c.kw.map(k=>{
+    const icon=KW_ICON[k];
+    return `<div class="kwchip" title="${k}">${icon?`<svg><use href="#${icon}"/></svg>`:k}</div>`;
+  });
+  if(c.shield) chips.push(`<div class="kwchip" title="Escudo"><svg><use href="#i-escudo"/></svg></div>`);
+  const kwHtml = chips.length? `<div class="kwrow">${chips.join("")}</div>` : "";
   const typeLabel = c.type.toUpperCase();
+  const typeIcon = c.type==="recuerdo" ? `<svg class="type-icon"><use href="#i-recuerdo"/></svg>` : "";
+  const artPath = cardArtPath(c);
 
   el.innerHTML=`
-    <div class="facbar" style="background:${fac.color}"></div>
     <div class="facsig" title="${fac.name}">${fac.art}</div>
-    <div class="top">
-      <div class="pip mana">${c.cost}</div>
+    <div class="card-face">
+      <div class="art-fallback">${c.art||"✦"}</div>
+      <div class="art-real"${artPath?` style="background-image:url('${artPath}')"`:""} data-slot="${artPath||""}"></div>
+      <div class="face-top">
+        <div class="pip mana"><span class="pip-inner"><svg class="pipicon"><use href="#i-mana"/></svg><span class="pip-num">${c.cost}</span></span></div>
+        ${kwHtml}
+      </div>
+      <div class="name-plate">${c.name}</div>
+      <div class="rules-band">
+        <div class="type-line">${typeIcon}${typeLabel}${c.fac?" · "+fac.name:""}</div>
+        <div class="txt">${c.txt||""}</div>
+      </div>
     </div>
-    <div class="name">${c.name}</div>
-    <div class="art">${c.art||"✦"}</div>
-    <div class="type">${typeLabel}${c.fac?" · "+fac.name:""}</div>
-    ${kwHtml}
-    <div class="txt">${c.txt||""}</div>
   `;
+  if(["hechizo","reliquia","recuerdo","runa"].includes(c.type)){
+    el.insertAdjacentHTML("beforeend", `<div class="type-orn type-orn-${c.type}"></div>`);
+  }
   if(c.type==="criatura"){
     const maxV=effMaxVida(owner,c);
     const buffed = (effAtk(c,owner)>c.baseAtk)?" buffed":"";
@@ -2202,17 +2326,19 @@ function makeCardEl(c, owner, mode){
     const hurt = (!hideStats && effVida(owner,c) < maxV)?" hurt":"";
     el.insertAdjacentHTML("beforeend",
       `<div class="stats">
-        <div class="badge atk${buffed}">${showA}</div>
-        <div class="badge vida${vbuff}${hurt}">${showV}</div>
+        <div class="badge atk${buffed}"><span class="pip-inner"><svg class="pipicon"><use href="#i-atk"/></svg><span class="pip-num">${showA}</span></span></div>
+        <div class="badge vida${vbuff}${hurt}"><span class="pip-inner"><svg class="pipicon"><use href="#i-vida"/></svg><span class="pip-num">${showV}</span></span></div>
       </div>`);
   }
   if(c.shield) el.insertAdjacentHTML("beforeend",`<div class="shieldring"></div>`);
 
-  // estados de interacción
+  // estados de interacción — mantener presionada (sección 4) reemplaza el click directo en mano/campo.
   if(mode==="hand"){
     el.classList.add("inhand");
     if(S.turn==="p" && canPlay(owner,c)) el.classList.add("playable"); else el.classList.add("unplayable");
-    el.onclick=()=>onHandClick(c);
+    bindCardTap(el, c, owner, ()=>onHandClick(c));
+  } else if(mode==="zoom"){
+    el.classList.add("zoom");
   } else {
     el.classList.add("onfield");
     if(c.justSummoned){
@@ -2221,6 +2347,7 @@ function makeCardEl(c, owner, mode){
       c.justSummoned=false;
     }
     if(c.type==="criatura" && c.sick && !c.attacked){ el.classList.add("summonsick"); el.insertAdjacentHTML("beforeend",`<div class="zzz">💤</div>`); }
+    else if(c.type==="criatura" && c.attacked){ el.classList.add("spent"); } // agotada: ya atacó este turno
     if(owner.id==="p" && S.turn==="p" && c.type==="criatura" && !c.sick && !c.attacked && effAtk(c,owner)>0 && !S.targeting){
       el.classList.add("canattack");
     }
@@ -2235,16 +2362,83 @@ function makeCardEl(c, owner, mode){
       const cand = S.targeting.cands.includes(c);
       if(cand){ el.classList.add("targetable"); if(owner.id==="p") el.classList.add("friendly"); }
     }
-    el.onclick=()=>{
+    bindCardTap(el, c, owner, ()=>{
       if(S.targeting){ tryTarget({creature:c, owner:owner.id}); return; }
       if(owner.id==="a" && S.selected){ trySelectTargetForAttack(c, "a"); return; }
       onFieldClick(c, owner.id);
-    };
+    });
   }
   return el;
 }
 
 function cardEl(c){ return document.querySelector(`.card[data-uid="${c.uid}"]`); }
+
+// ---- Inspección ampliada: mantener presionada ~400ms cualquier carta (mano/campo propio/rival) ----
+// la muestra centrada por encima de todo; soltar la cierra. Umbral de 10px cancela si empieza a
+// ser un drag/scroll (carrusel de mano) en vez de una pulsación sostenida. Un tap corto (<400ms,
+// sin moverse) dispara onTap normalmente — no roba el gesto de jugar carta / elegir objetivo.
+let cardPress=null;
+function bindCardTap(el, c, owner, onTap){
+  el.addEventListener("pointerdown", e=>{
+    if(e.pointerType==="mouse" && e.button!==0) return;
+    if(cardPress) clearTimeout(cardPress.timer);
+    try{ el.setPointerCapture(e.pointerId); }catch(err){} // el pointerup debe volver acá aunque el overlay de inspección quede tapando ese punto de la pantalla
+    const press={uid:c.uid, x0:e.clientX, y0:e.clientY, longFired:false, timer:null};
+    press.timer=setTimeout(()=>{
+      if(cardPress===press){ press.longFired=true; openCardInspect(c, owner); }
+    }, 400);
+    cardPress=press;
+  });
+  el.addEventListener("pointermove", e=>{
+    if(!cardPress || cardPress.uid!==c.uid || cardPress.longFired) return;
+    if(Math.hypot(e.clientX-cardPress.x0, e.clientY-cardPress.y0)>10){ clearTimeout(cardPress.timer); cardPress=null; }
+  });
+  const finish=()=>{
+    if(!cardPress || cardPress.uid!==c.uid) return;
+    clearTimeout(cardPress.timer);
+    const wasLong=cardPress.longFired;
+    cardPress=null;
+    if(wasLong) closeCardInspect(); else onTap();
+  };
+  el.addEventListener("pointerup", finish);
+  el.addEventListener("pointercancel", ()=>{
+    if(!cardPress || cardPress.uid!==c.uid) return;
+    clearTimeout(cardPress.timer);
+    const wasLong=cardPress.longFired;
+    cardPress=null;
+    if(wasLong) closeCardInspect();
+  });
+}
+function openCardInspect(c, owner){
+  const overlay=document.getElementById("inspectOverlay");
+  overlay.innerHTML="";
+  overlay.appendChild(makeCardEl(c, owner, "zoom"));
+  overlay.classList.add("show");
+}
+function closeCardInspect(){
+  document.getElementById("inspectOverlay").classList.remove("show");
+}
+
+// ---- Momento de recompensa (sección 5): la carta ganada aparece ampliada un instante ----
+let rewardPopupT=null;
+function showRewardCardPopup(reward){
+  if(!reward) return;
+  const items = Array.isArray(reward) ? reward : [reward];
+  const first = items.find(r=>r.type==="collection"); if(!first) return;
+  const entry = poolEntry(first.fac||"alderium", first.key); if(!entry) return;
+  const inst = entry.def.vanilla ? instantiate(null, entry.def, first.key) : instantiate(first.key);
+  const fakeOwner={id:"reward", fac:entry.def.fac, mana:0, tempMana:0, field:[]};
+  const popup=document.getElementById("rewardPopup");
+  const frame=document.getElementById("rewardFrame");
+  frame.innerHTML="";
+  const cardHost=makeCardEl(inst, fakeOwner, "zoom");
+  frame.appendChild(cardHost);
+  popup.classList.add("show");
+  clearTimeout(rewardPopupT);
+  const close=()=>{ popup.classList.remove("show"); popup.onclick=null; clearTimeout(rewardPopupT); };
+  popup.onclick=close;
+  rewardPopupT=setTimeout(close, 1200);
+}
 function reveal(c, owner){
   if(!c.hidden) return;
   c.hidden=false;
@@ -2339,7 +2533,7 @@ function checkWin(){
     // Contexto de retorno: duelo de mazmorra vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
     if(duelReturn && duelReturn.type==="dungeon" && win){
-      if(duelReturn.reward){ grantReward(duelReturn.reward); b.querySelector(".sub").textContent += " Recompensa: "+rewardLabel(duelReturn.reward)+"."; }
+      if(duelReturn.reward){ grantReward(duelReturn.reward); b.querySelector(".sub").textContent += " Recompensa: "+rewardLabel(duelReturn.reward)+"."; showRewardCardPopup(duelReturn.reward); }
       if(duelReturn.campaignDone && dungeonState){
         const dg=DUNGEONS[dungeonState.dungeonId];
         S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {done:true});
