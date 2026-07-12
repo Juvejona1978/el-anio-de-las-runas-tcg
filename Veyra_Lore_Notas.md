@@ -75,6 +75,12 @@ Cadena de cartas (contenido de **expansión**, no del set base): Piedra de Sigru
 - Nael se casa con Ilan; su hijo será héroe de Caelum.
 - Los héroes de todas las facciones se unen.
 
+### 2.7 — La Franja: identidad sellada
+La organización visible de La Franja (Cuadrillas, Primeras Palabras, Las Manos, Aguadores — ver 3.1) es contenido de **juego base**, usable ya para el conflicto interno de la campaña de Lyra Vale. Lo que NO es base: **la verdadera identidad de la gente de la Franja y su conexión con la séptima facción no se nombran en ningún contenido del juego base — ninguna carta ni texto dice de dónde vienen.** Esa revelación pertenece al arco mayor (ver sección 1 y 2.2–2.4).
+
+### 2.8 — Arsenal estético de Terra Caelum (expansión, sellado)
+La séptima facción, cuando se revele, tiene estética tecnológica de otro orden — fotónica, orbital, drones, colosos mecánicos — con rangos tipo Arconte/Primarca/Gran Estratega y nombres como Lumina, Solaris, Quantum, Nova. **Nada de esto aparece en el set base bajo ninguna forma.** Propósito de diseño: que la estética misma revele que lo que Alderium destruyó en el norte no era un pueblo más. El autor conserva la lista completa de 100 rangos (50 mujeres / 50 hombres) fuera del repo; aquí solo se registra el principio.
+
 ---
 
 ## 3. Conflictos resueltos
@@ -94,8 +100,44 @@ Conflictos detectados entre el libro y las cartas ya implementadas en el motor (
 
 ## 3.1 Estructuras sociales y rangos (canon de juego)
 
-- **Estructura social de Qashir** (de base a especializada): Exploradoras de las Alturas y Exploradores de Cuevas (subtipo Explorador, ojos y oídos del pueblo — Idris, Jefe de Dunas, los lidera y les da fuerza), Borrascosos de las Dunas (jinetes veloces), Sabias/Copistas de Runas (memoria escrita, hechizos), Quebradores de Piedra (mineros/guerreros que rompen defensas), Contenedores de Runas (vasijas que concentran y abaratan el saber rúnico). No es una jerarquía militar rígida como Alderium — es un tejido de oficios del desierto y las cuevas.
-- **Rangos de Alderium** (de recluta a élite): Recluta → Filo Común → Filo Áureo (rango de Darian Voln) → Primera Línea → Pretoriano (élite antigua, consagrada desde antes de que existiera el rango de Filo Áureo — Pretoriano del Alba es la carta que representa a esta guardia).
+- **Rangos de Alderium** (de recluta a élite, imperio clásico con Soberano/juramento/rango): Recluta → Portador(a) de Filo Común → Portador(a) de Filo Áureo (rango de Darian Voln) → Primera Línea → Pretoriano (élite antigua, consagrada desde antes de que existiera el rango de Filo Áureo — Pretoriano del Alba es la carta que representa a esta guardia).
+- **Estructura social de Qashir** (de base a especializada): Exploradoras de las Alturas y Exploradores de Cuevas (subtipo Explorador, ojos y oídos del pueblo — Idris, Jefe de Dunas, los lidera y les da fuerza), Borrascosos de las Dunas (jinetes veloces), Sabias/Copistas de Runas (memoria escrita, hechizos), Quebradores de Piedra (mineros/guerreros que rompen defensas), Contenedores de Runas (vasijas que concentran y abaratan el saber rúnico). No es una jerarquía militar rígida como Alderium — es un tejido de oficios del desierto y las cuevas. **Qashir no tiene ni tuvo reyes ni ejército permanente** ("aquí no competimos, sobrevivimos"): la **Reunión de las Dunas** es una leva voluntaria — cada asentamiento manda gente cuando los Jefes de Dunas convocan. En expedición, las Copistas de Runas cumplen rol de escribas militares (logística, suministros, registro de bajas) y los Quebradores de Piedra son sus zapadores/ingenieros de asedio. El título de Rasim, "Príncipe de los Espejismos", es **honorífico/burlón, no resto de monarquía**. Nueva unidad canónica anotada para futura carta (no implementada todavía): **Hondera de las Dunas** — arma a distancia, herramienta de pastor.
+- **Kóren — consenso y memoria, sociedad matrilineal:**
+  - *Madres del Clan:* el poder real; nombran y pueden destituir jefes. Bjorna es su cabeza.
+  - *Portavoces de la Paz:* deciden por consenso del consejo, nunca por imposición. Nota de cruce narrativo: la diplomacia de Alderium fracasa (expedición 7 de "El Precio del Alba") porque Alderium espera un rey que decida solo y se encuentra con un consejo.
+  - *Jefas y Jefes de Guerra:* electos por respeto ganado, no por linaje.
+  - *Los que Recuerdan:* guardianes de la memoria (Halvar). Kóren es la facción del tipo de carta "recuerdo".
+  - *Oyentes de la Piedra:* escuchan la piedra; lo que la piedra dice jamás se muestra ni se nombra (aplica la regla del dios invisible, ver 2.1).
+  - *Sociedad de la Piedra Erguida:* sociedad guerrera; policía interna, organiza la cacería, ejecuta lo que el consejo decide.
+  - *Identidad mecánica futura (no implementada):* memoria y ofrenda — recuperar cartas del descarte + sacrificar cartas propias para efectos mayores (ceremonia de ofrenda/potlatch). Frontera de diseño con Brasshaven: Brasshaven recicla máquinas por economía, Kóren ofrenda por prestigio y recuerda.
+- **Brasshaven — la fábrica militarizada; la autoridad viene de la competencia técnica:**
+  - *Tropa:* Operarios/Operarias, Fogoneras, Mineros de la Franja. Portan herramienta, no espada.
+  - *Suboficiales* (columna vertebral): Capataces (Magnus Ferro encabeza el estamento) y Maquinistas de Primera. Disciplina y entrenamiento de nuevos.
+  - *Oficiales:* Ingenieras/Ingenieros de Sección y de Línea — la comisión es un título técnico: se comanda porque se diseña. Lyra Vale pertenece a este estamento; su arco de campaña es ascender por esta escalera.
+  - *Alto mando:* el Magíster Industrial (mariscal de campo); Magísteres de Distrito si hacen falta. El consejo de guerra es una mesa de ingenieros con planos.
+- **La Franja — organización visible de los desposeídos de la zona minera** (contenido usable en el set base para el conflicto interno de la campaña de Lyra: sabotajes, contrabando de plasma, tramos fuera de control de la Ingeniería — gris moral, no son villanos; algunas Primeras Palabras son jefes de expedición negociables):
+  - *Cuadrillas:* células autónomas, cada una dueña de un tramo de túneles/pozo/ruta. Nadie manda sobre todas.
+  - *La Primera Palabra:* cabecilla de cada cuadrilla — habla primero, maneja lo que entra y sale, dicta castigos. En la Franja no hay títulos formales: hay "palabras".
+  - *Las Manos:* miembros activos, el día a día del tramo.
+  - *Aguadores:* jóvenes a prueba; llevan agua a los tajos — entran a todas partes, ven todo, nadie los mira (vigilancia y transporte).
+  - **La verdadera identidad de esta gente y su conexión con la séptima facción es material SENSIBLE — ver sección 2.7, NO esta lista.**
+- **Caelum — la nación de la ley; jerarquía judicial, no militar:**
+  - *Escalera:* Vigilantes del Cielo → Custodias/Custodios → Prefectas/Prefectos → Jueces (Elyon, Juez del Cielo) y Tejedoras de Leyes (Serena) → Arcontes → Primarca.
+  - *Los Oráculos* no consultan a nadie: leen el cielo y las leyes antiguas; lo que leen no se muestra (aplica la regla del dios invisible, ver 2.1).
+  - Sus cartas son Decretos y Leyes (Decreto de Equilibrio, Ley de Terra Caelum ya existen en el motor — ver nota abajo).
+
+**Nota de consistencia a revisar (no es tarea de esta tanda, solo un flag):** la carta ya commiteada "Ley de Terra Caelum" nombra "Terra Caelum" directamente en su título. La sección 1 de este documento ya trata la identidad de Terra Caelum como parte del canon de mundo general (no sensible a nivel de este `.md`), pero la sección 2.7 nueva (abajo) formaliza que ningún contenido de **juego base** debe nombrar a Terra Caelum — vale la pena que el autor confirme si esa carta es una excepción aceptada (el nombre sin la sustancia) o si conviene renombrarla en una futura tanda de motor.
+
+## 3.2 Regla 50/50 (canon de diseño, aplica a todo el juego)
+
+Paridad de género en tres niveles, por facción:
+- **(a) Personajes con nombre** (héroes, especialistas, jefes de expedición, protagonistas de campaña) — meta global: 3 de las 6 campañas protagonizadas por mujeres (Lyra Vale en Brasshaven, Vessa en Nómadas, y una de Kóren/Caelum, a definir).
+- **(b) Tropas:** los nombres de soldado se declinan con género real (ej. Arquera de la Muralla / Lancero) hasta quedar mitad y mitad, **sin duplicar cartas en versión él/ella** (una sola carta por rango/stat-line, el género es parte del nombre). Los colectivos (Milicia, Primera Línea) son neutros.
+- **(c) Rangos:** los títulos se declinan según quien los porta (Portadora de Filo Común, Instructora Pretoriana) — el rango es el mismo, la persona cambia.
+
+La paridad viaja también al arte. Como la base ya commiteada de Alderium es mayoritariamente masculina, las cartas nuevas de esa facción son mayoría femenina hasta compensar (ver `Veyra_Campania_Alderium.md`, sección 7, canon de origen de esta regla).
+
+**Nota de alcance (motor):** la regla (b) — declinar por género los 12 Soldados genéricos compartidos por las 6 facciones — no está implementada: `soldierPool()` genera hoy el mismo nombre neutro ("Recluta de Alderium", etc.) para las 6 facciones sin variante de género. Aplicar la regla ahí requeriría tocar el motor (`soldierPool`/`SOLDIER_RANKS`), fuera del alcance de esta tanda de documentación — queda anotado para cuando se toque ese código.
 
 ---
 
