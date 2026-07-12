@@ -18,12 +18,12 @@ Generado: 2026-07-12
 | Muralla Viviente | Criatura | — | Especialista (poco común) | 3 | 1/5 | Guardián | 2 | Base | `assets/cards/criaturas/alderium/alderium_criatura_muralla_viviente.png` |
 | Darian Voln, Filo Áureo | Criatura | — | Héroe (legendaria) | 4 | 4/3 | Prisa | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_darian_voln_filo_aureo.png` |
 | Guardia de Fila de Alderium | Criatura | — | Soldado (común) | 4 | 3/5 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_guardia_de_fila_de_alderium.png` |
-| Rhaen Iveros | Criatura | — | Héroe (legendaria) | 4 | 2/6 | Guardián | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_rhaen_iveros.png` |
 | Tiberon, Portaestandarte del Alba | Criatura | — | Héroe (legendaria) | 4 | 2/4 | — | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_tiberon_portaestandarte_del_alba.png` |
 | Veterano de Alderium | Criatura | — | Soldado (común) | 4 | 4/4 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_veterano_de_alderium.png` |
 | Campeón de Alderium | Criatura | — | Soldado (común) | 5 | 5/5 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_campeon_de_alderium.png` |
 | Isolde, Voz del Decreto | Criatura | — | Héroe (legendaria) | 5 | 3/5 | — | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_isolde_voz_del_decreto.png` |
 | Portador del Estandarte de Alderium | Criatura | — | Soldado (común) | 5 | 4/6 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_portador_del_estandarte_de_alderium.png` |
+| Pretoriano del Alba | Criatura | — | Héroe (legendaria) | 5 | 4/5 | Guardián, Escudo | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_pretoriano_del_alba.png` |
 | Coloso de Alderium | Criatura | — | Soldado (común) | 6 | 6/6 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_coloso_de_alderium.png` |
 | Custodio Menor de Alderium | Criatura | — | Soldado (común) | 6 | 5/7 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_custodio_menor_de_alderium.png` |
 
@@ -32,68 +32,106 @@ Generado: 2026-07-12
 - **Decreto de Contención:** Da Escudo a una criatura. Si es Guardián, a dos en vez de una.
 - **Muralla Viviente:** Al entrar: da Escudo a otro Guardián que controlás.
 - **Darian Voln, Filo Áureo:** Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.
-- **Rhaen Iveros:** Tus otros Guardianes ganan +0/+1.
 - **Tiberon, Portaestandarte del Alba:** Tus otros Guardianes ganan +1/+1.
 - **Isolde, Voz del Decreto:** Cuando una criatura enemiga ataca, Isolde le inflige 1 de daño antes de que se resuelva el combate.
+- **Pretoriano del Alba:** La vieja guardia pretoriana de Alderium: élite consagrada desde antes de que existiera el rango de Filo Áureo.
 
 ## Qashir
 
 | Carta | Tipo | Subtipo | Rareza | Costo | ATK/VIDA | Palabras clave | Copias máx. | Set | Imagen esperada |
 |---|---|---|---|---|---|---|---|---|---|
 | Aprendiz de Qashir | Criatura | — | Soldado (común) | 1 | 2/1 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_aprendiz_de_qashir.png` |
+| Exploradora de las Alturas | Criatura | — | Soldado (común) | 1 | 1/2 | Oculto | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_exploradora_de_las_alturas.png` |
+| Lior | Criatura | — | Héroe (legendaria) | 1 | 0/3 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_lior.png` |
 | Pacto de Sangre | Hechizo | — | Hechizo | 1 | — | — | 2 | Base | `assets/cards/hechizos/qashir/qashir_hechizo_pacto_de_sangre.png` |
 | Recluta de Qashir | Criatura | — | Soldado (común) | 1 | 1/2 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_recluta_de_qashir.png` |
 | Cazador de Qashir | Criatura | — | Soldado (común) | 2 | 1/3 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_cazador_de_qashir.png` |
 | Chacal de las Dunas | Criatura | — | Especialista (poco común) | 2 | 3/1 | Prisa | 2 | Base | `assets/cards/criaturas/qashir/qashir_criatura_chacal_de_las_dunas.png` |
+| Contenedor de Runas | Reliquia | — | Reliquia | 2 | — | — | 2 | Base | `assets/cards/reliquias/qashir_reliquia_contenedor_de_runas.png` |
 | Escudero de Qashir | Criatura | — | Soldado (común) | 2 | 2/2 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_escudero_de_qashir.png` |
+| Explorador de Cuevas | Criatura | — | Soldado (común) | 2 | 2/3 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_explorador_de_cuevas.png` |
+| Sanadora de las Cuevas Altas | Criatura | — | Especialista (poco común) | 2 | 1/3 | — | 2 | Base | `assets/cards/criaturas/qashir/qashir_criatura_sanadora_de_las_cuevas_altas.png` |
+| Borrascoso de las Dunas | Criatura | — | Soldado (común) | 3 | 4/2 | Prisa | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_borrascoso_de_las_dunas.png` |
 | Centinela de Qashir | Criatura | — | Soldado (común) | 3 | 2/4 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_centinela_de_qashir.png` |
+| Copista de Runas | Criatura | — | Especialista (poco común) | 3 | 1/4 | — | 2 | Base | `assets/cards/criaturas/qashir/qashir_criatura_copista_de_runas.png` |
+| Hoja Solar | Reliquia | — | Reliquia | 3 | — | — | 2 | Base | `assets/cards/reliquias/qashir_reliquia_hoja_solar.png` |
 | Lancero de Qashir | Criatura | — | Soldado (común) | 3 | 3/3 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_lancero_de_qashir.png` |
+| Quebrador de Piedra | Criatura | — | Especialista (poco común) | 3 | 3/3 | — | 2 | Base | `assets/cards/criaturas/qashir/qashir_criatura_quebrador_de_piedra.png` |
+| Varun, Guía de Caravanas | Criatura | — | Héroe (legendaria) | 3 | 2/3 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_varun_guia_de_caravanas.png` |
 | Zahira, la Apostadora | Criatura | — | Héroe (legendaria) | 3 | 4/2 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_zahira_la_apostadora.png` |
 | Guardia de Fila de Qashir | Criatura | — | Soldado (común) | 4 | 3/5 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_guardia_de_fila_de_qashir.png` |
+| Idris, Jefe de Dunas | Criatura | — | Héroe (legendaria) | 4 | 3/4 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_idris_jefe_de_dunas.png` |
 | Nadira, la que Vende el Viento | Criatura | — | Héroe (legendaria) | 4 | 2/3 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_nadira_la_que_vende_el_viento.png` |
+| Rhaen Iveros | Criatura | — | Héroe (legendaria) | 4 | 2/6 | Guardián | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_rhaen_iveros.png` |
+| Serpiente bajo la Arena | Criatura | — | Soldado (común) | 4 | 4/3 | Oculto | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_serpiente_bajo_la_arena.png` |
 | Veterano de Qashir | Criatura | — | Soldado (común) | 4 | 4/4 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_veterano_de_qashir.png` |
 | Campeón de Qashir | Criatura | — | Soldado (común) | 5 | 5/5 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_campeon_de_qashir.png` |
 | Portador del Estandarte de Qashir | Criatura | — | Soldado (común) | 5 | 4/6 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_portador_del_estandarte_de_qashir.png` |
 | Rasim, Príncipe de los Espejismos | Criatura | — | Héroe (legendaria) | 5 | 3/3 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_rasim_principe_de_los_espejismos.png` |
+| Aureon Valerius, el Testigo | Criatura | — | Héroe (legendaria) | 6 | 4/5 | — | 1 | Base | `assets/cards/criaturas/qashir/qashir_criatura_aureon_valerius_el_testigo.png` |
 | Coloso de Qashir | Criatura | — | Soldado (común) | 6 | 6/6 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_coloso_de_qashir.png` |
 | Custodio Menor de Qashir | Criatura | — | Soldado (común) | 6 | 5/7 | — | 3 | Base | `assets/cards/criaturas/qashir/qashir_criatura_custodio_menor_de_qashir.png` |
 
 **Texto de reglas:**
 
+- **Lior:** Mientras Lior esté en juego, tus efectos de curación curan +1. Sabor: los héroes no siempre llevan espada.
 - **Pacto de Sangre:** Sacrificá una criatura tuya. Ganás maná igual a su costo este turno.
 - **Chacal de las Dunas:** Al morir: inflige 1 de daño al rival.
+- **Contenedor de Runas:** Mientras esté en juego, tus Copistas de Runas y tus hechizos cuestan 1 menos (mínimo 1).
+- **Sanadora de las Cuevas Altas:** Al entrar: curá 2 a una criatura propia o a tu héroe.
+- **Copista de Runas:** Al entrar: devolvé a tu mano el último hechizo propio jugado esta partida (si no hay, sin efecto).
+- **Hoja Solar:** Equipá a una criatura propia: +2/+0.
+- **Quebrador de Piedra:** Al entrar: anulá el Escudo de una criatura enemiga.
+- **Varun, Guía de Caravanas:** Al entrar: robás 1 carta.
 - **Zahira, la Apostadora:** Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.
+- **Idris, Jefe de Dunas:** Tus otras criaturas Exploradoras ganan +0/+1.
 - **Nadira, la que Vende el Viento:** Habilidad activada, una vez por turno: pagá 2 de vida para robar una carta.
+- **Rhaen Iveros:** Tus otros Guardianes ganan +0/+1.
 - **Rasim, Príncipe de los Espejismos:** Al entrar, creá dos Espejismos 1/1 que desaparecen al final de tu próximo turno.
+- **Aureon Valerius, el Testigo:** Al entrar: tus otras criaturas ganan +0/+1. Sabor: el príncipe que eligió irse.
 
 ## Brasshaven
 
 | Carta | Tipo | Subtipo | Rareza | Costo | ATK/VIDA | Palabras clave | Copias máx. | Set | Imagen esperada |
 |---|---|---|---|---|---|---|---|---|---|
 | Aprendiz de Brasshaven | Criatura | — | Soldado (común) | 1 | 2/1 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_aprendiz_de_brasshaven.png` |
+| Autómata Menor | Criatura | — | Soldado (común) | 1 | 1/2 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_automata_menor.png` |
+| Minero de la Franja | Criatura | — | Soldado (común) | 1 | 1/1 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_minero_de_la_franja.png` |
 | Recluta de Brasshaven | Criatura | — | Soldado (común) | 1 | 1/2 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_recluta_de_brasshaven.png` |
+| Carro Mecánico | Criatura | — | Soldado (común) | 2 | 2/2 | Prisa | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_carro_mecanico.png` |
 | Cazador de Brasshaven | Criatura | — | Soldado (común) | 2 | 1/3 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_cazador_de_brasshaven.png` |
 | Cristal de Sobrecarga | Reliquia | — | Reliquia | 2 | — | — | 2 | Base | `assets/cards/reliquias/brasshaven_reliquia_cristal_de_sobrecarga.png` |
 | Escudero de Brasshaven | Criatura | — | Soldado (común) | 2 | 2/2 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_escudero_de_brasshaven.png` |
+| Milicia Técnica | Criatura | — | Soldado (común) | 2 | 2/3 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_milicia_tecnica.png` |
 | Autómata de Repuestos | Criatura | Autómata | Especialista (poco común) | 3 | 2/4 | — | 2 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_automata_de_repuestos.png` |
 | Centinela de Brasshaven | Criatura | — | Soldado (común) | 3 | 2/4 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_centinela_de_brasshaven.png` |
+| Espía de Brasshaven | Criatura | — | Soldado (común) | 3 | 2/2 | Oculto | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_espia_de_brasshaven.png` |
 | Lancero de Brasshaven | Criatura | — | Soldado (común) | 3 | 3/3 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_lancero_de_brasshaven.png` |
 | Unidad Prima, el Primer Autómata | Criatura | — | Héroe (legendaria) | 3 | 1/3 | — | 1 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_unidad_prima_el_primer_automata.png` |
+| Bram Vale, el que Resiste | Criatura | — | Héroe (legendaria) | 4 | 2/6 | Guardián | 1 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_bram_vale_el_que_resiste.png` |
 | Guardia de Fila de Brasshaven | Criatura | — | Soldado (común) | 4 | 3/5 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_guardia_de_fila_de_brasshaven.png` |
 | Lyra Vale, la Inventora | Criatura | — | Héroe (legendaria) | 4 | 3/3 | — | 1 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_lyra_vale_la_inventora.png` |
+| Tren Blindado | Reliquia | — | Reliquia | 4 | — | — | 2 | Base | `assets/cards/reliquias/brasshaven_reliquia_tren_blindado.png` |
 | Veterano de Brasshaven | Criatura | — | Soldado (común) | 4 | 4/4 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_veterano_de_brasshaven.png` |
 | Campeón de Brasshaven | Criatura | — | Soldado (común) | 5 | 5/5 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_campeon_de_brasshaven.png` |
 | Portador del Estandarte de Brasshaven | Criatura | — | Soldado (común) | 5 | 4/6 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_portador_del_estandarte_de_brasshaven.png` |
+| Tanque de Vapor | Criatura | — | Soldado (común) | 5 | 4/4 | Escudo | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_tanque_de_vapor.png` |
 | Coloso de Brasshaven | Criatura | — | Soldado (común) | 6 | 6/6 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_coloso_de_brasshaven.png` |
 | Custodio Menor de Brasshaven | Criatura | — | Soldado (común) | 6 | 5/7 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_custodio_menor_de_brasshaven.png` |
+| El Magíster Industrial | Criatura | — | Héroe (legendaria) | 6 | 3/5 | — | 1 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_el_magister_industrial.png` |
 | Magnus Ferro, Capataz de la Franja | Criatura | — | Héroe (legendaria) | 6 | 4/4 | — | 1 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_magnus_ferro_capataz_de_la_franja.png` |
+| Autómata Titán | Criatura | — | Soldado (común) | 7 | 6/6 | — | 3 | Base | `assets/cards/criaturas/brasshaven/brasshaven_criatura_automata_titan.png` |
 
 **Texto de reglas:**
 
+- **Minero de la Franja:** Al morir: ganás 1 de maná este turno.
 - **Cristal de Sobrecarga:** Ligá a una criatura: +2/+0. Al morir esa criatura, ganás +1 maná este turno.
 - **Autómata de Repuestos:** Al morir: pagá 1 maná para devolverla con sus stats actuales (una vez).
 - **Unidad Prima, el Primer Autómata:** Gana +1/+1 permanente cada vez que ligás una Reliquia a una criatura aliada (incluida ella misma).
+- **Bram Vale, el que Resiste:** «Guarden energía para cuando se abra una salida.»
 - **Lyra Vale, la Inventora:** Al entrar: devolvé una criatura de tu cementerio al campo con -1/-1.
+- **Tren Blindado:** Al jugarla: robás 2 cartas.
+- **El Magíster Industrial:** Tus cartas Autómata cuestan 1 menos (mínimo 1). Sabor: el ingeniero manda.
 - **Magnus Ferro, Capataz de la Franja:** Al entrar, devolvé al campo al último Autómata aliado destruido.
 
 ## Kóren

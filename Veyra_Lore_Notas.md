@@ -83,10 +83,19 @@ Conflictos detectados entre el libro y las cartas ya implementadas en el motor (
 
 - **"Zahra, la Apostadora" → "Zahira, la Apostadora"** (carta Qashir, 3 maná, 4/2, sin cambio de stats/habilidad). En el libro, Zahra es la anciana sabia de Qashir, la amada de Eliar, restaurada a sus treinta años por el brazalete — no es apostadora. El perfil temerario corresponde a Zahira, la joven de dieciocho que escaló donde no debía y encontró la runa. **Zahra queda reservada** como futura carta legendaria ligada a Eliar y Terra Caelum.
 - **"Mara, Cartógrafa de Rutas Muertas" → "Vessa, Cartógrafa de Rutas Muertas"** (heroína Nómada inventada para el juego, mismos stats/habilidad). Mara es la madre de Nael en el libro — colisión de nombre evitada renombrando a la heroína del juego (se descartó tener dos Maras: confunde en un mundo con pocos nombres repetidos).
-- **"Rhaen, Escudo del Trono"** — sin cambios por ahora. Rhaen Iveros es canónico de Alderium, pero su arco lo saca de la facción: pierde en el Coliseo ante Darian Voln, escolta a Lior y su madre a Qashir, recibe de Aureon Valerius la Hoja Solar y la armadura pretoriana, y elige quedarse en Qashir. La carta base representa su **etapa temprana** en Alderium. Anotado para expansión futura: **"Rhaen, Portador de la Hoja Solar"**.
+- **"Rhaen, Escudo del Trono" → "Rhaen Iveros", carta movida a Qashir.** Rhaen Iveros es canónico de Alderium, pero su arco lo saca de la facción: pierde en el Coliseo de Juramento ante Darian Voln (quien lo reemplaza como héroe inicial de Alderium), escolta a Lior y su madre a Qashir, recibe de Aureon Valerius la Hoja Solar y la armadura pretoriana, y elige quedarse en Qashir. La carta en el motor ahora refleja esta etapa: `fac:"qashir"` (su mecánica de aura a Guardianes se revisará con el diseño fino de Qashir, por ahora se conserva). Vencerlo en el Coliseo de Juramento (jefe final de "El Juramento de Alderium") entrega **Pretoriano del Alba** como recompensa, no a Rhaen. Anotado para expansión futura: **"Rhaen, Portador de la Hoja Solar"**.
 - **El Astado del Valle (Kóren)** — nota de diseño agregada: candidato a ser el **único Espíritu que Kóren acepta** (pendiente de confirmación del autor). Si lo es, su mecánica ya está alineada: entra dormido dos turnos = esperar como forma de fe.
-- **Héroes inventados para el juego sin aparición en el libro todavía**: Isolde, Tiberon (Alderium); Rasim, Nadira (Qashir); Magnus Ferro, Unidad Prima (Brasshaven); Bjorna, Halvar (Kóren); Elyon, Serena, El Custodio del Anillo (Caelum); Yesid (Nómadas). Válidos como canon de juego mientras no contradigan el libro — se integran al lore cuando la escritura llegue a sus regiones.
+- **Idris, Jefe de Dunas = hermano de Zahira** (sin nombre propio en el libro). Carta Qashir nueva; da identidad de facción al subtipo Explorador.
+- **Bram Vale, el que Resiste = padre de Lyra Vale** (sin nombre propio en el libro). Carta Brasshaven nueva, Guardián — "guarden energía para cuando se abra una salida" enlaza con el arco de Lyra y el taller encontrado por Brasshaven (hilo 4 de la sección siguiente).
+- **Héroes inventados para el juego sin aparición en el libro todavía**: Isolde, Tiberon (Alderium); Rasim, Nadira, Varun, Lior (Qashir); Magnus Ferro, Unidad Prima, El Magíster Industrial (Brasshaven); Bjorna, Halvar (Kóren); Elyon, Serena, El Custodio del Anillo (Caelum); Yesid (Nómadas). Válidos como canon de juego mientras no contradigan el libro — se integran al lore cuando la escritura llegue a sus regiones. (Aureon Valerius, Darian Voln y las Sanadoras de las Cuevas Altas ya estaban anotados en la cantera de personajes de más abajo y pasan de "potencial" a carta real en esta tanda.)
 - **Siete naciones, seis facciones** — ver sección 1: resuelto reservando Terra Caelum para la primera expansión.
+
+---
+
+## 3.1 Estructuras sociales y rangos (canon de juego)
+
+- **Estructura social de Qashir** (de base a especializada): Exploradoras de las Alturas y Exploradores de Cuevas (subtipo Explorador, ojos y oídos del pueblo — Idris, Jefe de Dunas, los lidera y les da fuerza), Borrascosos de las Dunas (jinetes veloces), Sabias/Copistas de Runas (memoria escrita, hechizos), Quebradores de Piedra (mineros/guerreros que rompen defensas), Contenedores de Runas (vasijas que concentran y abaratan el saber rúnico). No es una jerarquía militar rígida como Alderium — es un tejido de oficios del desierto y las cuevas.
+- **Rangos de Alderium** (de recluta a élite): Recluta → Filo Común → Filo Áureo (rango de Darian Voln) → Primera Línea → Pretoriano (élite antigua, consagrada desde antes de que existiera el rango de Filo Áureo — Pretoriano del Alba es la carta que representa a esta guardia).
 
 ---
 
@@ -106,9 +115,9 @@ Para continuar la escritura — no son tareas del juego, son notas narrativas:
 10. Lior, el niño que hizo que Rhaen saliera de Alderium: sembrado como "los héroes no siempre llevan espada", merece cosecha.
 
 ### Cantera de personajes del libro (potencial de carta futura)
-- **Alderium:** Darian Voln, Portador de Filo Áureo (disciplina/contención); Aureon Valerius; el rey Arcthur Valerius; la reina Lyssandra; el príncipe Caelion (villano en potencia); la princesa Maera (libre, sin usar); Lior.
-- **Qashir:** Zahira; Zahra restaurada; Varun, jefe de caravana; las sanadoras de las cuevas altas.
-- **Brasshaven:** el Magíster Industrial; el padre de Lyra; la milicia técnica; los autómatas de guerra; los cinco espías que necesitaban a Lyra.
+- **Alderium:** Darian Voln, Portador de Filo Áureo ✅carta; Aureon Valerius ✅carta (movido a Qashir, ver sección 3); el rey Arcthur Valerius; la reina Lyssandra; el príncipe Caelion (villano en potencia); la princesa Maera (libre, sin usar); Lior ✅carta (Qashir).
+- **Qashir:** Zahira ✅carta; Zahra restaurada; Varun, jefe de caravana ✅carta ("Guía de Caravanas"); las sanadoras de las cuevas altas ✅carta; Idris, hermano de Zahira ✅carta.
+- **Brasshaven:** el Magíster Industrial ✅carta; el padre de Lyra ✅carta ("Bram Vale, el que Resiste"); la milicia técnica ✅carta; los autómatas de guerra ✅carta (Autómata Menor/Titán); los cinco espías que necesitaban a Lyra ✅carta (Espía de Brasshaven, uno de los cinco).
 - **Kóren:** Eran, el sacerdote; Tarek; el jefe de la tribu.
 - **Terra Caelum / La Franja:** Nael; Ilan; Kael; Ashar (el lobo — carta compañera perfecta); el vigía de barba corta; el Clan El Lebrón como tribu/subtipo.
 - **Caelum:** Eliar; Aldana; Yarb; Taor (antagonista interno en gestación); los Diez y la mesa-artefacto.

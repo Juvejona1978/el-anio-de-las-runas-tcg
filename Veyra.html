@@ -687,8 +687,6 @@ function mk(o){ return Object.assign({uid:UID++}, o); }
 
 const LIB = {
   // ---------------- Alderium ----------------
-  rhaen:{fac:"alderium",name:"Rhaen Iveros",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🛡️",
-    txt:"Tus otros Guardianes ganan +0/+1.",auraGuardian:{atk:0,vida:1},rarity:"heroe"},
   muralla:{fac:"alderium",name:"Muralla Viviente",cost:3,type:"criatura",atk:1,vida:5,kw:["Guardián"],art:"🧱",
     txt:"Al entrar: da Escudo a otro Guardián que controlás.",etb:"muralla",rarity:"especialista"},
   decreto_cont:{fac:"alderium",name:"Decreto de Contención",cost:2,type:"hechizo",art:"📜",
@@ -699,6 +697,8 @@ const LIB = {
     txt:"Tus otros Guardianes ganan +1/+1.",auraGuardian:{atk:1,vida:1},rarity:"heroe"},
   darian:{fac:"alderium",name:"Darian Voln, Filo Áureo",cost:4,type:"criatura",atk:4,vida:3,kw:["Prisa"],art:"🗡️",
     txt:"Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.",flag:"darian",rarity:"heroe"},
+  pretoriano_alba:{fac:"alderium",name:"Pretoriano del Alba",cost:5,type:"criatura",atk:4,vida:5,kw:["Guardián","Escudo"],art:"🛡️",
+    txt:"La vieja guardia pretoriana de Alderium: élite consagrada desde antes de que existiera el rango de Filo Áureo.",rarity:"heroe"},
   // ---------------- Qashir ----------------
   zahra:{fac:"qashir",name:"Zahira, la Apostadora",cost:3,type:"criatura",atk:4,vida:2,kw:[],art:"🎲",
     txt:"Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.",etb:"zahra",rarity:"heroe"},
@@ -710,17 +710,66 @@ const LIB = {
     txt:"Al entrar, creá dos Espejismos 1/1 que desaparecen al final de tu próximo turno.",etb:"rasim",rarity:"heroe"},
   nadira:{fac:"qashir",name:"Nadira, la que Vende el Viento",cost:4,type:"criatura",atk:2,vida:3,kw:[],art:"🌬️",
     txt:"Habilidad activada, una vez por turno: pagá 2 de vida para robar una carta.",activated:"nadira",rarity:"heroe"},
+  aureon:{fac:"qashir",name:"Aureon Valerius, el Testigo",cost:6,type:"criatura",atk:4,vida:5,kw:[],art:"👁️",
+    txt:"Al entrar: tus otras criaturas ganan +0/+1. Sabor: el príncipe que eligió irse.",etb:"aureon",rarity:"heroe"},
+  idris:{fac:"qashir",name:"Idris, Jefe de Dunas",cost:4,type:"criatura",atk:3,vida:4,kw:[],art:"🏜️",
+    txt:"Tus otras criaturas Exploradoras ganan +0/+1.",auraSub:{sub:"explorador",atk:0,vida:1},rarity:"heroe"},
+  varun:{fac:"qashir",name:"Varun, Guía de Caravanas",cost:3,type:"criatura",atk:2,vida:3,kw:[],art:"🐫",
+    txt:"Al entrar: robás 1 carta.",etb:"varun",rarity:"heroe"},
+  lior:{fac:"qashir",name:"Lior",cost:1,type:"criatura",atk:0,vida:3,kw:[],art:"🕯️",
+    txt:"Mientras Lior esté en juego, tus efectos de curación curan +1. Sabor: los héroes no siempre llevan espada.",flag:"lior",rarity:"heroe"},
+  exploradora_alturas:{fac:"qashir",name:"Exploradora de las Alturas",cost:1,type:"criatura",atk:1,vida:2,kw:["Oculto"],art:"🏔️",
+    txt:"",sub:"explorador"},
+  explorador_cuevas:{fac:"qashir",name:"Explorador de Cuevas",cost:2,type:"criatura",atk:2,vida:3,kw:[],art:"🕳️",
+    txt:"",sub:"explorador"},
+  borrascoso:{fac:"qashir",name:"Borrascoso de las Dunas",cost:3,type:"criatura",atk:4,vida:2,kw:["Prisa"],art:"🌪️",
+    txt:""},
+  quebrador:{fac:"qashir",name:"Quebrador de Piedra",cost:3,type:"criatura",atk:3,vida:3,kw:[],art:"⛏️",
+    txt:"Al entrar: anulá el Escudo de una criatura enemiga.",etb:"quebrador",rarity:"especialista"},
+  sanadora:{fac:"qashir",name:"Sanadora de las Cuevas Altas",cost:2,type:"criatura",atk:1,vida:3,kw:[],art:"🌵",
+    txt:"Al entrar: curá 2 a una criatura propia o a tu héroe.",etb:"sanadora",rarity:"especialista"},
+  copista:{fac:"qashir",name:"Copista de Runas",cost:3,type:"criatura",atk:1,vida:4,kw:[],art:"📜",
+    txt:"Al entrar: devolvé a tu mano el último hechizo propio jugado esta partida (si no hay, sin efecto).",etb:"copista",rarity:"especialista"},
+  serpiente_arena:{fac:"qashir",name:"Serpiente bajo la Arena",cost:4,type:"criatura",atk:4,vida:3,kw:["Oculto"],art:"🐍",
+    txt:""},
+  hoja_solar:{fac:"qashir",name:"Hoja Solar",cost:3,type:"reliquia",art:"☀️",
+    txt:"Equipá a una criatura propia: +2/+0.",target:"criatura_propia",cast:"hoja_solar"},
+  contenedor_runas:{fac:"qashir",name:"Contenedor de Runas",cost:2,type:"reliquia",art:"🏺",
+    txt:"Mientras esté en juego, tus Copistas de Runas y tus hechizos cuestan 1 menos (mínimo 1).",rarity:"especialista"},
+  rhaen:{fac:"qashir",name:"Rhaen Iveros",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🛡️",
+    // su mecánica se revisará con el diseño fino de Qashir (por ahora conserva la de su etapa en Alderium)
+    txt:"Tus otros Guardianes ganan +0/+1.",auraGuardian:{atk:0,vida:1},rarity:"heroe"},
   // ---------------- Brasshaven ----------------
   lyra:{fac:"brasshaven",name:"Lyra Vale, la Inventora",cost:4,type:"criatura",atk:3,vida:3,kw:[],art:"🔧",
     txt:"Al entrar: devolvé una criatura de tu cementerio al campo con -1/-1.",etb:"lyra",rarity:"heroe"},
   automata:{fac:"brasshaven",name:"Autómata de Repuestos",cost:3,type:"criatura",atk:2,vida:4,kw:[],art:"🤖",
-    txt:"Al morir: pagá 1 maná para devolverla con sus stats actuales (una vez).",death:"automata",rarity:"especialista"},
+    txt:"Al morir: pagá 1 maná para devolverla con sus stats actuales (una vez).",death:"automata",rarity:"especialista",sub:"automata"},
   cristal:{fac:"brasshaven",name:"Cristal de Sobrecarga",cost:2,type:"reliquia",art:"💎",
     txt:"Ligá a una criatura: +2/+0. Al morir esa criatura, ganás +1 maná este turno.",target:"criatura_propia",cast:"cristal"},
   magnus:{fac:"brasshaven",name:"Magnus Ferro, Capataz de la Franja",cost:6,type:"criatura",atk:4,vida:4,kw:[],art:"🦾",
     txt:"Al entrar, devolvé al campo al último Autómata aliado destruido.",etb:"magnus",rarity:"heroe"},
   unidad_prima:{fac:"brasshaven",name:"Unidad Prima, el Primer Autómata",cost:3,type:"criatura",atk:1,vida:3,kw:[],art:"⚙️",
-    txt:"Gana +1/+1 permanente cada vez que ligás una Reliquia a una criatura aliada (incluida ella misma).",flag:"unidad_prima",rarity:"heroe"},
+    txt:"Gana +1/+1 permanente cada vez que ligás una Reliquia a una criatura aliada (incluida ella misma).",flag:"unidad_prima",rarity:"heroe",sub:"automata"},
+  magister:{fac:"brasshaven",name:"El Magíster Industrial",cost:6,type:"criatura",atk:3,vida:5,kw:[],art:"🏭",
+    txt:"Tus cartas Autómata cuestan 1 menos (mínimo 1). Sabor: el ingeniero manda.",rarity:"heroe"},
+  bram_vale:{fac:"brasshaven",name:"Bram Vale, el que Resiste",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🔩",
+    txt:"«Guarden energía para cuando se abra una salida.»",rarity:"heroe"},
+  automata_menor:{fac:"brasshaven",name:"Autómata Menor",cost:1,type:"criatura",atk:1,vida:2,kw:[],art:"🔧",
+    txt:"",sub:"automata"},
+  automata_titan:{fac:"brasshaven",name:"Autómata Titán",cost:7,type:"criatura",atk:6,vida:6,kw:[],art:"🦿",
+    txt:"",sub:"automata"},
+  tanque_vapor:{fac:"brasshaven",name:"Tanque de Vapor",cost:5,type:"criatura",atk:4,vida:4,kw:["Escudo"],art:"🚂",
+    txt:""},
+  carro_mecanico:{fac:"brasshaven",name:"Carro Mecánico",cost:2,type:"criatura",atk:2,vida:2,kw:["Prisa"],art:"🛺",
+    txt:""},
+  tren_blindado:{fac:"brasshaven",name:"Tren Blindado",cost:4,type:"reliquia",art:"🚆",
+    txt:"Al jugarla: robás 2 cartas.",cast:"tren_blindado",sub:"automata"},
+  minero:{fac:"brasshaven",name:"Minero de la Franja",cost:1,type:"criatura",atk:1,vida:1,kw:[],art:"⛏️",
+    txt:"Al morir: ganás 1 de maná este turno.",death:"minero"},
+  milicia_tecnica:{fac:"brasshaven",name:"Milicia Técnica",cost:2,type:"criatura",atk:2,vida:3,kw:[],art:"🔧",
+    txt:""},
+  espia_brasshaven:{fac:"brasshaven",name:"Espía de Brasshaven",cost:3,type:"criatura",atk:2,vida:2,kw:["Oculto"],art:"🕶️",
+    txt:""},
   // ---------------- Kóren ----------------
   anciana:{fac:"koren",name:"Anciana del Río Callado",cost:3,type:"criatura",atk:2,vida:4,kw:[],art:"👵",
     txt:"Al entrar: curá 2 al jugador. Recuerdo: cura 4.",etb:"anciana",rarity:"especialista"},
@@ -830,7 +879,7 @@ function foeOf(id){ return id==="p"?"a":"p"; }
 function newPlayer(id, fac){
   return {id, fac, life:20, manaMax:0, mana:0, tempMana:0, manaCapMax:10,
     hand:[], deck:[], field:[], grave:[], ecoDiscount:0,
-    freeNextCard:false, attacksThisTurn:0};
+    freeNextCard:false, attacksThisTurn:0, lastSpellPlayed:null};
 }
 
 // Mazo rápido por defecto (sin constructor): 2 copias de cada carta de diseño (1 si es Héroe) + relleno de Soldados hasta 20.
@@ -866,14 +915,16 @@ function instantiate(libKey, override, poolKey){
   const base = libKey ? LIB[libKey] : override;
   const c = mk({
     key: libKey || poolKey || null, fac: base.fac, name: base.name, cost: base.cost, type: base.type,
-    art: base.art, txt: base.txt||"", kw:(base.kw||[]).slice(),
+    art: base.art, txt: base.txt||"", kw:(base.kw||[]).slice(), sub: base.sub||null, // subtipo liviano (ej. "explorador","automata")
     baseAtk: base.atk||0, baseVida: base.vida||0,
     plusAtk:0, plusVida:0, damage:0,
-    shield:false, sick:true, hidden:(base.kw||[]).includes("Oculto"),
+    // Escudo declarado en kw = entra con Escudo ya puesto (mismo patrón que Oculto->hidden abajo).
+    shield:(base.kw||[]).includes("Escudo"), sick:true, hidden:(base.kw||[]).includes("Oculto"),
     etb: base.etb, death: base.death, cast: base.cast,
     target: base.target, flag: base.flag, vanilla: base.vanilla||false,
     rarity: base.rarity, // "heroe"|"especialista"|"soldado" (solo criaturas; ver copyLimit())
     auraGuardian: base.auraGuardian||null, // {atk,vida} que da a OTROS Guardianes propios (Rhaen, Tiberon)
+    auraSub: base.auraSub||null, // {sub,atk,vida} que da a OTRAS criaturas propias con ese sub (Idris)
     sleepTurns: base.sleepTurns||0, // dormido N turnos propios extra antes de poder atacar (El Astado del Valle)
     activated: base.activated, activatedUsed:false, // habilidad activada 1x/turno (Nadira)
     runaBonusVida: base.runaBonusVida||0, // +0/+X vida por cada Runa activa de cualquier jugador (El Custodio del Anillo)
@@ -892,18 +943,30 @@ function auraGuardianBonus(p, c){
   for(const o of p.field){ if(o!==c && o.auraGuardian){ atk+=o.auraGuardian.atk||0; vida+=o.auraGuardian.vida||0; } }
   return {atk, vida};
 }
+function auraSubBonus(p, c){
+  // Idris (+0/+1 a Exploradores): mismo patrón que auraGuardianBonus, pero con sub en vez de la keyword Guardián.
+  if(!c.sub) return {atk:0, vida:0};
+  let atk=0, vida=0;
+  for(const o of p.field){ if(o!==c && o.auraSub && o.auraSub.sub===c.sub){ atk+=o.auraSub.atk||0; vida+=o.auraSub.vida||0; } }
+  return {atk, vida};
+}
 function countActiveRunas(){
   // El Custodio del Anillo cuenta Runas de CUALQUIER jugador
   let n=0;
   for(const id of ["p","a"]){ const pl=S.players[id]; if(pl) n+=pl.field.filter(x=>x.type==="runa").length; }
   return n;
 }
-function effAtk(c, p){ return Math.max(0, c.baseAtk + c.plusAtk + (p?auraGuardianBonus(p,c).atk:0)); }
+function effAtk(c, p){
+  if(!p) return Math.max(0, c.baseAtk + c.plusAtk);
+  return Math.max(0, c.baseAtk + c.plusAtk + auraGuardianBonus(p,c).atk + auraSubBonus(p,c).atk);
+}
 function effMaxVida(p,c){
-  let v = c.baseVida + c.plusVida + auraGuardianBonus(p,c).vida;
+  let v = c.baseVida + c.plusVida + auraGuardianBonus(p,c).vida + auraSubBonus(p,c).vida;
   if(c.runaBonusVida) v += c.runaBonusVida * countActiveRunas();
   return v;
 }
+// Lior: tus efectos de curación propios curan +1.
+function healAmount(p, base){ return base + (p.field.some(x=>x.flag==="lior") ? 1 : 0); }
 function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
 
 // ============================================================
@@ -931,12 +994,17 @@ function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaig
 // v2: "mazmorra" desapareció del vocabulario del juego (pasa a "lugar") — dungeonsUnlocked/
 // dungeonCleared se renombraron a placesUnlocked/placeCleared.
 // v3: Darian Voln reemplaza a Rhaen como héroe inicial de la campaña de Alderium (Rhaen pasa a
-// ser el jefe final, recompensa de n6duel). loadGame() migra sola una partida vieja (v1 o v2,
-// mismos nombres de campo salvo el rename de v2 ya cubierto abajo) sin perder progreso: copia los
-// campos, guarda bajo v3 y borra las claves legacy. Si la campaña de Alderium no está completa y
-// el jugador todavía no tiene a Darian, se lo otorga (no se le quita Rhaen ni sus mazos guardados
-// — un duplicado eventual al vencer al jefe final es inofensivo, copyLimit lo acota en el constructor).
-const SAVE_KEY = "veyra_save_v3";
+// ser el jefe final, recompensa de n6duel).
+// v4: Rhaen Iveros pasa a fac:"qashir" (su mecánica se revisará con el diseño fino de Qashir) y la
+// recompensa del jefe final de la campaña de Alderium pasa a ser Pretoriano del Alba (Rhaen ya no
+// puede ser recompensa de una campaña mono-facción de Alderium). loadGame() migra sola una partida
+// vieja (v1/v2/v3, mismos nombres de campo salvo los renames ya cubiertos abajo) sin perder
+// progreso: copia los campos, guarda bajo v4 y borra las claves legacy. Al migrar: si "rhaen" está
+// en savedDecks.alderium se quita de ahí (ya no es de esa facción — pero NO se le quita de la
+// colección, sigue siendo una carta que el jugador posee, ahora jugable en Qashir); si la campaña
+// de Alderium ya está completa y el jugador no tiene Pretoriano del Alba, se lo otorga.
+const SAVE_KEY = "veyra_save_v4";
+const SAVE_KEY_LEGACY_V3 = "veyra_save_v3";
 const SAVE_KEY_LEGACY_V2 = "veyra_save_v2";
 const SAVE_KEY_LEGACY_V1 = "veyra_save_v1";
 function saveGame(){
@@ -951,11 +1019,15 @@ function saveGame(){
 function loadGame(){
   try{
     let raw=localStorage.getItem(SAVE_KEY);
-    let migratingLegacy=null; // "v2" | "v1" | null
+    let migratingLegacy=null; // "v3" | "v2" | "v1" | null
     if(!raw){
-      raw=localStorage.getItem(SAVE_KEY_LEGACY_V2);
-      if(raw) migratingLegacy="v2";
-      else{ raw=localStorage.getItem(SAVE_KEY_LEGACY_V1); if(raw) migratingLegacy="v1"; }
+      raw=localStorage.getItem(SAVE_KEY_LEGACY_V3);
+      if(raw) migratingLegacy="v3";
+      else{
+        raw=localStorage.getItem(SAVE_KEY_LEGACY_V2);
+        if(raw) migratingLegacy="v2";
+        else{ raw=localStorage.getItem(SAVE_KEY_LEGACY_V1); if(raw) migratingLegacy="v1"; }
+      }
       if(!raw) return false;
     }
     const data=JSON.parse(raw);
@@ -973,8 +1045,14 @@ function loadGame(){
     if(data.loreSeen && typeof data.loreSeen==="object") Object.assign(S.loreSeen, data.loreSeen);
     if(migratingLegacy){
       if(!isCampaignComplete("alderium") && ownedCount("darian")===0) grantCollection("darian",1);
+      if(S.savedDecks.alderium && S.savedDecks.alderium.rhaen){ delete S.savedDecks.alderium.rhaen; } // Rhaen ahora es de Qashir
+      if(isCampaignComplete("alderium") && ownedCount("pretoriano_alba")===0) grantCollection("pretoriano_alba",1);
       saveGame();
-      try{ localStorage.removeItem(SAVE_KEY_LEGACY_V2); localStorage.removeItem(SAVE_KEY_LEGACY_V1); } catch(e2){}
+      try{
+        localStorage.removeItem(SAVE_KEY_LEGACY_V3);
+        localStorage.removeItem(SAVE_KEY_LEGACY_V2);
+        localStorage.removeItem(SAVE_KEY_LEGACY_V1);
+      } catch(e2){}
     }
     return true;
   } catch(e){
@@ -1605,9 +1683,11 @@ const PLACES = {
         text:"Tu rival es Rhaen Iveros, de la tercera cohorte, Portador de Filo Común: no tiene tu equipamiento, pero no retrocede.",
         enemyFac:"alderium", enemyDeckBuilder:buildRhaenColiseoDeck,
         // Rhaen Iveros es el jefe final de esta campaña (ver Veyra_Lore_Notas.md): Darian ya reemplazó
-        // a Rhaen como héroe inicial de Alderium, y vencerlo en el Coliseo de Juramento del libro
-        // entrega su carta como recompensa.
-        reward:{type:"collection",key:"rhaen",n:1,fac:"alderium"},
+        // a Rhaen como héroe inicial de Alderium. Rhaen ahora es fac:"qashir" (se fue a Qashir en su
+        // arco) así que ya no puede ser la recompensa de una campaña mono-facción de Alderium — la
+        // recompensa pasa a ser Pretoriano del Alba, la vieja élite de Alderium. buildRhaenColiseoDeck
+        // sigue instanciando a "rhaen" para el rival sin problema: es un NPC puntual, no un mazo constructible.
+        reward:{type:"collection",key:"pretoriano_alba",n:1,fac:"alderium"},
         campaignDone:true, next:"exit"},
     }
   },
@@ -2046,6 +2126,8 @@ function canPlay(p,c){
 }
 function availMana(p){ return p.mana + p.tempMana; }
 function sendaActive(p){ return p.field.some(c=>c.type==="runa" && c.key==="senda"); }
+function magisterActive(p){ return p.field.some(c=>c.key==="magister"); }
+function contenedorActive(p){ return p.field.some(c=>c.key==="contenedor_runas"); }
 function effectiveCost(p,c){
   if(p.freeNextCard) return 0; // Yesid, el Último Portador: al revelarse, la próxima carta cuesta 0
   if(c.type==="recuerdo" && p.field.some(x=>x.flag==="halvar")) return 0; // Halvar, el que Recuerda
@@ -2054,6 +2136,8 @@ function effectiveCost(p,c){
     cost=Math.max(0, cost - p.ecoDiscount);
     if(sendaActive(p)) cost=Math.max(1, cost-1); // Senda de los Mil Pasos (mínimo 1)
   }
+  if(c.sub==="automata" && magisterActive(p)) cost=Math.max(1, cost-1); // El Magíster Industrial (mínimo 1)
+  if(contenedorActive(p) && (c.type==="hechizo" || c.key==="copista")) cost=Math.max(1, cost-1); // Contenedor de Runas (mínimo 1)
   return cost;
 }
 function spendMana(p,n){
@@ -2075,6 +2159,7 @@ async function playCard(p,c){
     playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
     if(c.type==="criatura"){ enterField(p,c); }
     await resolveTargeted(p,c,tgt);
+    if(c.type==="hechizo") p.lastSpellPlayed=c; // Copista de Runas
     if(c.type!=="criatura" && c.type!=="reliquia" && c.type!=="runa") p.grave.push(c);
     afterPlay(p,c);
     render(); checkWin(); return;
@@ -2092,11 +2177,14 @@ async function playCard(p,c){
     p.field.push(c); // permanece en juego
     if(c.cast) await runCast(p,c,null);
   } else if(c.type==="reliquia"){
-    // reliquias sin target: (ninguna hoy) — al cementerio
-    p.grave.push(c);
+    // reliquia sin objetivo: si tiene cast es de un solo uso (Tren Blindado, al cementerio);
+    // si no, es pasiva y permanece en juego como una runa (Contenedor de Runas).
+    if(c.cast){ await runCast(p,c,null); p.grave.push(c); }
+    else { p.field.push(c); }
   } else {
     // hechizo / recuerdo sin target
     if(c.cast){ const ok=await runCast(p,c,null); if(ok===false){ /* recuerdo fallido igual se descarta */ } }
+    if(c.type==="hechizo") p.lastSpellPlayed=c; // Copista de Runas
     p.grave.push(c);
   }
   afterPlay(p,c);
@@ -2155,7 +2243,37 @@ async function runEtb(p,c){
       let heal=2;
       const ok = await askRecuerdo("anciana");
       if(ok){ heal=4; toast("¡Recuerdo correcto! Cura 4"); } else { toast("Cura 2"); }
+      heal=healAmount(p,heal);
       p.life=Math.min(30,p.life+heal); log(`${who(p)} cura ${heal} de vida.`);
+      break;
+    }
+    case "varun":{ drawCard(p); log(`Varun, Guía de Caravanas: ${who(p)} roba 1 carta.`); break; }
+    case "quebrador":{
+      const foe=other(p);
+      const targets=foe.field.filter(x=>x.type==="criatura" && x.shield);
+      if(targets.length){
+        const pick = targets.length===1 ? targets[0] : await chooseFromList(p, targets, "Quebrador de Piedra: elegí qué Escudo anular.");
+        if(pick){ pick.shield=false; burst(cardEl(pick), "var(--shield)", 8); playSfx("escudo_romper"); log(`Quebrador de Piedra anula el Escudo de ${pick.name}.`); }
+      }
+      break;
+    }
+    case "sanadora":{
+      const heal=healAmount(p,2);
+      const hurt=p.field.filter(x=>x.type==="criatura" && x!==c && x.damage>0);
+      const target = hurt.length ? await chooseHealTarget(p, hurt, {title:"Sanadora de las Cuevas Altas", subtitle:`Curá ${heal} a tu héroe o a una criatura aliada.`}) : null;
+      if(target){ target.damage=Math.max(0,target.damage-heal); log(`Sanadora cura ${heal} a ${target.name}.`); }
+      else { p.life=Math.min(30,p.life+heal); log(`Sanadora cura ${heal} a ${who(p)}.`); }
+      break;
+    }
+    case "copista":{
+      const spell=p.lastSpellPlayed;
+      if(spell){ const copy=instantiate(spell.key); p.hand.push(copy); log(`Copista de Runas devuelve ${copy.name} a la mano.`); }
+      break;
+    }
+    case "aureon":{
+      const others=p.field.filter(x=>x!==c && x.type==="criatura");
+      for(const o of others){ o.plusVida+=1; }
+      if(others.length) log(`Aureon Valerius: tus otras criaturas ganan +0/+1.`);
       break;
     }
     case "forastero":{
@@ -2229,12 +2347,19 @@ async function resolveTargeted(p,c,tgt){
       break;
     }
     case "vendaje":{
-      if(tgt.isHero){ tgt.p.life=Math.min(30,tgt.p.life+3); log(`Vendaje: cura 3 a ${who(tgt.p)}.`); }
+      const heal=healAmount(p,3);
+      if(tgt.isHero){ tgt.p.life=Math.min(30,tgt.p.life+heal); log(`Vendaje: cura ${heal} a ${who(tgt.p)}.`); }
       else {
-        tgt.damage=Math.max(0,tgt.damage-3);
+        tgt.damage=Math.max(0,tgt.damage-heal);
         await coupleEffect(c, tgt, {color:"var(--good)"});
-        log(`Vendaje: cura 3 a ${tgt.name}.`);
+        log(`Vendaje: cura ${heal} a ${tgt.name}.`);
       }
+      break;
+    }
+    case "hoja_solar":{
+      tgt.plusAtk+=2;
+      await coupleEffect(c, tgt, {color:"var(--gold)"});
+      log(`Hoja Solar: ${tgt.name} gana +2/+0.`);
       break;
     }
   }
@@ -2252,6 +2377,7 @@ async function runCast(p,c,_){
     }
     case "ley":{ p.manaMax=Math.min(p.manaMax,12); log(`Ley de Terra Caelum: tope de maná ahora 12.`); break; }
     case "senda":{ log(`Senda de los Mil Pasos: tus criaturas Nómadas cuestan 1 menos al jugarlas (mínimo 1).`); break; }
+    case "tren_blindado":{ drawCard(p); drawCard(p); log(`Tren Blindado: ${who(p)} roba 2 cartas.`); break; }
     case "equilibrio":{
       const o=other(p); const lo=Math.min(availMana(p),availMana(o));
       p.mana=Math.max(0,lo-p.tempMana>0?lo-p.tempMana:0); p.tempMana=Math.min(p.tempMana,lo); p.mana=Math.max(0,lo-p.tempMana);
@@ -2386,6 +2512,7 @@ async function runDeath(p,c){
       const foe=other(p); foe.life-=1; log(`Chacal de las Dunas inflige 1 a ${who(foe)}.`);
       break;
     }
+    case "minero":{ p.tempMana+=1; toast("+1 maná (Minero de la Franja)"); log(`Minero de la Franja: ${who(p)} gana 1 maná este turno.`); break; }
     case "automata":{
       if(!c.automataUsed && availMana(p)>=1){
         let doIt=true;
@@ -2445,6 +2572,7 @@ async function aiPlay(p,c){
     log(`${who(p)} juega ${c.name}.`);
     playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
     if(tgt!==null) await resolveTargeted(p,c,tgt);
+    if(c.type==="hechizo") p.lastSpellPlayed=c; // Copista de Runas
     if(c.type==="hechizo"||c.type==="recuerdo") p.grave.push(c);
     render(); checkWin(); return;
   }
@@ -2453,8 +2581,11 @@ async function aiPlay(p,c){
   playSfx(c.type==="hechizo"?"hechizo":"carta_jugar");
   if(c.type==="criatura"){ enterField(p,c); await aiEtb(p,c); }
   else if(c.type==="runa"){ p.field.push(c); if(c.cast) await runCast(p,c,null); }
-  else if(c.type==="reliquia"){ p.grave.push(c); }
-  else { if(c.cast) await runCast(p,c,null); p.grave.push(c); }
+  else if(c.type==="reliquia"){
+    if(c.cast){ await runCast(p,c,null); p.grave.push(c); }
+    else { p.field.push(c); }
+  }
+  else { if(c.cast) await runCast(p,c,null); if(c.type==="hechizo") p.lastSpellPlayed=c; p.grave.push(c); }
   render(); checkWin();
 }
 
@@ -2476,8 +2607,32 @@ async function aiEtb(p,c){
         if(effMaxVida(p,rev)>0){ rev.justSummoned=true; p.field.push(rev); } else p.grave.push(rev); }
       break;
     }
-    case "anciana":{ const ok=Math.random()<0.6; p.life=Math.min(30,p.life+(ok?4:2)); break; }
+    case "anciana":{ const ok=Math.random()<0.6; p.life=Math.min(30,p.life+healAmount(p,ok?4:2)); break; }
     case "forastero":{ const r=[[1,1],[3,3],[5,1]][(Math.random()*3)|0]; c.baseAtk=r[0]; c.baseVida=r[1]; break; }
+    case "varun":{ drawCard(p); break; }
+    case "quebrador":{
+      const foe=other(p);
+      const targets=foe.field.filter(x=>x.type==="criatura" && x.shield);
+      if(targets.length){ const pick=targets[0]; pick.shield=false; burst(cardEl(pick), "var(--shield)", 8); playSfx("escudo_romper"); }
+      break;
+    }
+    case "sanadora":{
+      const heal=healAmount(p,2);
+      const hurt=p.field.filter(x=>x.type==="criatura" && x!==c && x.damage>0).sort((a,b)=>b.damage-a.damage);
+      if(hurt.length){ hurt[0].damage=Math.max(0,hurt[0].damage-heal); }
+      else { p.life=Math.min(30,p.life+heal); }
+      break;
+    }
+    case "copista":{
+      const spell=p.lastSpellPlayed;
+      if(spell){ p.hand.push(instantiate(spell.key)); }
+      break;
+    }
+    case "aureon":{
+      const others=p.field.filter(x=>x!==c && x.type==="criatura");
+      for(const o of others){ o.plusVida+=1; }
+      break;
+    }
     case "rasim":{
       for(let i=0;i<2 && p.field.length<7;i++){
         const tok=instantiate(null,{fac:p.fac,name:"Espejismo",cost:0,type:"criatura",atk:1,vida:1,kw:[],art:"👻",txt:""});
@@ -2508,6 +2663,7 @@ function aiPickTarget(p,c){
       return j.length? j.sort((a,b)=>b.cost-a.cost)[0] : null; }
     case "cristal":{ return p.field.filter(x=>x.type==="criatura").sort((a,b)=>effVida(p,b)-effVida(p,a))[0]||null; }
     case "vendaje":{ const hurt=p.field.filter(x=>x.damage>0).sort((a,b)=>b.damage-a.damage); return hurt[0]||{isHero:true,p}; }
+    case "hoja_solar":{ return p.field.filter(x=>x.type==="criatura").sort((a,b)=>effAtk(b,p)-effAtk(a,p))[0]||null; }
   }
   return null;
 }
@@ -2722,10 +2878,13 @@ async function chooseCreature(p,list,title,optional){
     openModal();
   });
 }
-function chooseHealTarget(p, hurtList){
+function chooseHealTarget(p, hurtList, opts){
+  opts = opts || {};
+  const title = opts.title || "Bjorna, Madre de las Piedras";
+  const subtitle = opts.subtitle || "Fin de turno: curá 2 a tu héroe o a una criatura aliada.";
   return new Promise(res=>{
     const box=document.getElementById("mbox");
-    box.innerHTML=`<h3>Bjorna, Madre de las Piedras</h3><div class="mq">Fin de turno: curá 2 a tu héroe o a una criatura aliada.</div>`;
+    box.innerHTML=`<h3>${title}</h3><div class="mq">${subtitle}</div>`;
     const bh=document.createElement("button"); bh.className="mopt"; bh.textContent=`Curar a ${who(p)} (héroe) — ${p.life} vida`;
     bh.onclick=()=>{closeModal();res(null)}; box.appendChild(bh);
     for(const c of hurtList){
@@ -2739,12 +2898,13 @@ function chooseHealTarget(p, hurtList){
 async function endOfTurnTriggers(p){
   const bjorna = p.field.find(c=>c.flag==="bjorna");
   if(!bjorna) return;
+  const heal=healAmount(p,2);
   const hurt = p.field.filter(x=>x.type==="criatura" && x.damage>0);
   let target=null;
-  if(p.id==="p" && hurt.length){ target = await chooseHealTarget(p, hurt); }
+  if(p.id==="p" && hurt.length){ target = await chooseHealTarget(p, hurt, {subtitle:`Fin de turno: curá ${heal} a tu héroe o a una criatura aliada.`}); }
   else if(p.id==="a" && hurt.length){ target = hurt.sort((a,b)=>b.damage-a.damage)[0]; }
-  if(target){ target.damage=Math.max(0,target.damage-2); log(`Bjorna cura 2 a ${target.name}.`); }
-  else { p.life=Math.min(30,p.life+2); log(`Bjorna cura 2 a ${who(p)}.`); }
+  if(target){ target.damage=Math.max(0,target.damage-heal); log(`Bjorna cura ${heal} a ${target.name}.`); }
+  else { p.life=Math.min(30,p.life+heal); log(`Bjorna cura ${heal} a ${who(p)}.`); }
   render();
 }
 function askRecuerdo(key){
@@ -2862,7 +3022,9 @@ function makeCardEl(c, owner, mode){
   const showA = hideStats? "?" : effAtk(c,owner);
   const showV = hideStats? "?" : effVida(owner,c);
 
-  let chips = c.kw.map(k=>{
+  // "Escudo" en kw solo es declarativo (entra con shield:true, ver instantiate) — el chip real
+  // se agrega abajo según el estado ACTUAL de c.shield, para no mostrarlo ya roto como si siguiera activo.
+  let chips = c.kw.filter(k=>k!=="Escudo").map(k=>{
     const icon=KW_ICON[k];
     return `<div class="kwchip" title="${k}">${icon?`<svg><use href="#${icon}"/></svg>`:k}</div>`;
   });
