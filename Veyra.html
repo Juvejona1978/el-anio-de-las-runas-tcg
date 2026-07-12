@@ -982,13 +982,37 @@ const CAMPAIGN_ORDER = ["alderium","qashir","brasshaven","koren","caelum","nomad
 S.unlocked = {alderium:true};
 S.collection = {}; // {clave_de_carta: copias poseídas}
 S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facción
-S.campaignProgress = {}; // {facción: {nodeId, done}} — progreso persistente de campaña
+S.campaignProgress = {}; // {facción: {expeditions: {placeId: {nodeId, done}}}} — progreso de cada expedición de la cadena
 S.placesUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
 S.audio = {musicVol:0.6, sfxVol:0.8, muted:false}; // preferencias de audio (sección 5 del motor de audio)
 S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar"
 S.placeCleared = {}; // {placeId: true} — jefe vencido al menos una vez
 function isUnlocked(k){ return !!S.unlocked[k]; }
-function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaignProgress[fac].done); }
+// Progreso de campaña, formato v5+: S.campaignProgress[fac] = {expeditions: {placeId: {nodeId, done}}}.
+// Una facción puede tener varias expediciones en cadena (CAMPAIGN_CHAINS) — cada una es un placeId
+// normal de PLACES con isCampaign:true, y su progreso vive bajo su propio placeId, no bajo la facción.
+function campaignExpeditionState(fac, placeId){
+  const cp=S.campaignProgress[fac];
+  return (cp && cp.expeditions) ? cp.expeditions[placeId] : undefined;
+}
+function setExpeditionProgress(fac, placeId, patch){
+  if(!S.campaignProgress[fac]) S.campaignProgress[fac]={expeditions:{}};
+  if(!S.campaignProgress[fac].expeditions) S.campaignProgress[fac].expeditions={};
+  S.campaignProgress[fac].expeditions[placeId]=Object.assign({}, S.campaignProgress[fac].expeditions[placeId], patch);
+  saveGame();
+}
+// Primera expedición de la cadena que todavía no está "done": es la que se muestra como hotspot
+// dorado ACTUAL en el mapa de continente. Devuelve null si la cadena está vacía o ya se completó entera.
+function currentExpeditionId(fac){
+  const chain=CAMPAIGN_CHAINS[fac]||[];
+  return chain.find(id=>{ const st=campaignExpeditionState(fac,id); return !(st && st.done); }) || null;
+}
+// La campaña de una facción está completa solo cuando TODAS las expediciones de su cadena lo están.
+function isCampaignComplete(fac){
+  const chain=CAMPAIGN_CHAINS[fac]||[];
+  if(!chain.length) return false;
+  return chain.every(id=>{ const st=campaignExpeditionState(fac,id); return !!(st && st.done); });
+}
 
 // ---- Persistencia (localStorage, clave versionada) ----
 // v2: "mazmorra" desapareció del vocabulario del juego (pasa a "lugar") — dungeonsUnlocked/
@@ -997,13 +1021,14 @@ function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaig
 // ser el jefe final, recompensa de n6duel).
 // v4: Rhaen Iveros pasa a fac:"qashir" (su mecánica se revisará con el diseño fino de Qashir) y la
 // recompensa del jefe final de la campaña de Alderium pasa a ser Pretoriano del Alba (Rhaen ya no
-// puede ser recompensa de una campaña mono-facción de Alderium). loadGame() migra sola una partida
-// vieja (v1/v2/v3, mismos nombres de campo salvo los renames ya cubiertos abajo) sin perder
-// progreso: copia los campos, guarda bajo v4 y borra las claves legacy. Al migrar: si "rhaen" está
-// en savedDecks.alderium se quita de ahí (ya no es de esa facción — pero NO se le quita de la
-// colección, sigue siendo una carta que el jugador posee, ahora jugable en Qashir); si la campaña
-// de Alderium ya está completa y el jugador no tiene Pretoriano del Alba, se lo otorga.
-const SAVE_KEY = "veyra_save_v4";
+// puede ser recompensa de una campaña mono-facción de Alderium).
+// v5: campañas multi-expedición. S.campaignProgress[fac] pasa de {nodeId,done} (1 campaña = 1 lugar)
+// a {expeditions:{placeId:{nodeId,done}}} (cadena de N expediciones, CAMPAIGN_CHAINS). loadGame()
+// migra sola una partida vieja (v1-v4, mismos nombres de campo salvo los renames ya cubiertos abajo)
+// sin perder progreso: el progreso viejo de una facción se envuelve como la expedición inicial de
+// su cadena (CAMPAIGN_CHAINS[fac][0]), preservando nodeId y done.
+const SAVE_KEY = "veyra_save_v5";
+const SAVE_KEY_LEGACY_V4 = "veyra_save_v4";
 const SAVE_KEY_LEGACY_V3 = "veyra_save_v3";
 const SAVE_KEY_LEGACY_V2 = "veyra_save_v2";
 const SAVE_KEY_LEGACY_V1 = "veyra_save_v1";
@@ -1019,14 +1044,18 @@ function saveGame(){
 function loadGame(){
   try{
     let raw=localStorage.getItem(SAVE_KEY);
-    let migratingLegacy=null; // "v3" | "v2" | "v1" | null
+    let migratingLegacy=null; // "v4" | "v3" | "v2" | "v1" | null
     if(!raw){
-      raw=localStorage.getItem(SAVE_KEY_LEGACY_V3);
-      if(raw) migratingLegacy="v3";
+      raw=localStorage.getItem(SAVE_KEY_LEGACY_V4);
+      if(raw) migratingLegacy="v4";
       else{
-        raw=localStorage.getItem(SAVE_KEY_LEGACY_V2);
-        if(raw) migratingLegacy="v2";
-        else{ raw=localStorage.getItem(SAVE_KEY_LEGACY_V1); if(raw) migratingLegacy="v1"; }
+        raw=localStorage.getItem(SAVE_KEY_LEGACY_V3);
+        if(raw) migratingLegacy="v3";
+        else{
+          raw=localStorage.getItem(SAVE_KEY_LEGACY_V2);
+          if(raw) migratingLegacy="v2";
+          else{ raw=localStorage.getItem(SAVE_KEY_LEGACY_V1); if(raw) migratingLegacy="v1"; }
+        }
       }
       if(!raw) return false;
     }
@@ -1035,7 +1064,21 @@ function loadGame(){
     if(data.unlocked && typeof data.unlocked==="object") Object.assign(S.unlocked, data.unlocked);
     if(data.collection && typeof data.collection==="object") Object.assign(S.collection, data.collection);
     if(data.savedDecks && typeof data.savedDecks==="object") Object.assign(S.savedDecks, data.savedDecks);
-    if(data.campaignProgress && typeof data.campaignProgress==="object") Object.assign(S.campaignProgress, data.campaignProgress);
+    // campaignProgress: formato nuevo (expeditions) se copia tal cual; formato viejo ({nodeId,done}
+    // directo sobre la facción, v1-v4) se envuelve como la expedición inicial de la cadena de esa facción.
+    if(data.campaignProgress && typeof data.campaignProgress==="object"){
+      for(const fac in data.campaignProgress){
+        const old=data.campaignProgress[fac];
+        if(!old || typeof old!=="object") continue;
+        if(old.expeditions && typeof old.expeditions==="object"){
+          if(!S.campaignProgress[fac]) S.campaignProgress[fac]={expeditions:{}};
+          Object.assign(S.campaignProgress[fac].expeditions, old.expeditions);
+        } else if(old.nodeId!==undefined || old.done!==undefined){
+          const firstId=(CAMPAIGN_CHAINS[fac]||[])[0];
+          if(firstId) setExpeditionProgress(fac, firstId, {nodeId:old.nodeId, done:!!old.done});
+        }
+      }
+    }
     // placesUnlocked/placeCleared: clave nueva si existe; si no, migrar desde el nombre viejo (v1).
     const placesUnlockedSrc = data.placesUnlocked || data.dungeonsUnlocked;
     if(placesUnlockedSrc && typeof placesUnlockedSrc==="object") Object.assign(S.placesUnlocked, placesUnlockedSrc);
@@ -1049,6 +1092,7 @@ function loadGame(){
       if(isCampaignComplete("alderium") && ownedCount("pretoriano_alba")===0) grantCollection("pretoriano_alba",1);
       saveGame();
       try{
+        localStorage.removeItem(SAVE_KEY_LEGACY_V4);
         localStorage.removeItem(SAVE_KEY_LEGACY_V3);
         localStorage.removeItem(SAVE_KEY_LEGACY_V2);
         localStorage.removeItem(SAVE_KEY_LEGACY_V1);
@@ -1343,6 +1387,19 @@ function backToCityFlow(){
 // ---- 3. Mapa de lugares del continente — "Salir al mundo" abre SIEMPRE esta pantalla.
 // La campaña (si existe y no está completa) aparece como hotspot destacado; los lugares
 // normales quedan bloqueados (candado) hasta completarla.
+// Hotspot rombo compartido por los lugares normales del continente Y las expediciones de campaña
+// ya completadas (revisitables) — misma pinta, mismo candado si locked, mismo destino (enterPlace).
+function placeHotspotEl(id, dg, locked){
+  const d=document.createElement("div");
+  d.className="hotspot place-hotspot"+(locked?" locked":"");
+  d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
+  d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/lugar/icono_lugar_${id}.png">${locked?'<span class="hs-lock">🔒</span>':""}<span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
+  d.onclick=()=>{
+    if(locked){ toast("🔒 Completá la campaña de "+FACTIONS[dg.faction].name+" para desbloquear sus lugares."); return; }
+    enterPlace(id);
+  };
+  return d;
+}
 function openPlaceMap(fac){
   currentCity=fac;
   document.getElementById("placeMapScreen").dataset.faction=fac;
@@ -1351,39 +1408,36 @@ function openPlaceMap(fac){
   const el=document.getElementById("placeHotspots"); el.innerHTML="";
   let any=false;
 
-  const campaignId=CAMPAIGN_IDS[fac];
-  const campaignPending = campaignId && !isCampaignComplete(fac);
-  if(campaignPending){
-    any=true;
-    const dg=PLACES[campaignId];
-    const progress=S.campaignProgress[fac];
-    const step = progress ? (dg.nodes[progress.nodeId]||{}).step||1 : 1;
-    const totalSteps=(CAMPAIGN_STEP_NAMES[fac]||[]).length||6;
-    const d=document.createElement("div");
-    d.className="hotspot campaign-hotspot";
-    d.style.left="50%"; d.style.top="28%";
-    d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_campana_${fac}.png"><span class="hs-init">⚜️</span></div>
-      <div class="hs-label">${dg.name} — ${step}/${totalSteps}</div>`;
-    d.onclick=()=>enterPlace(campaignId);
-    el.appendChild(d);
+  // Cadena de expediciones (sección "Campañas multi-expedición"): la ACTUAL (primera no completada)
+  // es el hotspot dorado pulsante; las YA COMPLETADAS quedan como hotspots normales revisitables
+  // (mismo mecanismo de jefe evadible que un lugar normal); las futuras todavía no se muestran.
+  const chain=CAMPAIGN_CHAINS[fac]||[];
+  const currentId=currentExpeditionId(fac);
+  for(const id of chain){
+    const dg=PLACES[id];
+    if(id===currentId){
+      any=true;
+      const st=campaignExpeditionState(fac,id);
+      const step = st ? (dg.nodes[st.nodeId]||{}).step||1 : 1;
+      const totalSteps=(CAMPAIGN_STEP_NAMES[id]||[]).length||6;
+      const d=document.createElement("div");
+      d.className="hotspot campaign-hotspot";
+      d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
+      d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_campana_${fac}.png"><span class="hs-init">⚜️</span></div>
+        <div class="hs-label">${dg.name} — ${step}/${totalSteps}</div>`;
+      d.onclick=()=>enterPlace(id);
+      el.appendChild(d);
+    } else {
+      const st=campaignExpeditionState(fac,id);
+      if(st && st.done){ any=true; el.appendChild(placeHotspotEl(id, dg, false)); }
+    }
   }
 
   const list=CONTINENT_PLACES[fac]||[];
-  const placesLocked = campaignId ? !isCampaignComplete(fac) : false;
+  const placesLocked = chain.length ? !isCampaignComplete(fac) : false;
   if(list.length){
     any=true;
-    for(const id of list){
-      const dg=PLACES[id];
-      const d=document.createElement("div");
-      d.className="hotspot place-hotspot"+(placesLocked?" locked":"");
-      d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
-      d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/lugar/icono_lugar_${id}.png">${placesLocked?'<span class="hs-lock">🔒</span>':""}<span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
-      d.onclick=()=>{
-        if(placesLocked){ toast("🔒 Completá la campaña de "+FACTIONS[fac].name+" para desbloquear sus lugares."); return; }
-        enterPlace(id);
-      };
-      el.appendChild(d);
-    }
+    for(const id of list) el.appendChild(placeHotspotEl(id, PLACES[id], placesLocked));
     const total=PLACE_TOTALS[fac];
     if(total && total>list.length){
       const more=document.createElement("div"); more.className="dg-more";
@@ -1574,10 +1628,204 @@ function buildPlaceGraph(shape, content){
   return nodes;
 }
 
+// ---- Conversor del formato "game-graph-map" del editor externo del autor ----
+// El autor diseña expediciones visualmente en una herramienta aparte que exporta un grafo genérico
+// {format:"game-graph-map", nodes:[{id,label,type,description,tags,position}], edges:[{source,target,
+// label,direction,cost,description}]} con type de nodo ∈ {"spawn","location","objective"}. El grafo
+// es solo FORMA (como PLACE_TOPOLOGIES); `content` (mismo tipo de objeto id->{...} que recibe
+// buildPlaceGraph) le da la carne jugable — si a un nodo le falta content, se genera un placeholder
+// tipo "decision" con su label/description, para que el autor pueda iterar el mapa sin escribir texto
+// todavía. Devuelve {startNode, nodes} — se combina a mano con faction/name/icon/mapPos/level para
+// completar una entrada de PLACES (esos datos no viven en el grafo del editor).
+function convertGraphMap(graph, content){
+  content = content || {};
+  if(!graph || graph.format!=="game-graph-map" || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges))
+    throw new Error('convertGraphMap: se esperaba {format:"game-graph-map", nodes:[...], edges:[...]}.');
+
+  const byId={};
+  for(const n of graph.nodes){
+    if(byId[n.id]) throw new Error(`convertGraphMap: id de nodo duplicado "${n.id}".`);
+    byId[n.id]=n;
+  }
+  const spawns=graph.nodes.filter(n=>n.type==="spawn");
+  if(spawns.length!==1) throw new Error(`convertGraphMap: se esperaba exactamente 1 nodo spawn, hay ${spawns.length}.`);
+  const objectives=graph.nodes.filter(n=>n.type==="objective");
+  if(!objectives.length) throw new Error("convertGraphMap: se necesita al menos 1 nodo objective.");
+
+  // Adyacencia dirigida: source->target siempre, aunque la arista venga marcada "bidirectional"
+  // (el swipe/tap del motor solo avanza — nunca hay vuelta atrás real). Se avisa por consola, no falla.
+  const adj={}; for(const n of graph.nodes) adj[n.id]=[];
+  for(const e of graph.edges){
+    if(!byId[e.source]) throw new Error(`convertGraphMap: arista con source desconocido "${e.source}".`);
+    if(!byId[e.target]) throw new Error(`convertGraphMap: arista con target desconocido "${e.target}".`);
+    if(e.direction==="bidirectional") console.warn(`convertGraphMap: arista bidireccional "${e.source}" -> "${e.target}" (${e.label||"sin label"}) tratada como dirigida — el swipe solo avanza.`);
+    adj[e.source].push({to:e.target, label:e.label});
+  }
+  for(const id in adj) if(adj[id].length>2) throw new Error(`convertGraphMap: el nodo "${id}" tiene ${adj[id].length} aristas salientes (máximo 2 — el motor solo swipea izquierda/derecha).`);
+
+  // BFS desde el spawn: distancia mínima = step-1 (usado por la barra de progreso existente).
+  const spawnId=spawns[0].id;
+  const dist={[spawnId]:0};
+  const order=[spawnId];
+  for(let i=0;i<order.length;i++){
+    const cur=order[i];
+    for(const {to} of adj[cur]) if(dist[to]===undefined){ dist[to]=dist[cur]+1; order.push(to); }
+  }
+  for(const o of objectives) if(dist[o.id]===undefined)
+    throw new Error(`convertGraphMap: el objective "${o.id}" (${o.label}) no es alcanzable desde el spawn.`);
+
+  // Ciclos alcanzables: DFS con pila de recursión (blanco/gris/negro) partiendo del spawn — el swipe
+  // es estrictamente hacia adelante, así que cualquier back-edge dentro de lo alcanzable es un error
+  // de diseño del mapa, no algo que el motor pueda resolver solo.
+  const state={}; let cyclePath=null;
+  (function dfs(id, path){
+    if(cyclePath) return;
+    state[id]=1; path.push(id);
+    for(const {to} of adj[id]){
+      if(cyclePath) return;
+      if(state[to]===1){ cyclePath=path.concat(to); return; }
+      if(state[to]===2) continue;
+      dfs(to, path);
+    }
+    path.pop(); state[id]=2;
+  })(spawnId, []);
+  if(cyclePath) throw new Error(`convertGraphMap: ciclo alcanzable detectado: ${cyclePath.join(" -> ")}.`);
+
+  const nodes={};
+  for(const n of graph.nodes){
+    const outs=adj[n.id];
+    const own=content[n.id];
+    const node = own ? Object.assign({}, own) : {type:"decision", text:n.description||`TODO(autor): contenido para "${n.label}".`};
+    if(node.name===undefined) node.name=n.label;
+    if(dist[n.id]!==undefined) node.step=dist[n.id]+1;
+    if(node.next===undefined && node.exits===undefined){
+      if(outs.length===2) node.exits=outs.map(o=>({dest:o.to, hint:o.label||byId[o.to].label||"Avanzar"}));
+      else node.next = outs.length===1 ? outs[0].to : "exit";
+    }
+    nodes[n.id]=node;
+  }
+  return {startNode:spawnId, nodes};
+}
+
+// Autotest del conversor (no se llama solo — es una herramienta de regresión para correr a mano
+// desde la consola de devtools, `runConvertGraphMapSelfTest()`, cada vez que se toque convertGraphMap
+// o llegue un mapa nuevo del editor externo). Cubre el mapa de ejemplo pedido: 16 nodos, 19 aristas,
+// 1 bidireccional, labels duplicados "Ruinas" — y una tanda de mapas inválidos que deben fallar.
+function runConvertGraphMapSelfTest(){
+  const results=[];
+  function ok(name,cond,detail){ results.push({name, pass:!!cond, detail: cond? "" : (detail||"")}); }
+
+  // ---- Mapa de ejemplo: dos ramas (a*/b*) con un desvío a un nodo "Ruinas" en cada una que
+  // reconectan en join1, un segundo par de ramas (c1/c2) que reconecta en join2, y de ahí dos
+  // caminos (d1/d2, unidos por la única arista bidireccional) hasta el objective. 16 nodos, 19 aristas.
+  const graph = {format:"game-graph-map",
+    nodes:[
+      {id:"spawn", label:"La Entrada", type:"spawn", description:"Entrada a la expedición.", position:{x:0,y:0}},
+      {id:"a1", label:"Sendero Alto", type:"location", position:{x:1,y:-1}},
+      {id:"a2", label:"Paso Alto", type:"location", position:{x:2,y:-1}},
+      {id:"a3", label:"Cresta Alta", type:"location", position:{x:3,y:-1}},
+      {id:"ruinas_a", label:"Ruinas", type:"location", position:{x:2,y:-2}},
+      {id:"b1", label:"Sendero Bajo", type:"location", position:{x:1,y:1}},
+      {id:"b2", label:"Paso Bajo", type:"location", position:{x:2,y:1}},
+      {id:"b3", label:"Cauce Bajo", type:"location", position:{x:3,y:1}},
+      {id:"ruinas_b", label:"Ruinas", type:"location", position:{x:4,y:1}},
+      {id:"join1", label:"El Cruce", type:"location", position:{x:5,y:0}},
+      {id:"c1", label:"Galería Este", type:"location", position:{x:6,y:-1}},
+      {id:"c2", label:"Galería Oeste", type:"location", position:{x:6,y:1}},
+      {id:"join2", label:"El Umbral", type:"location", position:{x:7,y:0}},
+      {id:"d1", label:"Escalinata", type:"location", position:{x:8,y:-1}},
+      {id:"d2", label:"Rampa", type:"location", position:{x:8,y:1}},
+      {id:"objective", label:"El Corazón de las Ruinas", type:"objective", position:{x:9,y:0}},
+    ],
+    edges:[
+      {source:"spawn", target:"a1", label:"El sendero alto"},
+      {source:"spawn", target:"b1", label:"El sendero bajo"},
+      {source:"a1", target:"a2"},
+      {source:"a1", target:"ruinas_a", label:"Un desvío"},
+      {source:"a2", target:"a3"},
+      {source:"a3", target:"ruinas_a"},
+      {source:"b1", target:"b2"},
+      {source:"b2", target:"b3"},
+      {source:"b3", target:"ruinas_b"},
+      {source:"ruinas_b", target:"join1"},
+      {source:"ruinas_a", target:"join1"},
+      {source:"join1", target:"c1", label:"Galería este"},
+      {source:"join1", target:"c2", label:"Galería oeste"},
+      {source:"c1", target:"join2"},
+      {source:"c2", target:"join2"},
+      {source:"join2", target:"d1", label:"La escalinata"},
+      {source:"join2", target:"d2", label:"La rampa", direction:"bidirectional"},
+      {source:"d1", target:"objective"},
+      {source:"d2", target:"objective"},
+    ]};
+  ok("mapa de ejemplo: 16 nodos", graph.nodes.length===16, `tiene ${graph.nodes.length}`);
+  ok("mapa de ejemplo: 19 aristas", graph.edges.length===19, `tiene ${graph.edges.length}`);
+
+  const content = {
+    ruinas_a:{name:"Las Ruinas Antiguas (Sendero Alto)", type:"quiz", subtitle:"Recuerdo",
+      text:"Símbolos gastados cubren la piedra.",
+      quiz:{q:"¿Qué eran estas ruinas?", opts:[["Un templo",true],["Una prisión",false]]},
+      reward:{type:"collection",key:"aprendiz",n:1,fac:"qashir"}},
+    objective:{name:"El Corazón de las Ruinas", type:"combat", subtitle:"Final",
+      text:"El guardián final aguarda.", enemyFac:"qashir",
+      reward:{type:"collection",key:"aprendiz",n:1,fac:"qashir"}},
+  };
+
+  const warns=[]; const origWarn=console.warn;
+  console.warn=(...a)=>{ warns.push(a.join(" ")); };
+  let res=null, threw=null;
+  try{ res=convertGraphMap(graph, content); } catch(e){ threw=e; } finally{ console.warn=origWarn; }
+
+  ok("convierte sin excepción", !threw, threw && threw.message);
+  if(res){
+    ok("startNode = spawn", res.startNode==="spawn");
+    ok("16 nodos en el resultado", Object.keys(res.nodes).length===16, `hay ${Object.keys(res.nodes).length}`);
+    ok("avisa por la arista bidireccional", warns.some(w=>w.includes("bidireccional")), warns.join(" | "));
+    ok("spawn.step = 1", res.nodes.spawn.step===1, `step=${res.nodes.spawn.step}`);
+    ok("ruinas_a.step = 3 (vía a1, más corto que vía a3)", res.nodes.ruinas_a.step===3, `step=${res.nodes.ruinas_a.step}`);
+    ok("join1.step = 4", res.nodes.join1.step===4, `step=${res.nodes.join1.step}`);
+    ok("join2.step = 6", res.nodes.join2.step===6, `step=${res.nodes.join2.step}`);
+    ok("objective.step = 8", res.nodes.objective.step===8, `step=${res.nodes.objective.step}`);
+    ok("ruinas_a usa el content (nombre propio, no el label)", res.nodes.ruinas_a.name==="Las Ruinas Antiguas (Sendero Alto)");
+    ok("ruinas_a con 1 sola salida -> next, no exits", res.nodes.ruinas_a.next==="join1" && !res.nodes.ruinas_a.exits);
+    ok("ruinas_b sin content -> placeholder con el label duplicado \"Ruinas\"", res.nodes.ruinas_b.name==="Ruinas" && res.nodes.ruinas_b.type==="decision");
+    ok("join1 con 2 salidas -> exits con hints de las aristas", Array.isArray(res.nodes.join1.exits) && res.nodes.join1.exits.length===2
+      && res.nodes.join1.exits[0].dest==="c1" && res.nodes.join1.exits[0].hint==="Galería este"
+      && res.nodes.join1.exits[1].dest==="c2" && res.nodes.join1.exits[1].hint==="Galería oeste");
+    ok("objective (0 salidas, sin next propio) -> next:\"exit\"", res.nodes.objective.next==="exit");
+  }
+
+  // ---- Mapas inválidos: cada uno debe tirar con mensaje claro ----
+  function mustThrow(name, badGraph){
+    let threw2=null;
+    try{ convertGraphMap(badGraph, {}); } catch(e){ threw2=e; }
+    ok(name, !!threw2, "no tiró excepción");
+  }
+  const g=graph;
+  mustThrow("sin spawn -> falla", {format:"game-graph-map", nodes:g.nodes.filter(n=>n.type!=="spawn"), edges:g.edges});
+  mustThrow("2 spawns -> falla", {format:"game-graph-map",
+    nodes:g.nodes.concat([{id:"spawn2", label:"Otra entrada", type:"spawn"}]), edges:g.edges});
+  mustThrow("sin objective -> falla", {format:"game-graph-map", nodes:g.nodes.filter(n=>n.type!=="objective"), edges:g.edges});
+  mustThrow("objective inalcanzable -> falla", {format:"game-graph-map",
+    nodes:g.nodes.concat([{id:"isla", label:"Isla perdida", type:"objective"}]), edges:g.edges});
+  mustThrow("nodo con 3 salidas -> falla (máximo 2)", {format:"game-graph-map", nodes:g.nodes,
+    edges:g.edges.concat([{source:"join1", target:"d1"}])});
+  mustThrow("ciclo alcanzable -> falla", {format:"game-graph-map", nodes:g.nodes,
+    edges:g.edges.concat([{source:"join2", target:"a1"}])});
+  mustThrow("arista con source desconocido -> falla", {format:"game-graph-map", nodes:g.nodes,
+    edges:g.edges.concat([{source:"fantasma", target:"a1"}])});
+
+  const failed=results.filter(r=>!r.pass);
+  console.log(`convertGraphMap self-test: ${results.length-failed.length}/${results.length} OK`+(failed.length?` — FALLÓ: ${failed.map(f=>f.name+" ("+f.detail+")").join("; ")}`:""));
+  return {passed:results.length-failed.length, total:results.length, results};
+}
+
 // ---- Registro de rivales nombrados (jefes evadibles en revisita) ----
 const OPPONENTS = {
   juez_silente:{name:"El Juez Silente",
     avoidLine:"La armadura vacía gira despacio, como si te reconociera, y no se mueve del centro de la cámara: te deja pasar sin una palabra."},
+  rhaen_coliseo:{name:"Rhaen Iveros",
+    avoidLine:"Rhaen te reconoce desde el otro extremo del Coliseo y solo asiente — ya no tiene nada que probarte."},
 };
 
 // ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
@@ -1638,6 +1886,7 @@ const PLACES = {
   // para la Reliquia del nodo 3 (Alderium todavía no tiene Reliquia diseñada) — queda avisado en el chat.
   alderium_juramento: {
     faction:"alderium", name:"El Juramento de Alderium", icon:"⚜️", isCampaign:true, startNode:"n1a", level:1,
+    mapPos:{left:50,top:28}, // posición del hotspot dorado en el mapa de continente mientras es la expedición actual
     nodes:{
       n1a:{name:"El Juramento del Guardián", type:"decision", step:1,
         text:"La catedral de Alderium huele a piedra fría y cera quemada. Hileras de armaduras vacías flanquean el altar donde generaciones de Guardianes hicieron su promesa antes que vos.",
@@ -1688,13 +1937,23 @@ const PLACES = {
         // recompensa pasa a ser Pretoriano del Alba, la vieja élite de Alderium. buildRhaenColiseoDeck
         // sigue instanciando a "rhaen" para el rival sin problema: es un NPC puntual, no un mazo constructible.
         reward:{type:"collection",key:"pretoriano_alba",n:1,fac:"alderium"},
+        // boss:true+bossId habilita el mismo mecanismo de "jefe evadible" que ya usan los lugares
+        // normales (synthesizeBossRevisit): al revisitar esta expedición ya completa (mapa de
+        // continente → hotspot normal, ver openPlaceMap), entrar reinicia en startNode como cualquier
+        // lugar limpiado, y al llegar de nuevo a este nodo se ofrece reenfrentar a Rhaen o rodearlo.
+        boss:true, bossId:"rhaen_coliseo",
+        repeatReward:{type:"collection",key:"sold_alderium_2",n:1,fac:"alderium"},
         campaignDone:true, next:"exit"},
     }
   },
 };
 const CONTINENT_PLACES = {alderium:["alderium_piloto"]};
-const CAMPAIGN_IDS = {alderium:"alderium_juramento"};
-const CAMPAIGN_STEP_NAMES = {alderium:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"]};
+// Cadena de expediciones por facción, en orden (sección "Campañas multi-expedición"): cada entrada
+// es un placeId de PLACES con isCampaign:true. Pensada para crecer a 10-15 expediciones por facción.
+const CAMPAIGN_CHAINS = {alderium:["alderium_juramento"]};
+// Indexado por placeId de expedición (antes era por facción: con varias expediciones en cadena,
+// cada una necesita su propia lista de nombres de paso).
+const CAMPAIGN_STEP_NAMES = {alderium_juramento:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"]};
 function buildVanillaOnlyDeck(fac){
   const deck=[]; const pool=soldierPool(fac); let vi=0;
   while(deck.length<20){ deck.push(instantiate(null, pool[vi%pool.length].def, pool[vi%pool.length].key)); vi++; }
@@ -1790,8 +2049,12 @@ function currentPlaceNode(){ return resolvePlaceNode(PLACES[placeState.placeId].
 function enterPlace(placeId){
   playSfx("lugar_entrar");
   const dg=PLACES[placeId];
-  const saved = dg.isCampaign && S.campaignProgress[dg.faction];
-  placeState={placeId, nodeId: (saved && saved.nodeId) || dg.startNode};
+  // Una expedición de campaña solo retoma su nodeId a medias camino; si ya está "done" (revisita
+  // desde un hotspot normal en el mapa) arranca de nuevo en startNode, igual que cualquier lugar
+  // ya limpiado — el jefe evadible se resuelve solo al volver a llegar a su nodo (ver resolvePlaceNode).
+  const st = dg.isCampaign ? campaignExpeditionState(dg.faction, placeId) : null;
+  const resume = st && !st.done;
+  placeState={placeId, nodeId: (resume && st.nodeId) || dg.startNode};
   document.getElementById("placeInterior").dataset.faction=dg.faction;
   document.getElementById("placeBg").dataset.slotLabel = dg.isCampaign ? `campana_${dg.faction}.jpg` : `lugar_${placeId}.jpg`;
   showScreen("placeInterior");
@@ -1845,7 +2108,7 @@ function placeAdvance(nextId){
   if(nextId==="exit"){ exitPlaceToMap(); return; }
   placeState.nodeId=nextId;
   const dg=PLACES[placeState.placeId];
-  if(dg.isCampaign){ S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {nodeId:nextId}); saveGame(); }
+  if(dg.isCampaign) setExpeditionProgress(dg.faction, placeState.placeId, {nodeId:nextId});
   renderPlaceNode();
 }
 function exitPlaceToMap(){
@@ -1888,6 +2151,9 @@ function engagePlaceCombat(node){
   beginDuel(dg.faction, node.enemyFac, {
     type:"place", next:node.next, reward, campaignDone:node.campaignDone,
     boss: !!node.boss, placeId: placeState.placeId,
+    // Derrota que avanza (motor, sección "Parte C"): nodos combat con loseAdvances:true no repiten
+    // al perder, avanzan igual que al ganar pero sin recompensa y mostrando loseText si lo tienen.
+    loseAdvances: !!node.loseAdvances, loseText: node.loseText,
   }, {enemyDeckBuilder: node.enemyDeckBuilder || (fac=>buildLeveledDeck(fac, dg.level||1)), difficulty: dg.level||1});
 }
 let quizModalOpen=false;
@@ -3310,12 +3576,18 @@ function checkWin(){
       if(duelReturn.boss && duelReturn.placeId){ S.placeCleared[duelReturn.placeId]=true; saveGame(); } // jefe vencido al menos una vez
       if(duelReturn.campaignDone && placeState){
         const dg=PLACES[placeState.placeId];
-        S.campaignProgress[dg.faction]=Object.assign({}, S.campaignProgress[dg.faction], {done:true});
+        setExpeditionProgress(dg.faction, placeState.placeId, {done:true});
         S.placesUnlocked[dg.faction]=true;
         saveGame();
         b.querySelector(".sub").textContent += " ¡Lugares de "+FACTIONS[dg.faction].name+" desbloqueados!";
       }
       contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); placeAdvance(duelReturn.next); };
+      replayBtn.style.display="none";
+      backBtn.textContent="Abandonar lugar"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
+    } else if(duelReturn && duelReturn.type==="place" && !win && duelReturn.loseAdvances){
+      // Derrota que avanza (Parte C): sin recompensa, muestra loseText (si hay) al llegar al siguiente nodo.
+      contBtn.style.display="block";
+      contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); if(duelReturn.loseText) toast(duelReturn.loseText); placeAdvance(duelReturn.next); };
       replayBtn.style.display="none";
       backBtn.textContent="Abandonar lugar"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
     } else if(duelReturn && duelReturn.type==="place" && !win){
