@@ -687,7 +687,7 @@ function mk(o){ return Object.assign({uid:UID++}, o); }
 
 const LIB = {
   // ---------------- Alderium ----------------
-  rhaen:{fac:"alderium",name:"Rhaen, Escudo del Trono",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🛡️",
+  rhaen:{fac:"alderium",name:"Rhaen Iveros",cost:4,type:"criatura",atk:2,vida:6,kw:["Guardián"],art:"🛡️",
     txt:"Tus otros Guardianes ganan +0/+1.",auraGuardian:{atk:0,vida:1},rarity:"heroe"},
   muralla:{fac:"alderium",name:"Muralla Viviente",cost:3,type:"criatura",atk:1,vida:5,kw:["Guardián"],art:"🧱",
     txt:"Al entrar: da Escudo a otro Guardián que controlás.",etb:"muralla",rarity:"especialista"},
@@ -697,6 +697,8 @@ const LIB = {
     txt:"Cuando una criatura enemiga ataca, Isolde le inflige 1 de daño antes de que se resuelva el combate.",flag:"isolde",rarity:"heroe"},
   tiberon:{fac:"alderium",name:"Tiberon, Portaestandarte del Alba",cost:4,type:"criatura",atk:2,vida:4,kw:[],art:"🚩",
     txt:"Tus otros Guardianes ganan +1/+1.",auraGuardian:{atk:1,vida:1},rarity:"heroe"},
+  darian:{fac:"alderium",name:"Darian Voln, Filo Áureo",cost:4,type:"criatura",atk:4,vida:3,kw:["Prisa"],art:"🗡️",
+    txt:"Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.",flag:"darian",rarity:"heroe"},
   // ---------------- Qashir ----------------
   zahra:{fac:"qashir",name:"Zahira, la Apostadora",cost:3,type:"criatura",atk:4,vida:2,kw:[],art:"🎲",
     txt:"Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.",etb:"zahra",rarity:"heroe"},
@@ -927,10 +929,15 @@ function isCampaignComplete(fac){ return !!(S.campaignProgress[fac] && S.campaig
 
 // ---- Persistencia (localStorage, clave versionada) ----
 // v2: "mazmorra" desapareció del vocabulario del juego (pasa a "lugar") — dungeonsUnlocked/
-// dungeonCleared se renombraron a placesUnlocked/placeCleared. loadGame() migra sola una
-// partida vieja (guardada bajo la clave v1, con los nombres de campo viejos) sin perder progreso:
-// lee v1 solo si no hay v2, copia los campos con su nombre nuevo, guarda bajo v2 y borra v1.
-const SAVE_KEY = "veyra_save_v2";
+// dungeonCleared se renombraron a placesUnlocked/placeCleared.
+// v3: Darian Voln reemplaza a Rhaen como héroe inicial de la campaña de Alderium (Rhaen pasa a
+// ser el jefe final, recompensa de n6duel). loadGame() migra sola una partida vieja (v1 o v2,
+// mismos nombres de campo salvo el rename de v2 ya cubierto abajo) sin perder progreso: copia los
+// campos, guarda bajo v3 y borra las claves legacy. Si la campaña de Alderium no está completa y
+// el jugador todavía no tiene a Darian, se lo otorga (no se le quita Rhaen ni sus mazos guardados
+// — un duplicado eventual al vencer al jefe final es inofensivo, copyLimit lo acota en el constructor).
+const SAVE_KEY = "veyra_save_v3";
+const SAVE_KEY_LEGACY_V2 = "veyra_save_v2";
 const SAVE_KEY_LEGACY_V1 = "veyra_save_v1";
 function saveGame(){
   try{
@@ -944,11 +951,12 @@ function saveGame(){
 function loadGame(){
   try{
     let raw=localStorage.getItem(SAVE_KEY);
-    let migratingFromV1=false;
+    let migratingLegacy=null; // "v2" | "v1" | null
     if(!raw){
-      raw=localStorage.getItem(SAVE_KEY_LEGACY_V1);
+      raw=localStorage.getItem(SAVE_KEY_LEGACY_V2);
+      if(raw) migratingLegacy="v2";
+      else{ raw=localStorage.getItem(SAVE_KEY_LEGACY_V1); if(raw) migratingLegacy="v1"; }
       if(!raw) return false;
-      migratingFromV1=true;
     }
     const data=JSON.parse(raw);
     if(!data || typeof data!=="object") return false;
@@ -963,7 +971,11 @@ function loadGame(){
     if(placeClearedSrc && typeof placeClearedSrc==="object") Object.assign(S.placeCleared, placeClearedSrc);
     if(data.audio && typeof data.audio==="object") Object.assign(S.audio, data.audio);
     if(data.loreSeen && typeof data.loreSeen==="object") Object.assign(S.loreSeen, data.loreSeen);
-    if(migratingFromV1){ saveGame(); try{ localStorage.removeItem(SAVE_KEY_LEGACY_V1); } catch(e2){} } // escribe bajo v2 y borra v1
+    if(migratingLegacy){
+      if(!isCampaignComplete("alderium") && ownedCount("darian")===0) grantCollection("darian",1);
+      saveGame();
+      try{ localStorage.removeItem(SAVE_KEY_LEGACY_V2); localStorage.removeItem(SAVE_KEY_LEGACY_V1); } catch(e2){}
+    }
     return true;
   } catch(e){
     try{ localStorage.removeItem(SAVE_KEY); } catch(e2){} // save corrupto: descartar y arrancar limpio
@@ -1316,9 +1328,10 @@ function grantCollection(key, n){ S.collection[key]=(S.collection[key]||0)+n; sa
 function ownedCount(key){ return S.collection[key]||0; }
 
 // Colección inicial de Alderium (Parte 1 del pedido de campaña): 40 cartas ya poseídas
-// (Rhaen único héroe, Muralla y Decreto de Contención al tope, resto Soldados hasta 40).
+// (Darian único héroe, Muralla y Decreto de Contención al tope, resto Soldados hasta 40).
+// Rhaen ya no está acá: es la recompensa por vencer al jefe final de la campaña (ver n6duel).
 function grantStartingAlderiumCollection(){
-  grantCollection("rhaen",1); grantCollection("muralla",2); grantCollection("decreto_cont",2);
+  grantCollection("darian",1); grantCollection("muralla",2); grantCollection("decreto_cont",2);
   let total=5;
   for(const entry of soldierPool("alderium")){
     if(total>=40) break;
@@ -1572,7 +1585,7 @@ const PLACES = {
       n3:{name:"La Encrucijada", type:"decision", step:3,
         text:"En el camino de vuelta al cuartel, un mercader con la carreta atascada te pide una mano — pero la guardia también te espera para entrenar antes del anochecer.",
         exits:[
-          {dest:"n4a", hint:"Ayudar al mercader", reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}},
+          {dest:"n4a", hint:"Ayudar al mercader", reward:{type:"collection",key:"isolde",n:1,fac:"alderium"}},
           {dest:"n4a", hint:"Entrenar con la guardia", reward:[{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"},{type:"collection",key:"sold_alderium_6",n:1,fac:"alderium"}]},
         ]},
       n4a:{name:"La Prueba del Escudo", type:"decision", step:4,
@@ -1581,17 +1594,21 @@ const PLACES = {
       n4duel:{name:"La Prueba del Escudo", type:"combat", step:4, subtitle:"Duelo",
         text:"Un caballero de la guardia forma su línea de Guardianes frente a vos. No vas a poder ir directo a su vida.",
         enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
-        reward:{type:"collection",key:"isolde",n:1,fac:"alderium"}, next:"n5bridge"},
+        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"}, next:"n5bridge"},
       n5bridge:{name:"El Arsenal", type:"bridge", step:5,
         text:"«Un Guardián arma su propio arsenal» — te dice tu mentor, señalando el registro de cartas. «Armá tu mazo antes del Juicio.»",
         bridgeFac:"alderium", next:"n6a"},
       n6a:{name:"El Juicio del Alba", type:"decision", step:6,
-        text:"El sol todavía no sale. En el patio central te espera el último desafío antes de ser reconocido como Guardián pleno de Alderium.",
+        text:"Las gradas del Coliseo de Juramento son anillos de metal blanco, filamentos de plasma como venas bajo la piedra. En el palco, el Soberano Arcthur Valerius observa en silencio. «Darian Voln» — te llama el Anunciante.",
         exits:[{dest:"n6duel", hint:"Al duelo final"}]},
-      n6duel:{name:"El Juicio del Alba", type:"combat", step:6, subtitle:"Final — Jefe de campaña",
-        text:"Un Guardián completo, con el mejor mazo que Alderium puede ofrecer, te espera para el Juicio.",
-        enemyFac:"alderium", enemyDeckBuilder:buildDeck,
-        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"}, campaignDone:true, next:"exit"},
+      n6duel:{name:"El Juicio del Alba", type:"combat", step:6, subtitle:"Final — Coliseo de Juramento",
+        text:"Tu rival es Rhaen Iveros, de la tercera cohorte, Portador de Filo Común: no tiene tu equipamiento, pero no retrocede.",
+        enemyFac:"alderium", enemyDeckBuilder:buildRhaenColiseoDeck,
+        // Rhaen Iveros es el jefe final de esta campaña (ver Veyra_Lore_Notas.md): Darian ya reemplazó
+        // a Rhaen como héroe inicial de Alderium, y vencerlo en el Coliseo de Juramento del libro
+        // entrega su carta como recompensa.
+        reward:{type:"collection",key:"rhaen",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
     }
   },
 };
@@ -1616,6 +1633,24 @@ function buildGuardianHeavyDeck(fac){
     }
   }
   const pool=soldierPool(fac); let vi=0;
+  while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
+  return shuffle(deck);
+}
+// Rhaen Iveros, jefe final de "El Juramento de Alderium" (Coliseo de Juramento): pelea sin la
+// élite (Darian, Tiberon quedan afuera del mazo — son su equipamiento, no el suyo), con Guardianes
+// y criaturas de vida alta relativa. "Filo Común, resistencia sin élite": aguanta, no domina.
+function buildRhaenColiseoDeck(fac){
+  const deck=[instantiate("rhaen")];
+  for(const k in LIB){
+    if(k==="rhaen"||k==="darian"||k==="tiberon") continue;
+    if(LIB[k].fac!==fac || LIB[k].type!=="criatura") continue;
+    const isGuardian=(LIB[k].kw||[]).includes("Guardián");
+    const sturdy=LIB[k].vida>=LIB[k].atk;
+    if(!isGuardian && !sturdy) continue;
+    const n=copyLimit(k); for(let i=0;i<n && deck.length<20;i++) deck.push(instantiate(k));
+  }
+  const pool=soldierPool(fac).slice().sort((a,b)=>b.def.vida-a.def.vida);
+  let vi=0;
   while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
   return shuffle(deck);
 }
@@ -2282,6 +2317,12 @@ async function attack(attacker, ownerP, target){
     floatDmg(document.getElementById(heroElId), effAtk(attacker,ownerP));
   } else {
     reveal(target, foe);
+    // Darian Voln, Filo Áureo: anula el Escudo del objetivo antes de que se resuelva el combate.
+    if(attacker.flag==="darian" && target.shield){
+      target.shield=false;
+      burst(cardEl(target), "var(--shield)", 8); playSfx("escudo_romper");
+      log(`${attacker.name} anula el Escudo de ${target.name} antes del golpe.`);
+    }
     const tel=cardEl(target), ael=cardEl(attacker);
     const aAtk=effAtk(attacker,ownerP), tAtk=effAtk(target,foe);
     const targetHadShield=target.shield, attackerHadShield=attacker.shield;

@@ -2,7 +2,7 @@
 
 Generado automáticamente desde `Veyra.html` (misma fuente de verdad que el motor) por `generate_catalogo.js`. **No editar a mano** — correr `node generate_catalogo.js` de nuevo tras cualquier cambio de cartas y commitear el resultado.
 
-Generado: 2026-07-11
+Generado: 2026-07-12
 
 ## Alderium
 
@@ -16,8 +16,9 @@ Generado: 2026-07-11
 | Centinela de Alderium | Criatura | — | Soldado (común) | 3 | 2/4 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_centinela_de_alderium.png` |
 | Lancero de Alderium | Criatura | — | Soldado (común) | 3 | 3/3 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_lancero_de_alderium.png` |
 | Muralla Viviente | Criatura | — | Especialista (poco común) | 3 | 1/5 | Guardián | 2 | Base | `assets/cards/criaturas/alderium/alderium_criatura_muralla_viviente.png` |
+| Darian Voln, Filo Áureo | Criatura | — | Héroe (legendaria) | 4 | 4/3 | Prisa | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_darian_voln_filo_aureo.png` |
 | Guardia de Fila de Alderium | Criatura | — | Soldado (común) | 4 | 3/5 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_guardia_de_fila_de_alderium.png` |
-| Rhaen, Escudo del Trono | Criatura | — | Héroe (legendaria) | 4 | 2/6 | Guardián | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_rhaen_escudo_del_trono.png` |
+| Rhaen Iveros | Criatura | — | Héroe (legendaria) | 4 | 2/6 | Guardián | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_rhaen_iveros.png` |
 | Tiberon, Portaestandarte del Alba | Criatura | — | Héroe (legendaria) | 4 | 2/4 | — | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_tiberon_portaestandarte_del_alba.png` |
 | Veterano de Alderium | Criatura | — | Soldado (común) | 4 | 4/4 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_veterano_de_alderium.png` |
 | Campeón de Alderium | Criatura | — | Soldado (común) | 5 | 5/5 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_campeon_de_alderium.png` |
@@ -30,7 +31,8 @@ Generado: 2026-07-11
 
 - **Decreto de Contención:** Da Escudo a una criatura. Si es Guardián, a dos en vez de una.
 - **Muralla Viviente:** Al entrar: da Escudo a otro Guardián que controlás.
-- **Rhaen, Escudo del Trono:** Tus otros Guardianes ganan +0/+1.
+- **Darian Voln, Filo Áureo:** Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.
+- **Rhaen Iveros:** Tus otros Guardianes ganan +0/+1.
 - **Tiberon, Portaestandarte del Alba:** Tus otros Guardianes ganan +1/+1.
 - **Isolde, Voz del Decreto:** Cuando una criatura enemiga ataca, Isolde le inflige 1 de daño antes de que se resuelva el combate.
 
