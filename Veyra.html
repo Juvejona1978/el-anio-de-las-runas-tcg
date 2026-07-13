@@ -1008,7 +1008,7 @@ S.placesUnlocked = {}; // {facción: true} — se desbloquea al completar la cam
 // niveles/tono de todo el sistema. El control en vivo del jugador vive en S.audio (persistido,
 // atado a los sliders del panel); estos son sus valores de arranque más las constantes de
 // procesamiento (reverb/shelf/grave) que no tienen slider propio.
-const AUDIO_MIX = { musicVol:0.7, sfxVol:0.85, reverbWet:0.25, reverbDry:0.8, shelfCutDb:-4, thumpBaseFreq:150, thumpEndFreq:65 };
+const AUDIO_MIX = { musicVol:0.7, sfxVol:0.85, reverbWet:0.25, reverbDry:0.8, shelfCutDb:-4, thumpBaseFreq:150, thumpEndFreq:65, thumpOnZzfx:true };
 S.audio = {musicVol:AUDIO_MIX.musicVol, sfxVol:AUDIO_MIX.sfxVol, muted:false}; // preferencias de audio (sección 5 del motor de audio)
 S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar"
 S.placeCleared = {}; // {placeId: true} — jefe vencido al menos una vez
@@ -1348,6 +1348,121 @@ function stopMusic(fade=1.0){
   Audio_.music.token++;
 }
 
+// ---- ZzFXMicro v1.3.2 by Frank Force — MIT License — https://github.com/KilledByAPixel/ZzFX
+// Adaptado: zzfxG() solo GENERA y devuelve el array de samples — no crea su propio AudioContext
+// ni reproduce directo a destination (la versión original lo hace todo junto). La reproducción la
+// hace nuestro playSfx(), que arma un AudioBuffer con estos samples y lo conecta a
+// Audio_.sfxHighshelf — el mismo punto de entrada que los SFX en MP3, así los sintetizados pasan
+// por el bus compartido (highshelf + reverb + volumen de SFX del jugador) igual que el resto.
+const zzfxV = .3; // volumen base de ZzFX, multiplica el parámetro volume de cada sonido individual
+function zzfxG(
+  volume=1, randomness=.05, frequency=220, attack=0, sustain=0,
+  release=.1, shape=0, shapeCurve=1, slide=0, deltaSlide=0,
+  pitchJump=0, pitchJumpTime=0, repeatTime=0, noise=0, modulation=0,
+  bitCrush=0, delay=0, sustainVolume=1, decay=0, tremolo=0, filter=0
+){
+  const sampleRate=44100;
+  let PI2=Math.PI*2,
+      abs=Math.abs,
+      sign=v=>v<0?-1:1,
+      startSlide=slide*=500*PI2/sampleRate/sampleRate,
+      startFrequency=frequency*=(1+randomness*2*Math.random()-randomness)*PI2/sampleRate,
+      modOffset=0, repeat=0, crush=0, jump=1,
+      length, b=[], t=0, i=0, s=0, f,
+      quality=2, w=PI2*abs(filter)*2/sampleRate,
+      cos=Math.cos(w), alpha=Math.sin(w)/2/quality,
+      a0=1+alpha, a1=-2*cos/a0, a2=(1-alpha)/a0,
+      b0=(1+sign(filter)*cos)/2/a0,
+      b1=-(sign(filter)+cos)/a0, b2=b0,
+      x2=0, x1=0, y2=0, y1=0;
+
+  const minAttack=9; // evita un "pop" si attack es 0
+  attack=attack*sampleRate||minAttack;
+  decay*=sampleRate;
+  sustain*=sampleRate;
+  release*=sampleRate;
+  delay*=sampleRate;
+  deltaSlide*=500*PI2/sampleRate**3;
+  modulation*=PI2/sampleRate;
+  pitchJump*=PI2/sampleRate;
+  pitchJumpTime*=sampleRate;
+  repeatTime=repeatTime*sampleRate|0;
+  volume*=zzfxV;
+
+  for(length=attack+decay+sustain+release+delay|0; i<length; b[i++]=s*volume){
+    if(!(++crush%(bitCrush*100|0))){
+      s=shape?shape>1?shape>2?shape>3?shape>4?
+          (t/PI2%1<shapeCurve/2)*2-1:
+          Math.sin(t**3):
+          Math.max(Math.min(Math.tan(t),1),-1):
+          1-(2*t/PI2%2+2)%2:
+          1-4*abs(Math.round(t/PI2)-t/PI2):
+          Math.sin(t);
+
+      s=(repeatTime?
+            1-tremolo+tremolo*Math.sin(PI2*i/repeatTime)
+            :1)*
+          (shape>4?s:sign(s)*abs(s)**shapeCurve)*
+          (i<attack?i/attack:
+          i<attack+decay?
+          1-((i-attack)/decay)*(1-sustainVolume):
+          i<attack+decay+sustain?
+          sustainVolume:
+          i<length-delay?
+          (length-i-delay)/release*
+          sustainVolume:
+          0);
+
+      s=delay?s/2+(delay>i?0:
+          (i<length-delay?1:(length-i)/delay)*
+          b[i-delay|0]/2/volume):s;
+
+      if(filter) s=y1=b2*x2+b1*(x2=x1)+b0*(x1=s)-a2*y2-a1*(y2=y1);
+    }
+
+    f=(frequency+=slide+=deltaSlide)*Math.cos(modulation*modOffset++);
+    t+=f+f*noise*Math.sin(i**5);
+
+    if(jump&&++jump>pitchJumpTime){ frequency+=pitchJump; startFrequency+=pitchJump; jump=0; }
+    if(repeatTime&&!(++repeat%repeatTime)){ frequency=startFrequency; slide=startSlide; jump||=1; }
+  }
+  return b;
+}
+// 8 SFX reemplazados por versiones sintetizadas (diseño del autor) en vez de MP3 de Kenney — el
+// resto de los SFX (carta_robar, swipe, ui_tap, escudo_romper, etc.) sigue cargando su MP3 como
+// siempre, sin cambios (ver el fallback en playSfx). Los huecos entre comas son parámetros
+// undefined intencionales de ZzFX — no rellenar con ceros, cambia el resultado.
+const SFX_ZZFX = {
+  invocar:         [.9,,46,.01,.01,.03,4,1.5,,,-154,.45,,.2,,,,.65,.03,,100],
+  hechizo:         [1.2,,217,,.07,.28,2,1.7,,-2,274,.07,.03,,,,.12,.69,.03,,-1316],
+  ataque_impacto:  [1.5,,369,,.05,.001,3,1.1,-6,,,,.08,1.9,,,.08,.75,.06,.4,-1556],
+  escudo_ganar:    [,,410,.07,.25,.25,,.1,5,177,187,.17,,.3,,.2,,.95,.28],
+  criatura_morir:  [.9,,77,.02,.03,.54,5,.9,7,-7,,,,1.2,,.2,.07,.32,.15,,1612],
+  heroe_habilidad: [2,,335,.02,.05,.29,1,.1,,-115,,,,,,,.09,.73,.02],
+  quiz_correcto:   [1.1,,406,.22,.07,.42,5,.5,,8,,,.17,,,,.29,.72,.12,,959],
+  quiz_incorrecto: [,,210,.47,.27,.01,1,.6,20,39,,,.02,,,.1,,.51,.33,.17],
+};
+// Pool de 3 variaciones por sonido ZzFX (la propia randomness de la síntesis ya varía la
+// frecuencia en cada generación): elegir una al azar en cada reproducción para que los golpes
+// repetidos no suenen como metralleta. Generado perezosamente la primera vez que se pide ese
+// nombre, y cacheado — no se regenera en cada play.
+const ZZFX_POOL_SIZE=3;
+const zzfxPools={};
+function getZzfxBuffer(name){
+  let pool=zzfxPools[name];
+  if(!pool){
+    pool=[];
+    for(let i=0;i<ZZFX_POOL_SIZE;i++){
+      const samples=zzfxG(...SFX_ZZFX[name]);
+      const buf=Audio_.ctx.createBuffer(1, samples.length, 44100);
+      buf.getChannelData(0).set(samples);
+      pool.push(buf);
+    }
+    zzfxPools[name]=pool;
+  }
+  return pool[(Math.random()*pool.length)|0];
+}
+
 // ---- SFX: cada reproducción es un AudioBufferSourceNode nuevo (se solapan sin cortarse), pasa
 // por el bus compartido (highshelf + split seco/húmedo, ver ensureAudioCtx). Los SFX de "impacto"
 // (golpe, muerte, jugar carta) suman una capa grave sintetizada simultánea — ver SFX_IMPACT/
@@ -1355,14 +1470,21 @@ function stopMusic(fade=1.0){
 const SFX_IMPACT = { carta_jugar:0.6, hechizo:0.6, ataque_impacto:1.0, escudo_romper:1.0, criatura_morir:1.0 };
 function playSfx(name){
   if(!Audio_.unlocked || !Audio_.ctx) return; // antes del primer gesto: silencioso, no se encola
-  const url=`assets/audio/sfx/${name}.mp3`;
-  loadAudioBuffer(url).then(buf=>{
-    if(!buf || !Audio_.ctx) return;
+  if(SFX_ZZFX[name]){
+    const buf=getZzfxBuffer(name);
     const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
     src.connect(Audio_.sfxHighshelf);
     try{ src.start(); }catch(e){}
-  });
-  if(SFX_IMPACT[name]!=null) playBassThump(SFX_IMPACT[name]);
+  } else {
+    const url=`assets/audio/sfx/${name}.mp3`;
+    loadAudioBuffer(url).then(buf=>{
+      if(!buf || !Audio_.ctx) return;
+      const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
+      src.connect(Audio_.sfxHighshelf);
+      try{ src.start(); }catch(e){}
+    });
+  }
+  if(SFX_IMPACT[name]!=null && (!SFX_ZZFX[name] || AUDIO_MIX.thumpOnZzfx)) playBassThump(SFX_IMPACT[name]);
 }
 // Capa grave sintetizada (sin archivo): un seno que cae de thumpBaseFreq a thumpEndFreq en 120ms
 // con una envolvente corta de golpe. Va directo al bus de SFX, sin pasar por la reverb (el grave
