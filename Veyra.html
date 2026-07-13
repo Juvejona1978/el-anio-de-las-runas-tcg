@@ -1644,7 +1644,7 @@ function openPlaceMap(fac){
   currentCity=fac;
   document.getElementById("placeMapScreen").dataset.faction=fac;
   document.getElementById("placeMapBg").dataset.slotLabel=`mapa_${fac}.jpg`;
-  document.getElementById("placeMapTitle").textContent=FACTIONS[fac].name.toUpperCase()+" — LUGARES";
+  document.getElementById("placeMapTitle").textContent="LUGARES";
   const el=document.getElementById("placeHotspots"); el.innerHTML="";
   let any=false;
 
