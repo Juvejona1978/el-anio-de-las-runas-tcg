@@ -1004,7 +1004,12 @@ S.collection = {}; // {clave_de_carta: copias poseídas}
 S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facción
 S.campaignProgress = {}; // {facción: {expeditions: {placeId: {nodeId, done}}}} — progreso de cada expedición de la cadena
 S.placesUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
-S.audio = {musicVol:0.6, sfxVol:0.8, muted:false}; // preferencias de audio (sección 5 del motor de audio)
+// Config central de mezcla de audio (motor de audio, más abajo) — un solo lugar para tocar
+// niveles/tono de todo el sistema. El control en vivo del jugador vive en S.audio (persistido,
+// atado a los sliders del panel); estos son sus valores de arranque más las constantes de
+// procesamiento (reverb/shelf/grave) que no tienen slider propio.
+const AUDIO_MIX = { musicVol:0.7, sfxVol:0.85, reverbWet:0.25, reverbDry:0.8, shelfCutDb:-4, thumpBaseFreq:150, thumpEndFreq:65 };
+S.audio = {musicVol:AUDIO_MIX.musicVol, sfxVol:AUDIO_MIX.sfxVol, muted:false}; // preferencias de audio (sección 5 del motor de audio)
 S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar"
 S.placeCleared = {}; // {placeId: true} — jefe vencido al menos una vez
 function isUnlocked(k){ return !!S.unlocked[k]; }
@@ -1132,12 +1137,20 @@ if(!HAD_SAVE){ grantStartingAlderiumCollection(); saveGame(); }
 //  Todo tolera archivos ausentes en silencio: fetch() no tira excepción
 //  por un 404 (solo chequeamos response.ok), y decodeAudioData/red se
 //  atajan en un catch que jamás loguea ni reintenta. Ver Veyra_Audio_Plan.md.
+//
+//  Rediseño 2026-07-12: bus de SFX con reverb sintetizada + capa grave (para que
+//  los SFX cortos de Kenney no suenen "secos" contra la música de espectro
+//  completo de Suno) y gestor de música unificado (loop con crossfade de
+//  empalme / stinger recortado a una duración corta aunque el archivo dure
+//  minutos), ambos leyendo AUDIO_MIX como única fuente de ajuste de mezcla.
+//  Los archivos de audio no se tocan: todo se resuelve en reproducción.
 // ============================================================
 const Audio_ = {
   ctx:null, unlocked:false,
-  masterGain:null, musicBus:null, sfxBus:null, stingerBus:null,
+  masterGain:null, musicGain:null,
+  sfxMasterGain:null, sfxHighshelf:null, sfxConvolver:null, sfxDryGain:null, sfxWetGain:null,
   buffers:{}, // url -> AudioBuffer | "missing" | Promise<AudioBuffer|null>
-  music:{trackName:null, iterations:[], token:0}, // iterations: {source,gain,timer,done}
+  music:{trackId:null, instances:[], token:0}, // instances: {source,gain,mode,timer,done}
   desiredTrack:null,
 };
 function effMusicVol(){ return S.audio.muted?0:S.audio.musicVol; }
@@ -1145,37 +1158,63 @@ function effSfxVol(){ return S.audio.muted?0:S.audio.sfxVol; }
 function applyAudioVolumes(){
   if(!Audio_.ctx) return;
   const now=Audio_.ctx.currentTime;
-  Audio_.musicBus.gain.cancelScheduledValues(now);
-  Audio_.musicBus.gain.setValueAtTime(effMusicVol(), now);
-  Audio_.sfxBus.gain.setValueAtTime(effSfxVol(), now);
-  Audio_.stingerBus.gain.setValueAtTime(effMusicVol(), now); // sigue el volumen de música, no el de efectos
+  // setTargetAtTime, no saltos de .value: el jugador puede arrastrar el slider en vivo sin clics.
+  Audio_.musicGain.gain.setTargetAtTime(effMusicVol(), now, 0.05);
+  Audio_.sfxMasterGain.gain.setTargetAtTime(effSfxVol(), now, 0.05);
+}
+// Impulso de reverb generado por código (sin archivo externo): ruido blanco estéreo de 1.2s con
+// decaimiento exponencial — le da a los SFX secos de Kenney el mismo "aire" que la música de Suno.
+function buildReverbImpulse(ctx){
+  const len=Math.floor(ctx.sampleRate*1.2);
+  const buf=ctx.createBuffer(2, len, ctx.sampleRate);
+  for(let ch=0; ch<buf.numberOfChannels; ch++){
+    const data=buf.getChannelData(ch);
+    for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/len, 3);
+  }
+  return buf;
 }
 function ensureAudioCtx(){
   if(Audio_.ctx) return;
   const Ctx=window.AudioContext||window.webkitAudioContext;
   if(!Ctx) return; // navegador sin Web Audio: todo queda silencioso, sin excepción
   try{
-    Audio_.ctx=new Ctx();
-    Audio_.masterGain=Audio_.ctx.createGain();
-    Audio_.musicBus=Audio_.ctx.createGain();
-    Audio_.sfxBus=Audio_.ctx.createGain();
-    Audio_.stingerBus=Audio_.ctx.createGain(); // aparte de musicBus: musicDuck() no debe apagar el propio stinger
-    Audio_.musicBus.connect(Audio_.masterGain);
-    Audio_.sfxBus.connect(Audio_.masterGain);
-    Audio_.stingerBus.connect(Audio_.masterGain);
-    Audio_.masterGain.connect(Audio_.ctx.destination);
+    const ctx=Audio_.ctx=new Ctx();
+    Audio_.masterGain=ctx.createGain();
+    Audio_.musicGain=ctx.createGain();
+    Audio_.musicGain.connect(Audio_.masterGain);
+
+    // Bus de SFX (creado una sola vez): highshelf que atenúa el brillo de Kenney (6kHz, shelfCutDb)
+    // → split seco/húmedo por una reverb propia → sfxMasterGain. Cada reproducción individual solo
+    // aporta su AudioBufferSourceNode, conectado al highshelf (ver playSfx).
+    Audio_.sfxMasterGain=ctx.createGain();
+    Audio_.sfxHighshelf=ctx.createBiquadFilter();
+    Audio_.sfxHighshelf.type="highshelf";
+    Audio_.sfxHighshelf.frequency.value=6000;
+    Audio_.sfxHighshelf.gain.value=AUDIO_MIX.shelfCutDb;
+    Audio_.sfxDryGain=ctx.createGain(); Audio_.sfxDryGain.gain.value=AUDIO_MIX.reverbDry;
+    Audio_.sfxWetGain=ctx.createGain(); Audio_.sfxWetGain.gain.value=AUDIO_MIX.reverbWet;
+    Audio_.sfxConvolver=ctx.createConvolver();
+    Audio_.sfxConvolver.buffer=buildReverbImpulse(ctx);
+    Audio_.sfxHighshelf.connect(Audio_.sfxDryGain);
+    Audio_.sfxHighshelf.connect(Audio_.sfxConvolver);
+    Audio_.sfxConvolver.connect(Audio_.sfxWetGain);
+    Audio_.sfxDryGain.connect(Audio_.sfxMasterGain);
+    Audio_.sfxWetGain.connect(Audio_.sfxMasterGain);
+    Audio_.sfxMasterGain.connect(Audio_.masterGain);
+
+    Audio_.masterGain.connect(ctx.destination);
     applyAudioVolumes();
   } catch(e){ Audio_.ctx=null; }
 }
-// Desbloqueo móvil (sección 2): crear/retomar el AudioContext dentro del primer gesto real
-// del usuario es lo que exigen las políticas de autoplay — no hace falta ningún <audio> mudo
-// aparte porque acá todo se reproduce vía Web Audio (AudioBufferSourceNode), no <audio> tags.
+// Desbloqueo móvil: crear/retomar el AudioContext dentro del primer gesto real del usuario es lo
+// que exigen las políticas de autoplay de iOS/Android — no hace falta ningún <audio> mudo aparte
+// porque acá todo se reproduce vía Web Audio (AudioBufferSourceNode), no <audio> tags.
 function unlockAudio(){
   if(Audio_.unlocked) return;
   Audio_.unlocked=true;
   ensureAudioCtx();
   if(Audio_.ctx && Audio_.ctx.state==="suspended") Audio_.ctx.resume().catch(()=>{});
-  if(Audio_.desiredTrack) playTrack(Audio_.desiredTrack);
+  if(Audio_.desiredTrack) playMusic(Audio_.desiredTrack);
 }
 document.addEventListener("pointerdown", unlockAudio, {once:true, capture:true});
 
@@ -1195,73 +1234,20 @@ function loadAudioBuffer(url){
   return p;
 }
 
-// ---- Música (sección 3): una pista por pantalla, crossfade entre pistas y loop con crossfade propio ----
-function playTrack(name){
-  Audio_.desiredTrack=name;
-  if(!Audio_.unlocked || !Audio_.ctx) return;
-  if(Audio_.music.trackName===name){ restoreMusicLevel(); return; } // ya suena: no reiniciar, solo asegurar volumen
-  const url=`assets/audio/musica/${name}.mp3`;
-  const myToken=++Audio_.music.token;
-  loadAudioBuffer(url).then(buf=>{
-    if(!buf || Audio_.music.token!==myToken || !Audio_.ctx) return; // ausente o superado por otro cambio de pantalla
-    fadeOutCurrentMusic(1.0);
-    startMusicIteration(name, buf, Audio_.ctx.currentTime, 1.0);
-  });
-}
-function startMusicIteration(name, buf, when, fadeIn){
-  const ctx=Audio_.ctx;
-  const src=ctx.createBufferSource(); src.buffer=buf;
-  const g=ctx.createGain();
-  g.gain.setValueAtTime(0, when);
-  g.gain.linearRampToValueAtTime(1, when+fadeIn);
-  src.connect(g); g.connect(Audio_.musicBus);
-  try{ src.start(when); }catch(e){ return; }
-  const iter={source:src, gain:g, done:false};
-  src.onended=()=>{ iter.done=true; };
-  Audio_.music.trackName=name;
-  Audio_.music.iterations = Audio_.music.iterations.filter(x=>!x.done);
-  Audio_.music.iterations.push(iter);
-  // Loop con crossfade propio (~1.5s): programar la próxima vuelta antes de que termine la actual.
-  const seam=1.5;
-  const nextWhen = when + Math.max(0.5, buf.duration-seam);
-  const delayMs = Math.max(0, (nextWhen-ctx.currentTime)*1000);
-  iter.timer=setTimeout(()=>{
-    if(Audio_.music.trackName!==name) return; // cambiaron de pista mientras tanto
-    g.gain.cancelScheduledValues(nextWhen);
-    g.gain.setValueAtTime(g.gain.value, nextWhen);
-    g.gain.linearRampToValueAtTime(0, nextWhen+seam);
-    try{ src.stop(nextWhen+seam+0.05); }catch(e){}
-    startMusicIteration(name, buf, nextWhen, seam);
-  }, delayMs);
-}
-function fadeOutCurrentMusic(fadeSec){
-  if(!Audio_.ctx) return;
-  const now=Audio_.ctx.currentTime;
-  for(const iter of Audio_.music.iterations){
-    clearTimeout(iter.timer);
-    iter.gain.cancelScheduledValues(now);
-    iter.gain.setValueAtTime(iter.gain.value, now);
-    iter.gain.linearRampToValueAtTime(0, now+fadeSec);
-    try{ iter.source.stop(now+fadeSec+0.05); }catch(e){}
-  }
-  Audio_.music.iterations=[];
-}
-function restoreMusicLevel(){
-  if(!Audio_.ctx) return;
-  const now=Audio_.ctx.currentTime;
-  Audio_.musicBus.gain.cancelScheduledValues(now);
-  Audio_.musicBus.gain.setValueAtTime(Audio_.musicBus.gain.value, now);
-  Audio_.musicBus.gain.linearRampToValueAtTime(effMusicVol(), now+0.4);
-}
-function musicDuck(){
-  if(!Audio_.ctx) return;
-  const now=Audio_.ctx.currentTime;
-  Audio_.musicBus.gain.cancelScheduledValues(now);
-  Audio_.musicBus.gain.setValueAtTime(Audio_.musicBus.gain.value, now);
-  Audio_.musicBus.gain.linearRampToValueAtTime(effMusicVol()*0.22, now+0.3);
-}
-// Mapa pantalla → pista (sección 3). "menu" (picker de facción/rival) no tiene pista propia:
-// se deja sonando lo que ya sonaba. Ciudad: Alderium usa su tema propio, el resto tema_ciudad_central.
+// ---- Gestor de música: tabla de pistas (loop con crossfade de empalme / stinger recortado) ----
+const MUSIC_TRACKS = {
+  tema_mapa_mundial:  {src:"assets/audio/musica/tema_mapa_mundial.mp3",   mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  tema_duelo:         {src:"assets/audio/musica/tema_duelo.mp3",          mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  tema_ciudad_central:{src:"assets/audio/musica/tema_ciudad_central.mp3", mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  tema_lugar:         {src:"assets/audio/musica/tema_lugar.mp3",          mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  tema_alderium:      {src:"assets/audio/musica/tema_alderium.mp3",       mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  tema_constructor:   {src:"assets/audio/musica/tema_constructor.mp3",    mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  tema_taberna:       {src:"assets/audio/musica/tema_taberna.mp3",        mode:"loop", fadeOut:2.0, loopCrossfade:3.0, volume:1.0},
+  stinger_victoria:   {src:"assets/audio/musica/stinger_victoria.mp3",    mode:"stinger", maxDuration:15, fadeOut:2.5, volume:1.0},
+  stinger_derrota:    {src:"assets/audio/musica/stinger_derrota.mp3",     mode:"stinger", maxDuration:12, fadeOut:2.5, volume:1.0},
+};
+// Mapa pantalla → id de pista. "menu" (picker de facción/rival) no tiene pista propia: se deja
+// sonando lo que ya sonaba. Ciudad: Alderium usa su tema propio, el resto tema_ciudad_central.
 const SCREEN_TRACK = {
   mapScreen:"tema_mapa_mundial", placeMapScreen:"tema_lugar", placeInterior:"tema_lugar",
   constructorScreen:"tema_constructor",
@@ -1271,32 +1257,128 @@ function setScreenMusic(screenId){
   if(screenId==="cityScreen") track = currentCity==="alderium" ? "tema_alderium" : "tema_ciudad_central";
   else if(screenId===null) track = "tema_duelo"; // showScreen(null) = tablero de duelo revelado
   else track = SCREEN_TRACK[screenId];
-  if(track) playTrack(track);
+  if(track) playMusic(track);
+}
+// playMusic: si ya suena esa pista, no hace nada. Si suena otra, la actual hace fadeOut con SU
+// propio valor de fadeOut mientras la nueva arranca de inmediato a volumen completo — sin fade in
+// (única excepción: el crossfade de empalme del propio loop, ver startLoopInstance).
+function playMusic(trackId){
+  Audio_.desiredTrack=trackId;
+  if(!Audio_.unlocked || !Audio_.ctx) return;
+  if(Audio_.music.trackId===trackId) return; // ya suena: no reiniciar
+  const def=MUSIC_TRACKS[trackId];
+  if(!def) return;
+  const prevDef = Audio_.music.trackId ? MUSIC_TRACKS[Audio_.music.trackId] : null;
+  fadeOutCurrentMusic(prevDef ? prevDef.fadeOut : 1.0);
+  const myToken=++Audio_.music.token;
+  loadAudioBuffer(def.src).then(buf=>{
+    if(!buf || Audio_.music.token!==myToken || !Audio_.ctx) return; // ausente o superado por otro cambio de pista
+    Audio_.music.trackId=trackId;
+    if(def.mode==="loop") startLoopInstance(trackId, def, buf, Audio_.ctx.currentTime, 0);
+    else startStingerInstance(trackId, def, buf, Audio_.ctx.currentTime);
+  });
+}
+function startLoopInstance(trackId, def, buf, when, fadeIn){
+  const ctx=Audio_.ctx;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const g=ctx.createGain();
+  if(fadeIn>0){ g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(def.volume, when+fadeIn); }
+  else g.gain.setValueAtTime(def.volume, when); // primer arranque de la pista: sin fade in
+  src.connect(g); g.connect(Audio_.musicGain);
+  try{ src.start(when); }catch(e){ return; }
+  const inst={source:src, gain:g, mode:"loop", done:false};
+  src.onended=()=>{ inst.done=true; };
+  Audio_.music.instances = Audio_.music.instances.filter(x=>!x.done);
+  Audio_.music.instances.push(inst);
+  // Loop con crossfade propio: arranca la próxima vuelta loopCrossfade segundos antes del final
+  // (la única excepción al "sin fade in" — hace falta para que el empalme no se note).
+  const seam=Math.min(def.loopCrossfade, buf.duration/2);
+  const nextWhen = when + Math.max(0.5, buf.duration-seam);
+  const delayMs = Math.max(0, (nextWhen-ctx.currentTime)*1000);
+  inst.timer=setTimeout(()=>{
+    if(Audio_.music.trackId!==trackId) return; // cambiaron de pista mientras tanto
+    g.gain.cancelScheduledValues(nextWhen);
+    g.gain.setValueAtTime(def.volume, nextWhen);
+    g.gain.linearRampToValueAtTime(0, nextWhen+seam);
+    try{ src.stop(nextWhen+seam+0.05); }catch(e){}
+    startLoopInstance(trackId, def, buf, nextWhen, seam);
+  }, delayMs);
+}
+function startStingerInstance(trackId, def, buf, when){
+  const ctx=Audio_.ctx;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(def.volume, when); // sin fade in
+  src.connect(g); g.connect(Audio_.musicGain);
+  try{ src.start(when); }catch(e){ return; }
+  const inst={source:src, gain:g, mode:"stinger", done:false};
+  src.onended=()=>{ inst.done=true; };
+  Audio_.music.instances = Audio_.music.instances.filter(x=>!x.done);
+  Audio_.music.instances.push(inst);
+  // El archivo puede durar minutos: se corta en maxDuration aunque nunca haya terminado de sonar.
+  const playLen = def.maxDuration!=null ? Math.min(def.maxDuration, buf.duration) : buf.duration;
+  const fadeAt = when + Math.max(0, playLen-def.fadeOut);
+  const delayMs = Math.max(0, (fadeAt-ctx.currentTime)*1000);
+  inst.timer=setTimeout(()=>{
+    if(inst.done || !Audio_.ctx) return;
+    const now2=Audio_.ctx.currentTime;
+    g.gain.cancelScheduledValues(now2);
+    g.gain.setValueAtTime(def.volume, now2);
+    g.gain.linearRampToValueAtTime(0, now2+def.fadeOut);
+    try{ src.stop(now2+def.fadeOut+0.05); }catch(e){}
+  }, delayMs);
+}
+function fadeOutCurrentMusic(fadeSec){
+  if(!Audio_.ctx) return;
+  const now=Audio_.ctx.currentTime;
+  for(const inst of Audio_.music.instances){
+    clearTimeout(inst.timer);
+    inst.gain.gain.cancelScheduledValues(now);
+    inst.gain.gain.setValueAtTime(inst.gain.gain.value, now);
+    inst.gain.gain.linearRampToValueAtTime(0, now+fadeSec);
+    try{ inst.source.stop(now+fadeSec+0.05); }catch(e){}
+  }
+  Audio_.music.instances=[];
+}
+// Corte manual disponible para cualquier flujo futuro que necesite silenciar música a mano.
+function stopMusic(fade=1.0){
+  fadeOutCurrentMusic(fade);
+  Audio_.music.trackId=null;
+  Audio_.desiredTrack=null;
+  Audio_.music.token++;
 }
 
-// ---- SFX (sección 4): cada reproducción es un AudioBufferSourceNode nuevo, así se solapan sin cortarse ----
+// ---- SFX: cada reproducción es un AudioBufferSourceNode nuevo (se solapan sin cortarse), pasa
+// por el bus compartido (highshelf + split seco/húmedo, ver ensureAudioCtx). Los SFX de "impacto"
+// (golpe, muerte, jugar carta) suman una capa grave sintetizada simultánea — ver SFX_IMPACT/
+// playBassThump — para que no suenen tan secos contra la música de espectro completo de Suno.
+const SFX_IMPACT = { carta_jugar:0.6, hechizo:0.6, ataque_impacto:1.0, escudo_romper:1.0, criatura_morir:1.0 };
 function playSfx(name){
   if(!Audio_.unlocked || !Audio_.ctx) return; // antes del primer gesto: silencioso, no se encola
   const url=`assets/audio/sfx/${name}.mp3`;
   loadAudioBuffer(url).then(buf=>{
     if(!buf || !Audio_.ctx) return;
     const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
-    src.connect(Audio_.sfxBus);
+    src.connect(Audio_.sfxHighshelf);
     try{ src.start(); }catch(e){}
   });
+  if(SFX_IMPACT[name]!=null) playBassThump(SFX_IMPACT[name]);
 }
-// Stinger de victoria/derrota: vive en assets/audio/musica/ (pista larga, no un efecto de UI — ver
-// Veyra_Audio_Plan.md) y sigue el volumen de música, pero por un bus propio para que musicDuck()
-// (que atenúa musicBus antes de dispararlo) no se apague a sí mismo.
-function playStinger(name){
+// Capa grave sintetizada (sin archivo): un seno que cae de thumpBaseFreq a thumpEndFreq en 120ms
+// con una envolvente corta de golpe. Va directo al bus de SFX, sin pasar por la reverb (el grave
+// con reverb "embarra"). Detiene y desconecta el oscilador al terminar para no dejar fugas.
+function playBassThump(intensity=1){
   if(!Audio_.unlocked || !Audio_.ctx) return;
-  const url=`assets/audio/musica/${name}.mp3`;
-  loadAudioBuffer(url).then(buf=>{
-    if(!buf || !Audio_.ctx) return;
-    const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
-    src.connect(Audio_.stingerBus);
-    try{ src.start(); }catch(e){}
-  });
+  const ctx=Audio_.ctx, now=ctx.currentTime;
+  const osc=ctx.createOscillator(); osc.type="sine";
+  osc.frequency.setValueAtTime(AUDIO_MIX.thumpBaseFreq, now);
+  osc.frequency.exponentialRampToValueAtTime(AUDIO_MIX.thumpEndFreq, now+0.12);
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(0.5*intensity, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now+0.18);
+  osc.connect(g); g.connect(Audio_.sfxMasterGain);
+  osc.start(now); osc.stop(now+0.2);
+  osc.onended=()=>{ try{osc.disconnect();}catch(e){} try{g.disconnect();}catch(e){} };
 }
 
 // Posiciones de los hotspots en el mapa mundial, en % del contenedor (mantienen su lugar relativo en cualquier pantalla).
@@ -3641,7 +3723,7 @@ function checkWin(){
     b.querySelector(".big").textContent = win? "VICTORIA" : "DERROTA";
     b.querySelector(".big").style.color = win? "var(--gold2)":"var(--vida)";
     b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
-    musicDuck(); playStinger(win?"stinger_victoria":"stinger_derrota"); // la próxima showScreen() retoma el tema normal
+    playMusic(win?"stinger_victoria":"stinger_derrota"); playBassThump(win?0.8:0.6); // la próxima showScreen() retoma el tema normal
 
     // Contexto de retorno: duelo de lugar vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
