@@ -3,3 +3,11 @@
 <meta http-equiv="refresh" content="0; url=./Veyra.html">
 <title>Veyrá</title>
 <a href="./Veyra.html">Ir al juego →</a>
+<script>
+// Redirige siempre con un parámetro que cambia en cada carga (timestamp), para que el
+// navegador nunca sirva una copia vieja de Veyra.html desde su caché — aunque este mismo
+// index.html quede cacheado, el timestamp se genera recién al ejecutarse, así que el link
+// de destino siempre es "nuevo" para el navegador. Recomendado: guardar esta página (la raíz
+// del sitio) como acceso directo en vez de la URL directa de Veyra.html.
+location.replace("./Veyra.html?v=" + Date.now());
+</script>
