@@ -1629,6 +1629,19 @@ function backToCityFlow(){
 // normales quedan bloqueados (candado) hasta completarla.
 // Hotspot rombo compartido por los lugares normales del continente Y las expediciones de campaña
 // ya completadas (revisitables) — misma pinta, mismo candado si locked, mismo destino (enterPlace).
+// Expedición de campaña todavía no alcanzada: visible pero bloqueada, sin spoilear nombre/ícono
+// (antes eran invisibles hasta llegar — pedido explícito del autor: "raro comparado a lo
+// tradicional", prefiere ver el camino que falta aunque esté bloqueado, como en otros juegos
+// de campaña con mapa). Mismo lenguaje visual que placeHotspotEl (rombo+candado), sin llamar a
+// enterPlace nunca — no tiene número de nodo real que abrir todavía.
+function futureExpeditionHotspotEl(dg, stepNumber){
+  const d=document.createElement("div");
+  d.className="hotspot place-hotspot locked";
+  d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
+  d.innerHTML=`<div class="hs-diamond"><span class="hs-lock">🔒</span><span>❔</span></div><div class="hs-label">Expedición ${stepNumber}</div>`;
+  d.onclick=()=>toast("🔒 Completá la expedición actual para desbloquear esta.");
+  return d;
+}
 function placeHotspotEl(id, dg, locked){
   const d=document.createElement("div");
   d.className="hotspot place-hotspot"+(locked?" locked":"");
@@ -1670,6 +1683,7 @@ function openPlaceMap(fac){
     } else {
       const st=campaignExpeditionState(fac,id);
       if(st && st.done){ any=true; el.appendChild(placeHotspotEl(id, dg, false)); }
+      else { any=true; el.appendChild(futureExpeditionHotspotEl(dg, chain.indexOf(id)+1)); }
     }
   }
 
