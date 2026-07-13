@@ -2076,6 +2076,12 @@ const OPPONENTS = {
     avoidLine:"Te mira desde la muralla exterior y no baja: un gesto seco, casi un saludo, es todo lo que va a darte esta vez."},
   madre_distritos:{name:"La Madre de los Distritos Bajos",
     avoidLine:"No te mira a los ojos, pero tampoco te cierra el paso: hoy nadie tiene ánimo para pelear otra vez lo mismo."},
+  serena_koren:{name:"Serena, Tejedora de Leyes",
+    avoidLine:"Te saluda con la misma cortesía exacta de siempre y no se levanta de la mesa: el protocolo ya se cumplió una vez, dice, no hace falta repetirlo."},
+  instructora_pretoriana:{name:"La Instructora Pretoriana",
+    avoidLine:"Te mide con la mirada un segundo y asiente, seco: ya sabe de lo que sos capaz, no hace falta la prueba otra vez."},
+  desertores_columna:{name:"Los Desertores de la Columna",
+    avoidLine:"Te ven pasar por el paso de piedra suelta y no se mueven de donde están escondidos: esta vez no hay columna que emboscar."},
 };
 
 // ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
@@ -2374,11 +2380,105 @@ const PLACES = {
         campaignDone:true, next:"exit"},
     }
   },
+  // ---- Tanda D (Veyra_Campania_Alderium.md sección 2, expediciones 7-9, Acto II "La Grieta") ----
+  // "La Diplomacia de Kóren": la única expedición de Alderium que cruza a otra facción. Serena
+  // NO se agrega a LIB como carta jugable — es un NPC de protocolo, mismo criterio que el Juez
+  // Silente/Guardián Ciego (si Kóren llega a tener su propia campaña con Serena de protagonista,
+  // esa es una decisión de esa tanda, no de esta). La recompensa (`anciana`, ya existente en el
+  // pool base de Kóren) es a propósito "inutilizable aún": S.collection no distingue facción activa,
+  // así que queda guardada para cuando el jugador abra el constructor de Kóren.
+  alderium_diplomacia_koren: {
+    faction:"alderium", name:"La Diplomacia de Kóren", icon:"🕊️", isCampaign:true, startNode:"d1a", level:4,
+    mapPos:{left:85,top:60},
+    nodes:{
+      d1a:{name:"El Camino a Kóren", type:"decision", step:1,
+        text:"La frontera con Kóren se anuncia antes de cruzarla: el aire se vuelve húmedo, la piedra gris de Alderium cede paso a musgo y madera tallada. Vas de escolta de la comitiva, no como soldado — como testigo.",
+        exits:[{dest:"d1b", hint:"Cruzar la frontera"}]},
+      d1b:{name:"El Camino a Kóren", type:"decision", step:1,
+        text:"La embajada de Kóren recibe con cortesía exacta, ni un gramo más: te hacen esperar el tiempo justo para que entiendas que acá tu rango no apura a nadie.",
+        exits:[{dest:"d2a", hint:"Entrar al salón de protocolo"}]},
+      d2a:{name:"El Salón de Protocolo", type:"decision", step:2,
+        text:"El embajador de Kóren escucha el pedido de Alderium sin mover un músculo. Te toca hablar primero, o dejar que hable el canciller que viajó con vos.",
+        exits:[
+          {dest:"d3a", hint:"Hablar vos, con firmeza", reward:{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"}},
+          {dest:"d3a", hint:"Ceder la palabra al canciller", reward:{type:"collection",key:"sold_alderium_2",n:1,fac:"alderium"}},
+        ]},
+      d3a:{name:"La Tejedora de Leyes", type:"decision", step:3,
+        text:"Serena, Tejedora de Leyes, preside la mesa como si el tiempo no la apurara. Escucha completo el pedido de Alderium y niega apenas con la cabeza. «Antes de darles una respuesta» — dice — «Kóren quiere ver con qué clase de soldado está hablando.»",
+        exits:[{dest:"d4duel", hint:"Aceptar el duelo ceremonial"}]},
+      d4duel:{name:"El Duelo Ceremonial", type:"combat", step:4, subtitle:"Duelo ceremonial",
+        text:"No hay maná real en juego, ni sangre: es protocolo, un duelo de cartas que Kóren usa desde antes de que existiera el trono de Alderium para medir a un enviado. Ganar esto es una formalidad — la respuesta de Kóren ya está decidida, y no te la va a dar ella.",
+        enemyFac:"koren",
+        reward:{type:"collection",key:"anciana",n:1,fac:"koren"},
+        boss:true, bossId:"serena_koren",
+        repeatReward:{type:"collection",key:"sold_alderium_9",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
+  // "Los Arsenales": última expedición "en casa" del Acto I/II — ascenso de Darian a Primera Línea.
+  alderium_arsenales: {
+    faction:"alderium", name:"Los Arsenales", icon:"⚒️", isCampaign:true, startNode:"g1a", level:4,
+    mapPos:{left:45,top:90},
+    nodes:{
+      g1a:{name:"Los Arsenales", type:"decision", step:1,
+        text:"Las forjas de Alderium no descansan: día y noche, el golpe del martillo contra el metal se escucha desde los tejados vecinos. Ascendiste — te toca supervisar, no fabricar.",
+        exits:[{dest:"g1b", hint:"Recorrer las forjas"}]},
+      g1b:{name:"Los Arsenales", type:"decision", step:1,
+        text:"El Magíster de armas te ve pasar sin saludar. «¿Para qué tanto acero?» — pregunta, a nadie en particular, con la vista fija en un lote de espadas nuevas. Nadie le contesta. Vos tampoco.",
+        exits:[{dest:"g2a", hint:"Continuar"}]},
+      g2a:{name:"El Inventario", type:"decision", step:2,
+        text:"Un escriba te ofrece revisar el inventario antes de la prueba de rango: podés detenerte a mirar el equipo disponible, o presentarte directo.",
+        exits:[
+          {dest:"g3a", hint:"Revisar el inventario", reward:{type:"collection",key:"estandarte_alba",n:1,fac:"alderium"}},
+          {dest:"g3a", hint:"Presentarte directo a la prueba", reward:{type:"collection",key:"sold_alderium_5",n:1,fac:"alderium"}},
+        ]},
+      g3a:{name:"La Prueba de Rango", type:"decision", step:3,
+        text:"La Instructora Pretoriana te espera en el patio de armas, con la misma mirada que usó con cada recluta antes que vos. «Primera Línea no es un título que se entrega» — dice — «es uno que se cobra.»",
+        exits:[{dest:"g4duel", hint:"Aceptar la prueba"}]},
+      g4duel:{name:"La Instructora Pretoriana", type:"combat", step:4, subtitle:"Prueba de rango",
+        text:"No es una enemiga: es la última prueba antes del ascenso. Se mueve como si llevara toda la vida haciendo exactamente esto.",
+        enemyFac:"alderium",
+        reward:{type:"collection",key:"darian",n:1,fac:"alderium"},
+        boss:true, bossId:"instructora_pretoriana",
+        repeatReward:{type:"collection",key:"sold_alderium_10",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
+  // "Las Caravanas de Guerra": arranca el Acto III. Le hace eco a "La Ruta de Caravanas" (exp. 4)
+  // a propósito — mismo dilema de mirar para otro lado, ahora con la guerra ya en marcha.
+  alderium_caravanas_guerra: {
+    faction:"alderium", name:"Las Caravanas de Guerra", icon:"🗡️", isCampaign:true, startNode:"m1a", level:4,
+    mapPos:{left:10,top:55},
+    nodes:{
+      m1a:{name:"La Marcha", type:"decision", step:1,
+        text:"La columna sale de Alderium al amanecer: carretas, soldados, el peso entero de una guerra que todavía nadie llama por su nombre. Kilómetros de polvo por delante.",
+        exits:[{dest:"m1b", hint:"Marchar"}]},
+      m1b:{name:"La Marcha", type:"decision", step:1,
+        text:"A la tercera noche faltan dos nombres en la lista de guardia. Nadie los menciona en voz alta, pero todos los cuentan.",
+        exits:[{dest:"m2a", hint:"Continuar"}]},
+      m2a:{name:"Las Deserciones", type:"decision", step:2,
+        text:"Un oficial te pide autorización para reportar a los que faltan como desertores — sabe lo que eso significa para ellos. Sos vos quien firma.",
+        exits:[
+          {dest:"m3a", hint:"Reportarlos, como marca el reglamento", reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
+          {dest:"m3a", hint:"Dejar la lista incompleta, como en la ruta de caravanas", reward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"}},
+        ]},
+      m3a:{name:"La Emboscada", type:"decision", step:3,
+        text:"El paso se estrecha entre dos laderas de piedra suelta — el lugar exacto que elegiría alguien que conoce el camino de memoria. Los que faltaban en la lista de guardia no se habían ido muy lejos.",
+        exits:[{dest:"m4duel", hint:"Formar filas"}]},
+      m4duel:{name:"Los Desertores de la Columna", type:"combat", step:4, subtitle:"Emboscada",
+        text:"No pelean por una causa — pelean por no volver a marchar. Eso los hace más peligrosos, no menos.",
+        enemyFac:"alderium",
+        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"},
+        boss:true, bossId:"desertores_columna",
+        repeatReward:{type:"collection",key:"sold_alderium_11",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
 };
 const CONTINENT_PLACES = {alderium:["alderium_piloto"]};
 // Cadena de expediciones por facción, en orden (sección "Campañas multi-expedición"): cada entrada
 // es un placeId de PLACES con isCampaign:true. Pensada para crecer a 10-15 expediciones por facción.
-const CAMPAIGN_CHAINS = {alderium:["alderium_juramento","alderium_patrulla","alderium_templo","alderium_ruta_caravanas","alderium_frontera_norte","alderium_escasez"]};
+const CAMPAIGN_CHAINS = {alderium:["alderium_juramento","alderium_patrulla","alderium_templo","alderium_ruta_caravanas","alderium_frontera_norte","alderium_escasez","alderium_diplomacia_koren","alderium_arsenales","alderium_caravanas_guerra"]};
 // Indexado por placeId de expedición (antes era por facción: con varias expediciones en cadena,
 // cada una necesita su propia lista de nombres de paso).
 const CAMPAIGN_STEP_NAMES = {
@@ -2388,6 +2488,9 @@ const CAMPAIGN_STEP_NAMES = {
   alderium_ruta_caravanas:["La Escolta","Los Roba-Grano","La Orden sin Prisioneros","La Jefa de los Asaltantes"],
   alderium_frontera_norte:["El Fuerte del Norte","Los Veteranos que Callan","Lo que Alderium Hizo","La Veterana Renegada del Norte"],
   alderium_escasez:["El Racionamiento","Los Disturbios","La Guardia Contra su Propia Gente","La Madre de los Distritos Bajos"],
+  alderium_diplomacia_koren:["El Camino a Kóren","El Salón de Protocolo","La Tejedora de Leyes","El Duelo Ceremonial"],
+  alderium_arsenales:["Los Arsenales","El Inventario","La Prueba de Rango","La Instructora Pretoriana"],
+  alderium_caravanas_guerra:["La Marcha","Las Deserciones","La Emboscada","Los Desertores de la Columna"],
 };
 function buildVanillaOnlyDeck(fac){
   const deck=[]; const pool=soldierPool(fac); let vi=0;
