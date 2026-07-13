@@ -10,31 +10,45 @@ Generado: 2026-07-12
 |---|---|---|---|---|---|---|---|---|---|
 | Aprendiz de Alderium | Criatura | — | Soldado (común) | 1 | 2/1 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_aprendiz_de_alderium.png` |
 | Recluta de Alderium | Criatura | — | Soldado (común) | 1 | 1/2 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_recluta_de_alderium.png` |
+| Arquera de la Muralla | Criatura | — | Soldado (común) | 2 | 2/2 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_arquera_de_la_muralla.png` |
 | Cazador de Alderium | Criatura | — | Soldado (común) | 2 | 1/3 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_cazador_de_alderium.png` |
 | Decreto de Contención | Hechizo | — | Hechizo | 2 | — | — | 2 | Base | `assets/cards/hechizos/alderium/alderium_hechizo_decreto_de_contencion.png` |
 | Escudero de Alderium | Criatura | — | Soldado (común) | 2 | 2/2 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_escudero_de_alderium.png` |
+| Médica de Campaña | Criatura | — | Especialista (poco común) | 2 | 1/3 | — | 2 | Base | `assets/cards/criaturas/alderium/alderium_criatura_medica_de_campana.png` |
+| Portadora de Filo Común | Criatura | — | Soldado (común) | 2 | 2/3 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_portadora_de_filo_comun.png` |
 | Centinela de Alderium | Criatura | — | Soldado (común) | 3 | 2/4 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_centinela_de_alderium.png` |
+| Cierre de Filas | Hechizo | — | Hechizo | 3 | — | — | 2 | Base | `assets/cards/hechizos/alderium/alderium_hechizo_cierre_de_filas.png` |
+| Estandarte del Alba | Reliquia | — | Reliquia | 3 | — | — | 2 | Base | `assets/cards/reliquias/alderium_reliquia_estandarte_del_alba.png` |
 | Lancero de Alderium | Criatura | — | Soldado (común) | 3 | 3/3 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_lancero_de_alderium.png` |
 | Muralla Viviente | Criatura | — | Especialista (poco común) | 3 | 1/5 | Guardián | 2 | Base | `assets/cards/criaturas/alderium/alderium_criatura_muralla_viviente.png` |
+| Cassia, Capitana de la Ronda | Criatura | — | Héroe (legendaria) | 4 | 3/4 | — | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_cassia_capitana_de_la_ronda.png` |
 | Darian Voln, Filo Áureo | Criatura | — | Héroe (legendaria) | 4 | 4/3 | Prisa | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_darian_voln_filo_aureo.png` |
 | Guardia de Fila de Alderium | Criatura | — | Soldado (común) | 4 | 3/5 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_guardia_de_fila_de_alderium.png` |
 | Tiberon, Portaestandarte del Alba | Criatura | — | Héroe (legendaria) | 4 | 2/4 | — | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_tiberon_portaestandarte_del_alba.png` |
 | Veterano de Alderium | Criatura | — | Soldado (común) | 4 | 4/4 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_veterano_de_alderium.png` |
 | Campeón de Alderium | Criatura | — | Soldado (común) | 5 | 5/5 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_campeon_de_alderium.png` |
+| Guardiana de Primera Línea | Criatura | — | Especialista (poco común) | 5 | 4/6 | Guardián | 2 | Base | `assets/cards/criaturas/alderium/alderium_criatura_guardiana_de_primera_linea.png` |
 | Isolde, Voz del Decreto | Criatura | — | Héroe (legendaria) | 5 | 3/5 | — | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_isolde_voz_del_decreto.png` |
 | Portador del Estandarte de Alderium | Criatura | — | Soldado (común) | 5 | 4/6 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_portador_del_estandarte_de_alderium.png` |
 | Pretoriano del Alba | Criatura | — | Héroe (legendaria) | 5 | 4/5 | Guardián, Escudo | 1 | Base | `assets/cards/criaturas/alderium/alderium_criatura_pretoriano_del_alba.png` |
 | Coloso de Alderium | Criatura | — | Soldado (común) | 6 | 6/6 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_coloso_de_alderium.png` |
 | Custodio Menor de Alderium | Criatura | — | Soldado (común) | 6 | 5/7 | — | 3 | Base | `assets/cards/criaturas/alderium/alderium_criatura_custodio_menor_de_alderium.png` |
+| Filo Áureo de Darian | Reliquia | — | Reliquia | 6 | — | — | 2 | Base | `assets/cards/reliquias/alderium_reliquia_filo_aureo_de_darian.png` |
 
 **Texto de reglas:**
 
 - **Decreto de Contención:** Da Escudo a una criatura. Si es Guardián, a dos en vez de una.
+- **Médica de Campaña:** Al entrar: curá 2 a una criatura propia o a tu héroe.
+- **Cierre de Filas:** Da Escudo a hasta dos criaturas Guardián que controlás.
+- **Estandarte del Alba:** Equipá a una criatura propia: +1/+1 y Escudo.
 - **Muralla Viviente:** Al entrar: da Escudo a otro Guardián que controlás.
+- **Cassia, Capitana de la Ronda:** Tus otras criaturas de Filo ganan +0/+1.
 - **Darian Voln, Filo Áureo:** Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.
 - **Tiberon, Portaestandarte del Alba:** Tus otros Guardianes ganan +1/+1.
+- **Guardiana de Primera Línea:** El rango entre el Filo Áureo y el Pretoriano: quien lo porta ya no retrocede.
 - **Isolde, Voz del Decreto:** Cuando una criatura enemiga ataca, Isolde le inflige 1 de daño antes de que se resuelva el combate.
 - **Pretoriano del Alba:** La vieja guardia pretoriana de Alderium: élite consagrada desde antes de que existiera el rango de Filo Áureo.
+- **Filo Áureo de Darian:** Equipá a una criatura propia: +2/+2 y Guardián.
 
 ## Qashir
 

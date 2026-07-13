@@ -696,9 +696,29 @@ const LIB = {
   tiberon:{fac:"alderium",name:"Tiberon, Portaestandarte del Alba",cost:4,type:"criatura",atk:2,vida:4,kw:[],art:"🚩",
     txt:"Tus otros Guardianes ganan +1/+1.",auraGuardian:{atk:1,vida:1},rarity:"heroe"},
   darian:{fac:"alderium",name:"Darian Voln, Filo Áureo",cost:4,type:"criatura",atk:4,vida:3,kw:["Prisa"],art:"🗡️",
-    txt:"Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.",flag:"darian",rarity:"heroe"},
+    txt:"Cuando Darian ataca a una criatura con Escudo, ese Escudo se anula antes de que se resuelva el combate.",flag:"darian",rarity:"heroe",sub:"filo"},
   pretoriano_alba:{fac:"alderium",name:"Pretoriano del Alba",cost:5,type:"criatura",atk:4,vida:5,kw:["Guardián","Escudo"],art:"🛡️",
     txt:"La vieja guardia pretoriana de Alderium: élite consagrada desde antes de que existiera el rango de Filo Áureo.",rarity:"heroe"},
+  // Tanda A (2026-07-12): expansión del pool de Alderium — ver Veyra_Campania_Alderium.md sección 4
+  // y Veyra_Lore_Notas.md sección 3.2 (regla 50/50: mayoría femenina en esta tanda, la base ya
+  // commiteada era mayoritariamente masculina). sub:"filo" identifica la línea de rango Filo Común/
+  // Áureo (Cassia la potencia, mismo mecanismo genérico auraSub que ya usa Idris en Qashir).
+  cassia:{fac:"alderium",name:"Cassia, Capitana de la Ronda",cost:4,type:"criatura",atk:3,vida:4,kw:[],art:"🎖️",
+    txt:"Tus otras criaturas de Filo ganan +0/+1.",auraSub:{sub:"filo",atk:0,vida:1},rarity:"heroe"},
+  medica:{fac:"alderium",name:"Médica de Campaña",cost:2,type:"criatura",atk:1,vida:3,kw:[],art:"⚕️",
+    txt:"Al entrar: curá 2 a una criatura propia o a tu héroe.",etb:"medica",rarity:"especialista"},
+  primera_linea:{fac:"alderium",name:"Guardiana de Primera Línea",cost:5,type:"criatura",atk:4,vida:6,kw:["Guardián"],art:"🛡️",
+    txt:"El rango entre el Filo Áureo y el Pretoriano: quien lo porta ya no retrocede.",sub:"filo",rarity:"especialista"},
+  arquera:{fac:"alderium",name:"Arquera de la Muralla",cost:2,type:"criatura",atk:2,vida:2,kw:[],art:"🏹",
+    txt:"",sub:"filo"},
+  portadora_comun:{fac:"alderium",name:"Portadora de Filo Común",cost:2,type:"criatura",atk:2,vida:3,kw:[],art:"🗡️",
+    txt:"",sub:"filo"},
+  cierre_filas:{fac:"alderium",name:"Cierre de Filas",cost:3,type:"hechizo",art:"📯",
+    txt:"Da Escudo a hasta dos criaturas Guardián que controlás.",cast:"cierre_filas"},
+  estandarte_alba:{fac:"alderium",name:"Estandarte del Alba",cost:3,type:"reliquia",art:"🚩",
+    txt:"Equipá a una criatura propia: +1/+1 y Escudo.",target:"criatura_propia",cast:"estandarte_alba"},
+  filo_aureo_darian:{fac:"alderium",name:"Filo Áureo de Darian",cost:6,type:"reliquia",art:"⚜️",
+    txt:"Equipá a una criatura propia: +2/+2 y Guardián.",target:"criatura_propia",cast:"filo_aureo_darian"},
   // ---------------- Qashir ----------------
   zahra:{fac:"qashir",name:"Zahira, la Apostadora",cost:3,type:"criatura",atk:4,vida:2,kw:[],art:"🎲",
     txt:"Al entrar: podés sacrificar otra criatura tuya para ganar +1 maná este turno.",etb:"zahra",rarity:"heroe"},
@@ -2531,6 +2551,14 @@ async function runEtb(p,c){
       else { p.life=Math.min(30,p.life+heal); log(`Sanadora cura ${heal} a ${who(p)}.`); }
       break;
     }
+    case "medica":{
+      const heal=healAmount(p,2);
+      const hurt=p.field.filter(x=>x.type==="criatura" && x!==c && x.damage>0);
+      const target = hurt.length ? await chooseHealTarget(p, hurt, {title:"Médica de Campaña", subtitle:`Curá ${heal} a tu héroe o a una criatura aliada.`}) : null;
+      if(target){ target.damage=Math.max(0,target.damage-heal); log(`Médica de Campaña cura ${heal} a ${target.name}.`); }
+      else { p.life=Math.min(30,p.life+heal); log(`Médica de Campaña cura ${heal} a ${who(p)}.`); }
+      break;
+    }
     case "copista":{
       const spell=p.lastSpellPlayed;
       if(spell){ const copy=instantiate(spell.key); p.hand.push(copy); log(`Copista de Runas devuelve ${copy.name} a la mano.`); }
@@ -2628,6 +2656,20 @@ async function resolveTargeted(p,c,tgt){
       log(`Hoja Solar: ${tgt.name} gana +2/+0.`);
       break;
     }
+    case "estandarte_alba":{
+      tgt.plusAtk+=1; tgt.plusVida+=1; tgt.shield=true;
+      await coupleEffect(c, tgt, {color:"var(--shield)"});
+      playSfx("escudo_ganar");
+      log(`Estandarte del Alba: ${tgt.name} gana +1/+1 y Escudo.`);
+      break;
+    }
+    case "filo_aureo_darian":{
+      tgt.plusAtk+=2; tgt.plusVida+=2;
+      if(!tgt.kw.includes("Guardián")) tgt.kw.push("Guardián");
+      await coupleEffect(c, tgt, {color:"var(--gold)"});
+      log(`Filo Áureo de Darian: ${tgt.name} gana +2/+2 y Guardián.`);
+      break;
+    }
   }
   render();
 }
@@ -2644,6 +2686,13 @@ async function runCast(p,c,_){
     case "ley":{ p.manaMax=Math.min(p.manaMax,12); log(`Ley de Terra Caelum: tope de maná ahora 12.`); break; }
     case "senda":{ log(`Senda de los Mil Pasos: tus criaturas Nómadas cuestan 1 menos al jugarlas (mínimo 1).`); break; }
     case "tren_blindado":{ drawCard(p); drawCard(p); log(`Tren Blindado: ${who(p)} roba 2 cartas.`); break; }
+    case "cierre_filas":{
+      const targets=p.field.filter(x=>x.type==="criatura" && x.kw.includes("Guardián") && !x.shield).slice(0,2);
+      for(const t of targets){ t.shield=true; await coupleEffect(c, t, {color:"var(--shield)"}); }
+      if(targets.length){ playSfx("escudo_ganar"); log(`Cierre de Filas: Escudo a ${targets.map(t=>t.name).join(" y ")}.`); }
+      else log(`Cierre de Filas: no había Guardianes sin Escudo.`);
+      break;
+    }
     case "equilibrio":{
       const o=other(p); const lo=Math.min(availMana(p),availMana(o));
       p.mana=Math.max(0,lo-p.tempMana>0?lo-p.tempMana:0); p.tempMana=Math.min(p.tempMana,lo); p.mana=Math.max(0,lo-p.tempMana);
@@ -2889,6 +2938,13 @@ async function aiEtb(p,c){
       else { p.life=Math.min(30,p.life+heal); }
       break;
     }
+    case "medica":{
+      const heal=healAmount(p,2);
+      const hurt=p.field.filter(x=>x.type==="criatura" && x!==c && x.damage>0).sort((a,b)=>b.damage-a.damage);
+      if(hurt.length){ hurt[0].damage=Math.max(0,hurt[0].damage-heal); }
+      else { p.life=Math.min(30,p.life+heal); }
+      break;
+    }
     case "copista":{
       const spell=p.lastSpellPlayed;
       if(spell){ p.hand.push(instantiate(spell.key)); }
@@ -2930,6 +2986,8 @@ function aiPickTarget(p,c){
     case "cristal":{ return p.field.filter(x=>x.type==="criatura").sort((a,b)=>effVida(p,b)-effVida(p,a))[0]||null; }
     case "vendaje":{ const hurt=p.field.filter(x=>x.damage>0).sort((a,b)=>b.damage-a.damage); return hurt[0]||{isHero:true,p}; }
     case "hoja_solar":{ return p.field.filter(x=>x.type==="criatura").sort((a,b)=>effAtk(b,p)-effAtk(a,p))[0]||null; }
+    case "estandarte_alba":{ return p.field.filter(x=>x.type==="criatura" && !x.shield).sort((a,b)=>effVida(p,b)-effVida(p,a))[0] || p.field.find(x=>x.type==="criatura") || null; }
+    case "filo_aureo_darian":{ return p.field.filter(x=>x.type==="criatura").sort((a,b)=>effAtk(b,p)-effAtk(a,p))[0]||null; }
   }
   return null;
 }
