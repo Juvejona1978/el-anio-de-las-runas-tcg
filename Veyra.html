@@ -1135,7 +1135,7 @@ if(!HAD_SAVE){ grantStartingAlderiumCollection(); saveGame(); }
 // ============================================================
 const Audio_ = {
   ctx:null, unlocked:false,
-  masterGain:null, musicBus:null, sfxBus:null,
+  masterGain:null, musicBus:null, sfxBus:null, stingerBus:null,
   buffers:{}, // url -> AudioBuffer | "missing" | Promise<AudioBuffer|null>
   music:{trackName:null, iterations:[], token:0}, // iterations: {source,gain,timer,done}
   desiredTrack:null,
@@ -1148,6 +1148,7 @@ function applyAudioVolumes(){
   Audio_.musicBus.gain.cancelScheduledValues(now);
   Audio_.musicBus.gain.setValueAtTime(effMusicVol(), now);
   Audio_.sfxBus.gain.setValueAtTime(effSfxVol(), now);
+  Audio_.stingerBus.gain.setValueAtTime(effMusicVol(), now); // sigue el volumen de música, no el de efectos
 }
 function ensureAudioCtx(){
   if(Audio_.ctx) return;
@@ -1158,8 +1159,10 @@ function ensureAudioCtx(){
     Audio_.masterGain=Audio_.ctx.createGain();
     Audio_.musicBus=Audio_.ctx.createGain();
     Audio_.sfxBus=Audio_.ctx.createGain();
+    Audio_.stingerBus=Audio_.ctx.createGain(); // aparte de musicBus: musicDuck() no debe apagar el propio stinger
     Audio_.musicBus.connect(Audio_.masterGain);
     Audio_.sfxBus.connect(Audio_.masterGain);
+    Audio_.stingerBus.connect(Audio_.masterGain);
     Audio_.masterGain.connect(Audio_.ctx.destination);
     applyAudioVolumes();
   } catch(e){ Audio_.ctx=null; }
@@ -1279,6 +1282,19 @@ function playSfx(name){
     if(!buf || !Audio_.ctx) return;
     const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
     src.connect(Audio_.sfxBus);
+    try{ src.start(); }catch(e){}
+  });
+}
+// Stinger de victoria/derrota: vive en assets/audio/musica/ (pista larga, no un efecto de UI — ver
+// Veyra_Audio_Plan.md) y sigue el volumen de música, pero por un bus propio para que musicDuck()
+// (que atenúa musicBus antes de dispararlo) no se apague a sí mismo.
+function playStinger(name){
+  if(!Audio_.unlocked || !Audio_.ctx) return;
+  const url=`assets/audio/musica/${name}.mp3`;
+  loadAudioBuffer(url).then(buf=>{
+    if(!buf || !Audio_.ctx) return;
+    const src=Audio_.ctx.createBufferSource(); src.buffer=buf;
+    src.connect(Audio_.stingerBus);
     try{ src.start(); }catch(e){}
   });
 }
@@ -3625,7 +3641,7 @@ function checkWin(){
     b.querySelector(".big").textContent = win? "VICTORIA" : "DERROTA";
     b.querySelector(".big").style.color = win? "var(--gold2)":"var(--vida)";
     b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
-    musicDuck(); playSfx(win?"stinger_victoria":"stinger_derrota"); // la próxima showScreen() retoma el tema normal
+    musicDuck(); playStinger(win?"stinger_victoria":"stinger_derrota"); // la próxima showScreen() retoma el tema normal
 
     // Contexto de retorno: duelo de lugar vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
