@@ -2070,6 +2070,12 @@ const OPPONENTS = {
     avoidLine:"Cassia te ve pasar y solo te guiña un ojo — la ronda de hoy ya tiene bastante con lo suyo."},
   guardian_ciego:{name:"El Guardián Ciego del Templo",
     avoidLine:"La figura de piedra no se mueve esta vez: quizás ya sabe que no vas a tocar el símbolo partido."},
+  jefa_asaltantes:{name:"La Jefa de los Asaltantes",
+    avoidLine:"Te ve pasar con las manos vacías y no se levanta del fuego: sabe que no venís a terminar lo de la última vez."},
+  veterana_norte:{name:"La Veterana Renegada del Norte",
+    avoidLine:"Te mira desde la muralla exterior y no baja: un gesto seco, casi un saludo, es todo lo que va a darte esta vez."},
+  madre_distritos:{name:"La Madre de los Distritos Bajos",
+    avoidLine:"No te mira a los ojos, pero tampoco te cierra el paso: hoy nadie tiene ánimo para pelear otra vez lo mismo."},
 };
 
 // ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
@@ -2263,17 +2269,125 @@ const PLACES = {
         campaignDone:true, next:"exit"},
     }
   },
+  // ---- Tanda C (Veyra_Campania_Alderium.md sección 2, expediciones 4-6) ----
+  // "La Ruta de Caravanas": primera orden incómoda («sin prisioneros») contra gente desesperada,
+  // no malvada — Darian puede matizarla. Los asaltantes son alderianos empobrecidos (enemyFac
+  // "alderium", mismo criterio ya usado con Cassia/Guardián Ciego), sin mazo especial: la dureza
+  // no viene de la mecánica sino de la orden que el jugador elige cómo cumplir.
+  alderium_ruta_caravanas: {
+    faction:"alderium", name:"La Ruta de Caravanas", icon:"🐎", isCampaign:true, startNode:"r1a", level:3,
+    mapPos:{left:50,top:70},
+    nodes:{
+      r1a:{name:"La Escolta", type:"decision", step:1,
+        text:"El camino al norte serpentea entre colinas peladas: una hilera de carretas cargadas de grano y barriles de plasma cruza territorio que ya no se siente del todo seguro. A vos te tocó la escolta.",
+        exits:[{dest:"r1b", hint:"Seguir la marcha"}]},
+      r1b:{name:"La Escolta", type:"decision", step:1,
+        text:"El capitán de la caravana no deja de mirar hacia atrás. «Hace dos semanas perdimos media carga en una emboscada» — dice, sin que nadie le pregunte — «los que la robaron no eran soldados de nadie.»",
+        exits:[{dest:"r2combat", hint:"Continuar"}]},
+      r2combat:{name:"Los Roba-Grano", type:"combat", step:2, subtitle:"Encuentro",
+        text:"Salen de entre las rocas antes de que anochezca del todo: no llevan armadura, ni bandera, ni formación — solo hambre y sacos vacíos.",
+        enemyFac:"alderium", next:"r2b"},
+      r2b:{name:"El Reparto", type:"decision", step:2,
+        text:"Los que quedan no corren: se quedan mirando el grano que no alcanzaron a robar. Uno, apenas mayor que Lior, tiembla sin soltar un saco vacío.",
+        exits:[
+          {dest:"r3a", hint:"Aplicar el reglamento y reportarlos", reward:{type:"collection",key:"sold_alderium_7",n:1,fac:"alderium"}},
+          {dest:"r3a", hint:"Dejarles un saco y mirar para otro lado", reward:{type:"collection",key:"sold_alderium_9",n:1,fac:"alderium"}},
+        ]},
+      r3a:{name:"La Orden sin Prisioneros", type:"decision", step:3,
+        text:"En el fuerte de paso, el oficial al mando te entrega la orden por escrito antes de que puedas sentarte: «Sin prisioneros. La próxima partida que intercepten se resuelve en el lugar.» No es una sugerencia.",
+        exits:[{dest:"r3b", hint:"Leer la orden completa"}]},
+      r3b:{name:"La Orden sin Prisioneros", type:"decision", step:3,
+        text:"La firma queda a tu nombre. Vos decidís cómo se cumple.",
+        exits:[
+          {dest:"r4duel", hint:"Cumplirla al pie de la letra", reward:{type:"collection",key:"sold_alderium_10",n:1,fac:"alderium"}},
+          {dest:"r4duel", hint:"Dejar que algunos escapen, en secreto", reward:{type:"collection",key:"arquera",n:1,fac:"alderium"}},
+        ]},
+      r4duel:{name:"La Jefa de los Asaltantes", type:"combat", step:4, subtitle:"Duelo",
+        text:"La encontrás al final del desfiladero, plantada frente a los que le quedan — no hay retirada posible, ni para ella ni para vos. No pide piedad. No la va a dar tampoco.",
+        enemyFac:"alderium",
+        reward:{type:"collection",key:"primera_linea",n:1,fac:"alderium"},
+        boss:true, bossId:"jefa_asaltantes",
+        repeatReward:{type:"collection",key:"sold_alderium_1",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
+  // "La Frontera Norte": la única referencia oblicua permitida en toda la campaña (sección 1 del
+  // doc de diseño) vive en el nodo f3 — una frase, sin contexto, y la orden explícita de no
+  // preguntar. Nada más en esta expedición vuelve a tocar el tema.
+  alderium_frontera_norte: {
+    faction:"alderium", name:"La Frontera Norte", icon:"❄️", isCampaign:true, startNode:"f1a", level:3,
+    mapPos:{left:20,top:78},
+    nodes:{
+      f1a:{name:"El Fuerte del Norte", type:"decision", step:1,
+        text:"El viento acá corta distinto. El fuerte que te toca guarnecer es la mitad de lo que fue: la otra mitad quedó marcada apenas en los cimientos, como si algo la hubiera vaciado hace años.",
+        exits:[{dest:"f1b", hint:"Entrar al fuerte"}]},
+      f1b:{name:"El Fuerte del Norte", type:"decision", step:1,
+        text:"Los braseros de plasma arden bajos, racionados. Un puñado de veteranos bebe alrededor del único fuego real, en silencio — el tipo de silencio que no se rompe preguntando.",
+        exits:[{dest:"f2a", hint:"Acercarse"}]},
+      f2a:{name:"Los Veteranos que Callan", type:"decision", step:2,
+        text:"Nadie te invita a sentarte, pero tampoco te corren. Podés intentar sacarles algo de conversación, o ir directo a reportarte con el oficial al mando y dejarlos en paz.",
+        exits:[
+          {dest:"f3", hint:"Sentarte con los veteranos", reward:{type:"collection",key:"medica",n:1,fac:"alderium"}},
+          {dest:"f3", hint:"Reportarte directo con el oficial", reward:{type:"collection",key:"sold_alderium_11",n:1,fac:"alderium"}},
+        ]},
+      f3:{name:"Lo que Alderium Hizo", type:"decision", step:3,
+        text:"El oficial al mando es mayor de lo que debería estar todavía en la frontera. Te mira antes de firmar tu ingreso. «Lo que Alderium hizo en el norte no se pregunta, Voln» — dice, sin levantar la vista — «se hereda. Y no vuelvas a preguntarlo delante de los veteranos.»",
+        exits:[{dest:"f4duel", hint:"Aceptar la orden"}]},
+      f4duel:{name:"La Veterana Renegada del Norte", type:"combat", step:4, subtitle:"Duelo",
+        text:"La encontrás en la muralla exterior, donde se supone que no debería haber nadie de guardia: rompió filas hace semanas y nadie en el fuerte movió un dedo para detenerla. Ahora sos vos quien tiene que hacerlo.",
+        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
+        reward:{type:"collection",key:"muralla",n:1,fac:"alderium"},
+        boss:true, bossId:"veterana_norte",
+        repeatReward:{type:"collection",key:"sold_alderium_3",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
+  // "La Escasez": el duelo que nadie quiere ganar. La rival no tiene nombre propio a propósito
+  // (ver Veyra_Campania_Alderium.md: "una madre de los distritos bajos") — mismo criterio de
+  // anonimato deliberado que ya se usó con el Juez Silente/Guardián Ciego, acá por peso emocional
+  // en vez de atmósfera. Sin mazo especial: es gente común, no una elite.
+  alderium_escasez: {
+    faction:"alderium", name:"La Escasez", icon:"⚖️", isCampaign:true, startNode:"e1a", level:3,
+    mapPos:{left:75,top:80},
+    nodes:{
+      e1a:{name:"El Racionamiento", type:"decision", step:1,
+        text:"Las colas para el plasma empiezan antes del amanecer y no siempre terminan con barriles para todos. En los Distritos Bajos, la guardia ya no solo vigila: ahora también reparte, o niega.",
+        exits:[{dest:"e1b", hint:"Recorrer la fila"}]},
+      e1b:{name:"El Racionamiento", type:"decision", step:1,
+        text:"Cassia camina la ronda con vos, más callada que de costumbre. «Antes contábamos ladrones» — dice — «ahora contamos barriles. No sé cuál trabajo es peor.»",
+        exits:[{dest:"e2a", hint:"Continuar"}]},
+      e2a:{name:"Los Disturbios", type:"decision", step:2,
+        text:"Un barril declarado vacío antes de tiempo enciende la mecha: gritos, empujones, alguien tira una piedra que no le da a nadie pero rompe algo en el ambiente. La orden llega rápido: contener.",
+        exits:[
+          {dest:"e3a", hint:"Contener con la fuerza mínima posible", reward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"}},
+          {dest:"e3a", hint:"Seguir el protocolo de dispersión al pie de la letra", reward:{type:"collection",key:"sold_alderium_1",n:1,fac:"alderium"}},
+        ]},
+      e3a:{name:"La Guardia Contra su Propia Gente", type:"decision", step:3,
+        text:"Cassia no te mira a los ojos cuando te señala a la que está al frente de los disturbios. «No es una criminal» — dice, bajo, para que solo vos la oigas — «es una madre que hizo la fila tres días seguidos. Y aun así, tenés que ir.»",
+        exits:[{dest:"e4duel", hint:"Ir"}]},
+      e4duel:{name:"La Madre de los Distritos Bajos", type:"combat", step:4, subtitle:"Duelo que nadie quiere ganar",
+        text:"No lleva armadura ni entrenamiento — lleva a su gente detrás y nada que perder. No hay honor en esto, para ningún lado. Vos también lo sabés.",
+        enemyFac:"alderium",
+        reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"},
+        boss:true, bossId:"madre_distritos",
+        repeatReward:{type:"collection",key:"sold_alderium_7",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
 };
 const CONTINENT_PLACES = {alderium:["alderium_piloto"]};
 // Cadena de expediciones por facción, en orden (sección "Campañas multi-expedición"): cada entrada
 // es un placeId de PLACES con isCampaign:true. Pensada para crecer a 10-15 expediciones por facción.
-const CAMPAIGN_CHAINS = {alderium:["alderium_juramento","alderium_patrulla","alderium_templo"]};
+const CAMPAIGN_CHAINS = {alderium:["alderium_juramento","alderium_patrulla","alderium_templo","alderium_ruta_caravanas","alderium_frontera_norte","alderium_escasez"]};
 // Indexado por placeId de expedición (antes era por facción: con varias expediciones en cadena,
 // cada una necesita su propia lista de nombres de paso).
 const CAMPAIGN_STEP_NAMES = {
   alderium_juramento:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"],
   alderium_patrulla:["La Ronda de la Mañana","El Incidente de Lior","El Mercado de los Distritos Bajos","La Prueba de Honor"],
   alderium_templo:["Las Ruinas Bajo el Distrito","Los Símbolos sin Nombre","El Corredor del Guardián","El Guardián Ciego"],
+  alderium_ruta_caravanas:["La Escolta","Los Roba-Grano","La Orden sin Prisioneros","La Jefa de los Asaltantes"],
+  alderium_frontera_norte:["El Fuerte del Norte","Los Veteranos que Callan","Lo que Alderium Hizo","La Veterana Renegada del Norte"],
+  alderium_escasez:["El Racionamiento","Los Disturbios","La Guardia Contra su Propia Gente","La Madre de los Distritos Bajos"],
 };
 function buildVanillaOnlyDeck(fac){
   const deck=[]; const pool=soldierPool(fac); let vi=0;
