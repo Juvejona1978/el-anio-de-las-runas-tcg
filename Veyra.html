@@ -1944,6 +1944,10 @@ const OPPONENTS = {
     avoidLine:"La armadura vacía gira despacio, como si te reconociera, y no se mueve del centro de la cámara: te deja pasar sin una palabra."},
   rhaen_coliseo:{name:"Rhaen Iveros",
     avoidLine:"Rhaen te reconoce desde el otro extremo del Coliseo y solo asiente — ya no tiene nada que probarte."},
+  cassia_patrulla:{name:"Cassia, Capitana de la Ronda",
+    avoidLine:"Cassia te ve pasar y solo te guiña un ojo — la ronda de hoy ya tiene bastante con lo suyo."},
+  guardian_ciego:{name:"El Guardián Ciego del Templo",
+    avoidLine:"La figura de piedra no se mueve esta vez: quizás ya sabe que no vas a tocar el símbolo partido."},
 };
 
 // ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
@@ -2064,14 +2068,91 @@ const PLACES = {
         campaignDone:true, next:"exit"},
     }
   },
+  // ---- Tanda B (Veyra_Campania_Alderium.md sección 2, expediciones 2-3) ----
+  // "La Patrulla de los Distritos": la ciudad por dentro, el incidente de Lior, primer gesto humano
+  // de Darian. El "duelo de honor" contra Cassia no es un enfrentamiento hostil — el texto lo deja
+  // claro antes del combate — por eso usa el mismo mecanismo de jefe evadible que el resto.
+  alderium_patrulla: {
+    faction:"alderium", name:"La Patrulla de los Distritos", icon:"🛡️", isCampaign:true, startNode:"p1a", level:2,
+    mapPos:{left:30,top:42},
+    nodes:{
+      p1a:{name:"La Ronda de la Mañana", type:"decision", step:1,
+        text:"La ronda de la mañana empieza antes de que el sol toque los tejados: Alderium se despierta al ritmo de las botas de la guardia. Cassia, capitana de esta patrulla, marca el paso sin mirar atrás — sabe que la seguís.",
+        exits:[{dest:"p1b", hint:"Seguir la ronda"}]},
+      p1b:{name:"La Ronda de la Mañana", type:"decision", step:1,
+        text:"«Acá no perseguimos gloria» — te dice Cassia, sin girar la cabeza — «perseguimos que nadie tenga que perseguir nada. Un distrito tranquilo es un distrito que funciona.»",
+        exits:[{dest:"p2a", hint:"Continuar"}]},
+      p2a:{name:"El Incidente de Lior", type:"decision", step:2,
+        text:"Un grito corta la calle del mercado: un puestero señala a un chico flaco que corre entre los toldos con una hogaza bajo el brazo. Dos guardias ya le cierran el paso.",
+        exits:[{dest:"p2b", hint:"Acercarse"}]},
+      p2b:{name:"El Incidente de Lior", type:"decision", step:2,
+        text:"El chico —no tiene más de diez años— no suelta el pan. Cassia te mira: la decisión, por una vez, es tuya, no de ella.",
+        exits:[
+          {dest:"p3a", hint:"Dejarlo ir con una advertencia", reward:{type:"collection",key:"medica",n:1,fac:"alderium"}},
+          {dest:"p3a", hint:"Aplicar el reglamento", reward:{type:"collection",key:"arquera",n:2,fac:"alderium"}},
+        ]},
+      p3a:{name:"El Mercado de los Distritos Bajos", type:"decision", step:3,
+        text:"Sea cual sea tu decisión, Cassia no dice nada — hasta que llegan al puesto de guardia. «La ley y la piedad no siempre pelean» — dice al fin — «pero cuando pelean, alguien tiene que elegir. Hoy elegiste vos.»",
+        exits:[{dest:"p3b", hint:"Seguir"}]},
+      p3b:{name:"El Mercado de los Distritos Bajos", type:"decision", step:3,
+        text:"«Se dice que servís bien en el Coliseo» — sonríe Cassia, aflojando el guante — «yo también serví ahí. ¿Qué tal una ronda de práctica, capitán contra lo que seas vos todavía?»",
+        exits:[{dest:"p3duel", hint:"Aceptar el desafío"}]},
+      p3duel:{name:"La Prueba de Honor", type:"combat", step:4, subtitle:"Duelo de honor",
+        text:"No hay premio de guerra en esto — solo el orgullo de la patrulla y el respeto de tu capitana. Cassia forma su línea de Filo sin apuro: sabe exactamente lo que hace.",
+        enemyFac:"alderium", enemyDeckBuilder:buildCassiaPatrolDeck,
+        reward:{type:"collection",key:"isolde",n:1,fac:"alderium"},
+        boss:true, bossId:"cassia_patrulla",
+        repeatReward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
+  // "El Templo del Distrito Bajo": ruinas anteriores al trono, atmósfera y no revelación —
+  // el símbolo partido por siete líneas es la única referencia oblicua permitida en esta expedición
+  // (regla de lore sensible, ver Veyra_Campania_Alderium.md sección 1: nunca se nombra lo que evoca).
+  // Por eso mismo esta expedición no lleva quiz: no hay una respuesta correcta que dar todavía.
+  alderium_templo: {
+    faction:"alderium", name:"El Templo del Distrito Bajo", icon:"🗿", isCampaign:true, startNode:"t1a", level:2,
+    mapPos:{left:68,top:55},
+    nodes:{
+      t1a:{name:"Las Ruinas Bajo el Distrito", type:"decision", step:1,
+        text:"Bajo los cimientos del Distrito Bajo hay una escalera que nadie recuerda haber construido. La patrulla la señala en los mapas simplemente como «lo viejo».",
+        exits:[{dest:"t1b", hint:"Bajar"}]},
+      t1b:{name:"Las Ruinas Bajo el Distrito", type:"decision", step:1,
+        text:"El aire ahí abajo es más frío de lo que debería, y las paredes están cubiertas de símbolos que ningún erudito de Alderium ha logrado traducir — más viejos, dicen, que el trono mismo.",
+        exits:[{dest:"t2a", hint:"Seguir bajando"}]},
+      t2a:{name:"Los Símbolos sin Nombre", type:"decision", step:2,
+        text:"Un símbolo se repite más que los otros: un círculo partido por siete líneas que no llegan al centro. Nadie sabe qué significa. Nadie, en Alderium, parece querer preguntar.",
+        exits:[{dest:"t2b", hint:"Continuar"}]},
+      t2b:{name:"Los Símbolos sin Nombre", type:"decision", step:2,
+        text:"Podés detenerte a copiar los símbolos en tu cuaderno, o seguir de largo — la ronda no tiene tiempo para historia.",
+        exits:[
+          {dest:"t3a", hint:"Copiar los símbolos", reward:{type:"collection",key:"cierre_filas",n:1,fac:"alderium"}},
+          {dest:"t3a", hint:"Seguir de largo", reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
+        ]},
+      t3a:{name:"El Corredor del Guardián", type:"decision", step:3,
+        text:"Al final del corredor, una figura de piedra del tamaño de dos hombres bloquea el paso: una armadura antigua, sin ojos tallados en el yelmo, que no se ha movido en —a juzgar por el polvo— generaciones.",
+        exits:[{dest:"t3duel", hint:"Acercarse al símbolo partido"}]},
+      t3duel:{name:"El Guardián Ciego", type:"combat", step:4, subtitle:"El Guardián Ciego del Templo",
+        text:"No ataca primero. No parece ver. Pero cuando das un paso hacia el símbolo partido, se mueve — despacio, seguro, como si hubiera hecho esto un millón de veces antes que vos.",
+        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
+        reward:{type:"collection",key:"estandarte_alba",n:1,fac:"alderium"},
+        boss:true, bossId:"guardian_ciego",
+        repeatReward:{type:"collection",key:"sold_alderium_5",n:1,fac:"alderium"},
+        campaignDone:true, next:"exit"},
+    }
+  },
 };
 const CONTINENT_PLACES = {alderium:["alderium_piloto"]};
 // Cadena de expediciones por facción, en orden (sección "Campañas multi-expedición"): cada entrada
 // es un placeId de PLACES con isCampaign:true. Pensada para crecer a 10-15 expediciones por facción.
-const CAMPAIGN_CHAINS = {alderium:["alderium_juramento"]};
+const CAMPAIGN_CHAINS = {alderium:["alderium_juramento","alderium_patrulla","alderium_templo"]};
 // Indexado por placeId de expedición (antes era por facción: con varias expediciones en cadena,
 // cada una necesita su propia lista de nombres de paso).
-const CAMPAIGN_STEP_NAMES = {alderium_juramento:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"]};
+const CAMPAIGN_STEP_NAMES = {
+  alderium_juramento:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"],
+  alderium_patrulla:["La Ronda de la Mañana","El Incidente de Lior","El Mercado de los Distritos Bajos","La Prueba de Honor"],
+  alderium_templo:["Las Ruinas Bajo el Distrito","Los Símbolos sin Nombre","El Corredor del Guardián","El Guardián Ciego"],
+};
 function buildVanillaOnlyDeck(fac){
   const deck=[]; const pool=soldierPool(fac); let vi=0;
   while(deck.length<20){ deck.push(instantiate(null, pool[vi%pool.length].def, pool[vi%pool.length].key)); vi++; }
@@ -2107,6 +2188,21 @@ function buildRhaenColiseoDeck(fac){
     const n=copyLimit(k); for(let i=0;i<n && deck.length<20;i++) deck.push(instantiate(k));
   }
   const pool=soldierPool(fac).slice().sort((a,b)=>b.def.vida-a.def.vida);
+  let vi=0;
+  while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
+  return shuffle(deck);
+}
+// Cassia, Capitana de la Ronda, jefa de "La Patrulla de los Distritos": pelea con su propia línea
+// de Filo (arquera, portadora_comun, primera_línea) a copias máximas —su aura las potencia— más
+// Darian queda afuera, mismo criterio que Rhaen en el Coliseo (es el propio héroe del jugador).
+function buildCassiaPatrolDeck(fac){
+  const deck=[instantiate("cassia")];
+  for(const k in LIB){
+    if(k==="cassia"||k==="darian") continue;
+    if(LIB[k].fac!==fac || LIB[k].type!=="criatura" || LIB[k].sub!=="filo") continue;
+    const n=copyLimit(k); for(let i=0;i<n && deck.length<20;i++) deck.push(instantiate(k));
+  }
+  const pool=soldierPool(fac).slice().sort((a,b)=>(b.def.atk+b.def.vida)-(a.def.atk+a.def.vida));
   let vi=0;
   while(deck.length<20){ deck.push(instantiate(null,pool[vi%pool.length].def,pool[vi%pool.length].key)); vi++; }
   return shuffle(deck);
@@ -3732,10 +3828,12 @@ function checkWin(){
       if(duelReturn.boss && duelReturn.placeId){ S.placeCleared[duelReturn.placeId]=true; saveGame(); } // jefe vencido al menos una vez
       if(duelReturn.campaignDone && placeState){
         const dg=PLACES[placeState.placeId];
-        setExpeditionProgress(dg.faction, placeState.placeId, {done:true});
-        S.placesUnlocked[dg.faction]=true;
-        saveGame();
-        b.querySelector(".sub").textContent += " ¡Lugares de "+FACTIONS[dg.faction].name+" desbloqueados!";
+        setExpeditionProgress(dg.faction, placeState.placeId, {done:true}); // esta expedición: siempre
+        if(isCampaignComplete(dg.faction)){ // la cadena ENTERA: recién ahí desbloquean los lugares normales
+          S.placesUnlocked[dg.faction]=true;
+          saveGame();
+          b.querySelector(".sub").textContent += " ¡Lugares de "+FACTIONS[dg.faction].name+" desbloqueados!";
+        } else saveGame();
       }
       contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); placeAdvance(duelReturn.next); };
       replayBtn.style.display="none";
