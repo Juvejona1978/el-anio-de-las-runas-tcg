@@ -551,15 +551,20 @@
     #enemyHero{grid-row:1;grid-column:1}
     .side.enemy{grid-row:2;grid-column:1;min-height:0}
     .side.player{grid-row:3;grid-column:1;min-height:0}
+    /* fondo de tablero a todo el ancho en ambas filas de campo (antes solo la rival lo tenía) —
+       evita que el costado del jugador se vea como vacío/sin distribuir frente al resto de la pantalla */
+    .side.enemy,.side.player{background:radial-gradient(ellipse 90% 100% at 50% 50%,#1b1728,#121019 78%)}
     .side .field{overflow-y:auto}
     .mid{grid-row:4;grid-column:1;height:auto;background:none;align-self:stretch}
     #playerHero{grid-row:4;grid-column:1;align-self:center}
     .hand{grid-row:5;grid-column:1;padding:10px 14px 32px}
 
-    /* herobar de cada jugador como píldora compacta centrada, en vez de franja de ancho completo */
-    .herobar{max-width:min(620px,58vw);margin:0 auto;border-radius:999px;
-      border:1px solid var(--line);border-bottom:1px solid var(--line)!important;
-      border-top:1px solid var(--line)!important;padding:7px 20px}
+    /* herobar a todo el ancho de la fila (fondo/borde ya no quedan recortados a una píldora
+       angosta) pero el contenido (retrato+nombre+vida+maná+mazo) se mantiene agrupado y
+       centrado — separar el nombre del conteo de mazo dejaba ese número flotando solo en
+       medio de la pantalla, ilegible, así que se descartó esa variante */
+    .herobar{justify-content:center;padding:10px 26px}
+    .hblock{flex:0 0 auto}
 
     /* el botón de fin de turno queda pegado al extremo derecho de TODA la fila (no solo de la píldora) */
     #endturn{right:18px}
