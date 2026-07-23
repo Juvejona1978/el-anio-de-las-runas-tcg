@@ -63,7 +63,7 @@
      volver a un layout de tarjetas-menú acá — la estructura espacial ya
      es la definitiva, solo cambia el fondo cuando llegue el .jpg.
      ==================================================================== */
-  #mapScreen,#cityScreen,#placeMapScreen,#placeInterior{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
+  #mapScreen,#cityScreen,#placeInterior{position:fixed;inset:0;z-index:48;display:none;overflow:hidden}
   .scene-bg{position:absolute;inset:0;background-color:var(--bg-base);background-size:cover;background-position:center;
     background-image:
       radial-gradient(circle at 22% 28%, rgba(255,255,255,.035) 0, transparent 42%),
@@ -98,7 +98,7 @@
     border-radius:50%;padding:2px;line-height:1}
   .hs-label{font-family:Georgia,serif;font-size:11px;color:var(--text);background:rgba(0,0,0,.6);
     padding:3px 9px;border-radius:3px;border:1px solid var(--frame);white-space:nowrap;backdrop-filter:blur(2px)}
-  #mapHotspots,#placeHotspots{position:absolute;inset:0;z-index:2}
+  #mapHotspots{position:absolute;inset:0;z-index:2}
 
   /* Hotspot de lugar: rombo en vez de círculo, más chico */
   .place-hotspot .hs-diamond{width:44px;height:44px;border:2px solid var(--frame);transform:rotate(45deg);
@@ -650,38 +650,31 @@
   </g></symbol>
 </svg>
 
-<!-- ===================== MAPA MUNDIAL =====================
-     Pantalla-lugar: la imagen de fondo ES el mapa. data-img-slot:
+<!-- ===================== CAMPAÑA: SELECCIÓN DE FACCIÓN =====================
+     Reusa la plantilla de hotspots del viejo mapa mundial. data-img-slot:
      assets/backgrounds/mapas/mapa_general_veyra.jpg -->
 <div id="mapScreen">
   <div class="scene-bg" id="mapBg" data-slot-label="mapa_general_veyra.jpg"></div>
-  <div class="scene-title">VEYRÁ</div>
-  <div class="scene-sub">Elegí un continente</div>
+  <button class="compass-btn" id="factionPickBack" title="Volver al menú">‹</button>
+  <div class="scene-title">CAMPAÑA</div>
+  <div class="scene-sub">Elegí una facción</div>
   <div id="mapHotspots"></div>
-  <div class="lockhint">🔒 Los continentes bloqueados se desbloquean completando la campaña del anterior.</div>
+  <div class="lockhint">🔒 Las facciones bloqueadas se desbloquean completando la campaña de la anterior.</div>
 </div>
 
-<!-- ===================== CIUDAD CENTRAL =====================
-     Plantilla única para las 6 facciones — misma estructura, distinta
-     estética por imagen. data-img-slot: assets/backgrounds/mapas/ciudad_<faccion>.jpg -->
+<!-- ===================== MENÚ PRINCIPAL =====================
+     Reusa la plantilla de marcos de la vieja Ciudad Central — 5 botones:
+     Campaña / Duelo de Entrenamiento / Tienda / Mazos-Cartas / Ajustes.
+     data-img-slot: assets/backgrounds/mapas/mapa_general_veyra.jpg -->
 <div id="cityScreen">
-  <div class="scene-bg" id="cityBg"></div>
-  <button class="compass-btn" id="cityToMap" title="Al mapa mundial">🧭</button>
-  <div class="city-title" id="cityTitle"></div>
+  <div class="scene-bg" id="cityBg" data-slot-label="mapa_general_veyra.jpg"></div>
+  <div class="city-title">VEYRÁ</div>
   <div class="city-frames" id="cityFrames"></div>
 </div>
 
-<!-- ===================== MAPA DE LUGARES DEL CONTINENTE =====================
-     data-img-slot: assets/backgrounds/mapas/mapa_<faccion>.jpg -->
-<div id="placeMapScreen">
-  <div class="scene-bg" id="placeMapBg"></div>
-  <button class="compass-btn" id="placeMapBack" title="Volver a la ciudad">‹</button>
-  <div class="scene-title" id="placeMapTitle"></div>
-  <div id="placeHotspots"></div>
-</div>
-
-<!-- ===================== INTERIOR DE LUGAR =====================
-     data-img-slot: assets/backgrounds/lugares/lugar_<id>.jpg -->
+<!-- ===================== CAMPAÑA: INTRO / HITO / DUELO / CIERRE =====================
+     Carta única con swipe (estilo Reigns), recorrida linealmente por CAMPAIGN[fac].steps.
+     data-img-slot: assets/backgrounds/lugares/campana_<faccion>.jpg -->
 <div id="placeInterior">
   <div class="scene-bg" id="placeBg"></div>
   <button class="compass-btn" id="placeExitBtn" title="Abandonar lugar">✕</button>
@@ -1057,53 +1050,35 @@ function healAmount(p, base){ return base + (p.field.some(x=>x.flag==="lior") ? 
 function effVida(p,c){ return effMaxVida(p,c) - c.damage; }
 
 // ============================================================
-//  Navegación: Mapa mundial → Ciudad → Mapa de lugares → Lugar → Duelo
-//  (secciones 7, 10, 11, 13 del diseño). Pantallas-lugar: la imagen de
-//  fondo ES el lugar (ver data-slot-label en el HTML), la UI solo pone
-//  puntos interactivos encima. Ciudad Central es UNA plantilla
-//  reutilizada por las 6 facciones.
+//  Navegación: Menú principal → (Campaña → facción → secuencia lineal de
+//  duelos) | (Duelo de Entrenamiento) | Tienda | Mazos/Cartas | Ajustes.
+//  Pantallas-lugar: la imagen de fondo ES el lugar (ver data-slot-label en
+//  el HTML), la UI solo pone puntos interactivos encima.
 // ============================================================
 const CAMPAIGN_ORDER = ["alderium","qashir","brasshaven","koren","caelum","nomadas"];
-// Progresión de campaña (sección 6.1): solo Alderium desbloqueada al inicio.
-// Sin motor de campaña completo todavía no hay forma de desbloquear el resto — se deja el estado listo para cuando lo haya.
-S.unlocked = {alderium:true};
 S.collection = {}; // {clave_de_carta: copias poseídas}
 S.savedDecks = {}; // {facción: {clave: copias}} — un mazo activo por facción
-S.campaignProgress = {}; // {facción: {expeditions: {placeId: {nodeId, done}}}} — progreso de cada expedición de la cadena
-S.placesUnlocked = {}; // {facción: true} — se desbloquea al completar la campaña de esa facción
+S.campaignProgress = {}; // {facción: {duelIndex, bossDefeated}} — progreso de la secuencia lineal de esa facción
 // Config central de mezcla de audio (motor de audio, más abajo) — un solo lugar para tocar
 // niveles/tono de todo el sistema. El control en vivo del jugador vive en S.audio (persistido,
 // atado a los sliders del panel); estos son sus valores de arranque más las constantes de
 // procesamiento (reverb/shelf/grave) que no tienen slider propio.
 const AUDIO_MIX = { musicVol:0.7, sfxVol:0.85, reverbWet:0.25, reverbDry:0.8, shelfCutDb:-4, thumpBaseFreq:150, thumpEndFreq:65, thumpOnZzfx:true };
 S.audio = {musicVol:AUDIO_MIX.musicVol, sfxVol:AUDIO_MIX.sfxVol, muted:false}; // preferencias de audio (sección 5 del motor de audio)
-S.loreSeen = {}; // {factId: true} — lore ambiental leído en nodos "lugar"
-S.placeCleared = {}; // {placeId: true} — jefe vencido al menos una vez
-function isUnlocked(k){ return !!S.unlocked[k]; }
-// Progreso de campaña, formato v5+: S.campaignProgress[fac] = {expeditions: {placeId: {nodeId, done}}}.
-// Una facción puede tener varias expediciones en cadena (CAMPAIGN_CHAINS) — cada una es un placeId
-// normal de PLACES con isCampaign:true, y su progreso vive bajo su propio placeId, no bajo la facción.
-function campaignExpeditionState(fac, placeId){
-  const cp=S.campaignProgress[fac];
-  return (cp && cp.expeditions) ? cp.expeditions[placeId] : undefined;
+// Progreso de campaña, formato v6: S.campaignProgress[fac] = {duelIndex, bossDefeated}. duelIndex es
+// el próximo duelo a jugar (0-based, 0..20); bossDefeated marca la campaña de esa facción como completa.
+function campaignProgress(fac){
+  if(!S.campaignProgress[fac]) S.campaignProgress[fac]={duelIndex:0, bossDefeated:false};
+  return S.campaignProgress[fac];
 }
-function setExpeditionProgress(fac, placeId, patch){
-  if(!S.campaignProgress[fac]) S.campaignProgress[fac]={expeditions:{}};
-  if(!S.campaignProgress[fac].expeditions) S.campaignProgress[fac].expeditions={};
-  S.campaignProgress[fac].expeditions[placeId]=Object.assign({}, S.campaignProgress[fac].expeditions[placeId], patch);
-  saveGame();
-}
-// Primera expedición de la cadena que todavía no está "done": es la que se muestra como hotspot
-// dorado ACTUAL en el mapa de continente. Devuelve null si la cadena está vacía o ya se completó entera.
-function currentExpeditionId(fac){
-  const chain=CAMPAIGN_CHAINS[fac]||[];
-  return chain.find(id=>{ const st=campaignExpeditionState(fac,id); return !(st && st.done); }) || null;
-}
-// La campaña de una facción está completa solo cuando TODAS las expediciones de su cadena lo están.
-function isCampaignComplete(fac){
-  const chain=CAMPAIGN_CHAINS[fac]||[];
-  if(!chain.length) return false;
-  return chain.every(id=>{ const st=campaignExpeditionState(fac,id); return !!(st && st.done); });
+// Una facción de campaña se desbloquea al vencer al jefe final de la anterior en CAMPAIGN_ORDER
+// (Alderium, la primera, siempre está desbloqueada). Independiente de si esa facción ya tiene
+// contenido real de campaña (ver CAMPAIGN más abajo) — eso lo decide factionHasCampaign.
+function factionCampaignUnlocked(fac){
+  const idx=CAMPAIGN_ORDER.indexOf(fac);
+  if(idx<=0) return true;
+  const prev=CAMPAIGN_ORDER[idx-1];
+  return !!(S.campaignProgress[prev] && S.campaignProgress[prev].bossDefeated);
 }
 
 // ---- Persistencia (localStorage, clave versionada) ----
@@ -1114,12 +1089,16 @@ function isCampaignComplete(fac){
 // v4: Rhaen Iveros pasa a fac:"qashir" (su mecánica se revisará con el diseño fino de Qashir) y la
 // recompensa del jefe final de la campaña de Alderium pasa a ser Pretoriano del Alba (Rhaen ya no
 // puede ser recompensa de una campaña mono-facción de Alderium).
-// v5: campañas multi-expedición. S.campaignProgress[fac] pasa de {nodeId,done} (1 campaña = 1 lugar)
-// a {expeditions:{placeId:{nodeId,done}}} (cadena de N expediciones, CAMPAIGN_CHAINS). loadGame()
-// migra sola una partida vieja (v1-v4, mismos nombres de campo salvo los renames ya cubiertos abajo)
-// sin perder progreso: el progreso viejo de una facción se envuelve como la expedición inicial de
-// su cadena (CAMPAIGN_CHAINS[fac][0]), preservando nodeId y done.
-const SAVE_KEY = "veyra_save_v5";
+// v6: se reemplaza el mapa/grafo de lugares por una secuencia lineal de duelos por facción (ver
+// CAMPAIGN más abajo). S.campaignProgress[fac] pasa de {expeditions:{...}} (grafo de nodos, v5) a
+// {duelIndex, bossDefeated} (posición en la secuencia lineal) — no hay mapeo 1:1 limpio entre nodo
+// de grafo viejo y duelo nuevo, así que loadGame() NO migra el progreso de campaña de saves v1-v5:
+// arranca esa facción en duelIndex:0 (efecto: quien tenía una campaña en curso la re-empieza desde
+// el duelo 1). collection y savedDecks (cartas y mazos del jugador) sí se preservan intactos desde
+// cualquier versión vieja. S.unlocked/S.placesUnlocked/S.placeCleared desaparecen (el desbloqueo de
+// facción ahora se deriva de campaignProgress, ver factionCampaignUnlocked).
+const SAVE_KEY = "veyra_save_v6";
+const SAVE_KEY_LEGACY_V5 = "veyra_save_v5";
 const SAVE_KEY_LEGACY_V4 = "veyra_save_v4";
 const SAVE_KEY_LEGACY_V3 = "veyra_save_v3";
 const SAVE_KEY_LEGACY_V2 = "veyra_save_v2";
@@ -1127,63 +1106,41 @@ const SAVE_KEY_LEGACY_V1 = "veyra_save_v1";
 function saveGame(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      unlocked: S.unlocked, collection: S.collection, savedDecks: S.savedDecks,
-      campaignProgress: S.campaignProgress, placesUnlocked: S.placesUnlocked,
-      audio: S.audio, loreSeen: S.loreSeen, placeCleared: S.placeCleared,
+      collection: S.collection, savedDecks: S.savedDecks,
+      campaignProgress: S.campaignProgress, audio: S.audio,
     }));
   } catch(e){ /* localStorage no disponible (modo privado, cuota, etc.): seguir solo en memoria */ }
 }
 function loadGame(){
   try{
     let raw=localStorage.getItem(SAVE_KEY);
-    let migratingLegacy=null; // "v4" | "v3" | "v2" | "v1" | null
+    let migratingLegacy=null; // "v5" | "v4" | "v3" | "v2" | "v1" | null
     if(!raw){
-      raw=localStorage.getItem(SAVE_KEY_LEGACY_V4);
-      if(raw) migratingLegacy="v4";
-      else{
-        raw=localStorage.getItem(SAVE_KEY_LEGACY_V3);
-        if(raw) migratingLegacy="v3";
-        else{
-          raw=localStorage.getItem(SAVE_KEY_LEGACY_V2);
-          if(raw) migratingLegacy="v2";
-          else{ raw=localStorage.getItem(SAVE_KEY_LEGACY_V1); if(raw) migratingLegacy="v1"; }
-        }
+      for(const [key,tag] of [[SAVE_KEY_LEGACY_V5,"v5"],[SAVE_KEY_LEGACY_V4,"v4"],[SAVE_KEY_LEGACY_V3,"v3"],[SAVE_KEY_LEGACY_V2,"v2"],[SAVE_KEY_LEGACY_V1,"v1"]]){
+        raw=localStorage.getItem(key);
+        if(raw){ migratingLegacy=tag; break; }
       }
       if(!raw) return false;
     }
     const data=JSON.parse(raw);
     if(!data || typeof data!=="object") return false;
-    if(data.unlocked && typeof data.unlocked==="object") Object.assign(S.unlocked, data.unlocked);
     if(data.collection && typeof data.collection==="object") Object.assign(S.collection, data.collection);
     if(data.savedDecks && typeof data.savedDecks==="object") Object.assign(S.savedDecks, data.savedDecks);
-    // campaignProgress: formato nuevo (expeditions) se copia tal cual; formato viejo ({nodeId,done}
-    // directo sobre la facción, v1-v4) se envuelve como la expedición inicial de la cadena de esa facción.
-    if(data.campaignProgress && typeof data.campaignProgress==="object"){
+    // campaignProgress: solo se copia si ya viene en el formato nuevo {duelIndex,bossDefeated} (o sea,
+    // un save v6 sin versionar todavía por otra causa) — el formato viejo (v1-v5, grafo de nodos) se
+    // descarta a propósito, sin intentar traducirlo (ver comentario de v6 más arriba).
+    if(!migratingLegacy && data.campaignProgress && typeof data.campaignProgress==="object"){
       for(const fac in data.campaignProgress){
         const old=data.campaignProgress[fac];
-        if(!old || typeof old!=="object") continue;
-        if(old.expeditions && typeof old.expeditions==="object"){
-          if(!S.campaignProgress[fac]) S.campaignProgress[fac]={expeditions:{}};
-          Object.assign(S.campaignProgress[fac].expeditions, old.expeditions);
-        } else if(old.nodeId!==undefined || old.done!==undefined){
-          const firstId=(CAMPAIGN_CHAINS[fac]||[])[0];
-          if(firstId) setExpeditionProgress(fac, firstId, {nodeId:old.nodeId, done:!!old.done});
-        }
+        if(old && typeof old==="object" && old.duelIndex!==undefined) S.campaignProgress[fac]=old;
       }
     }
-    // placesUnlocked/placeCleared: clave nueva si existe; si no, migrar desde el nombre viejo (v1).
-    const placesUnlockedSrc = data.placesUnlocked || data.dungeonsUnlocked;
-    if(placesUnlockedSrc && typeof placesUnlockedSrc==="object") Object.assign(S.placesUnlocked, placesUnlockedSrc);
-    const placeClearedSrc = data.placeCleared || data.dungeonCleared;
-    if(placeClearedSrc && typeof placeClearedSrc==="object") Object.assign(S.placeCleared, placeClearedSrc);
     if(data.audio && typeof data.audio==="object") Object.assign(S.audio, data.audio);
-    if(data.loreSeen && typeof data.loreSeen==="object") Object.assign(S.loreSeen, data.loreSeen);
     if(migratingLegacy){
-      if(!isCampaignComplete("alderium") && ownedCount("darian")===0) grantCollection("darian",1);
       if(S.savedDecks.alderium && S.savedDecks.alderium.rhaen){ delete S.savedDecks.alderium.rhaen; } // Rhaen ahora es de Qashir
-      if(isCampaignComplete("alderium") && ownedCount("pretoriano_alba")===0) grantCollection("pretoriano_alba",1);
       saveGame();
       try{
+        localStorage.removeItem(SAVE_KEY_LEGACY_V5);
         localStorage.removeItem(SAVE_KEY_LEGACY_V4);
         localStorage.removeItem(SAVE_KEY_LEGACY_V3);
         localStorage.removeItem(SAVE_KEY_LEGACY_V2);
@@ -1314,14 +1271,15 @@ const MUSIC_TRACKS = {
   stinger_derrota:    {src:"assets/audio/musica/stinger_derrota.mp3",     mode:"stinger", maxDuration:12, fadeOut:2.5, volume:1.0},
 };
 // Mapa pantalla → id de pista. "menu" (picker de facción/rival) no tiene pista propia: se deja
-// sonando lo que ya sonaba. Ciudad: Alderium usa su tema propio, el resto tema_ciudad_central.
+// sonando lo que ya sonaba. Home (cityScreen): tema_ciudad_central. Campaña (placeInterior):
+// Alderium usa su tema propio, el resto tema_lugar (ver activeCampaignFac, seteado en enterFactionCampaign).
 const SCREEN_TRACK = {
-  mapScreen:"tema_mapa_mundial", placeMapScreen:"tema_lugar", placeInterior:"tema_lugar",
-  constructorScreen:"tema_constructor",
+  mapScreen:"tema_mapa_mundial", constructorScreen:"tema_constructor",
 };
 function setScreenMusic(screenId){
   let track;
-  if(screenId==="cityScreen") track = currentCity==="alderium" ? "tema_alderium" : "tema_ciudad_central";
+  if(screenId==="cityScreen") track = "tema_ciudad_central";
+  else if(screenId==="placeInterior") track = activeCampaignFac==="alderium" ? "tema_alderium" : "tema_lugar";
   else if(screenId===null) track = "tema_duelo"; // showScreen(null) = tablero de duelo revelado
   else track = SCREEN_TRACK[screenId];
   if(track) playMusic(track);
@@ -1577,205 +1535,86 @@ const MAP_HOTSPOTS = {
   koren:{left:30,top:77}, brasshaven:{left:66,top:77},
 };
 // Cantidad total de lugares planificadas por continente (sección 10) — para el aviso "X de Y construidas".
-const PLACE_TOTALS = {alderium:5, qashir:4, brasshaven:4, koren:4, caelum:4, nomadas:2};
-
-let currentCity=null, placeState=null, duelReturn=null;
-const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", placeMapScreen:"block", placeInterior:"block",
+let duelReturn=null;
+const SCREEN_DISPLAY = {menu:"flex", mapScreen:"block", cityScreen:"block", placeInterior:"block",
   constructorScreen:"flex"};
 function showScreen(id){
   for(const x in SCREEN_DISPLAY){ document.getElementById(x).style.display = (x===id) ? SCREEN_DISPLAY[x] : "none"; }
   setScreenMusic(id);
 }
 
-// ---- 1. Mapa mundial ----
-function renderMap(){
+// ---- 1. Menú principal (id="cityScreen": 5 botones, reutiliza la plantilla de marcos de la
+// vieja Ciudad Central) — Campaña / Duelo de Entrenamiento / Tienda / Mazos-Cartas / Ajustes.
+const HOME_ITEMS = [
+  {role:"campania", t:"Campaña", d:"Recorré la historia de cada facción, duelo a duelo.",
+    go:()=>{ showScreen("mapScreen"); renderCampaignFactionPick(); }},
+  {role:"entrenamiento", t:"Duelo de Entrenamiento", d:"Un duelo suelto, sin historia — elegí tu facción y tu rival.",
+    go:()=>openDuelPicker(chosenFac||"alderium")},
+  {role:"tienda", t:"Tienda", d:"Comercio bajo la primera luz, todavía por abrir.", soon:true},
+  {role:"cartas", t:"Mazos y Cartas", d:"Tu colección y tu mazo, guardados como se guarda un juramento.",
+    go:()=>openHomeConstructorPicker()},
+  {role:"ajustes", t:"Ajustes", d:"Música, efectos y silencio total.",
+    go:()=>document.getElementById("audioPanel").classList.add("show")},
+];
+function renderHome(){
+  const frames=document.getElementById("cityFrames"); frames.innerHTML="";
+  for(const it of HOME_ITEMS){
+    const b=document.createElement("div"); b.className="cityframe"+(it.soon?" soon":"");
+    const slot=`boton_${it.role}.jpg`;
+    b.style.backgroundImage=`url('assets/backgrounds/${slot}')`; // si no existe, cae al fondo semitransparente actual (mismo criterio que el resto del arte)
+    b.innerHTML=`<div><div class="cf-name">${it.t}${it.soon?' <span style="font-size:10px;color:var(--text-dim);font-weight:400">(próximamente)</span>':""}</div>
+      <div class="cf-desc">${it.d}</div></div><div class="cf-slot">${slot}</div>`;
+    b.onclick=()=> it.soon ? toast("Todavía no abrió sus puertas.") : it.go();
+    frames.appendChild(b);
+  }
+}
+function openDuelPicker(fac){
+  chosenFac = factionCampaignUnlocked(fac) ? fac : CAMPAIGN_ORDER.find(factionCampaignUnlocked);
+  refreshFacPickSelection();
+  showScreen("menu");
+}
+function openHomeConstructorPicker(){
+  const unlockedFacs=CAMPAIGN_ORDER.filter(factionCampaignUnlocked);
+  if(unlockedFacs.length<=1){ openConstructor(unlockedFacs[0]||"alderium", {type:"city"}); return; }
+  const box=document.getElementById("mbox");
+  box.innerHTML=`<h3>Mazos y Cartas</h3><div class="mq">Elegí una facción</div>`;
+  for(const k of unlockedFacs){
+    const b=document.createElement("button"); b.className="mopt"; b.textContent=FACTIONS[k].name;
+    b.onclick=()=>{ closeModal(); openConstructor(k, {type:"city"}); };
+    box.appendChild(b);
+  }
+  openModal();
+}
+
+// ---- 2. Campaña → selección de facción (id="mapScreen": reutiliza el viejo mapa mundial de
+// hotspots) — Alderium tiene contenido real (ver CAMPAIGN); el resto queda bloqueada
+// "Próximamente" hasta que se escriba su secuencia.
+function renderCampaignFactionPick(){
   const el=document.getElementById("mapHotspots");
   el.innerHTML="";
   for(const k of CAMPAIGN_ORDER){
-    const f=FACTIONS[k], unlocked=isUnlocked(k), pos=MAP_HOTSPOTS[k];
+    const f=FACTIONS[k], available=!!CAMPAIGN[k];
     const d=document.createElement("div");
-    d.className="hotspot"+(unlocked?"":" locked");
+    d.className="hotspot"+(available?"":" locked");
     d.dataset.faction=k;
-    d.style.left=pos.left+"%"; d.style.top=pos.top+"%";
+    d.style.left=MAP_HOTSPOTS[k].left+"%"; d.style.top=MAP_HOTSPOTS[k].top+"%";
     d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_${k}.png">
-        <span class="hs-init">${f.name[0]}</span>${unlocked?"":'<span class="hs-lock">🔒</span>'}
+        <span class="hs-init">${f.name[0]}</span>${available?"":'<span class="hs-lock">🔒</span>'}
       </div><div class="hs-label">${f.name}</div>`;
     d.onclick=()=>{
-      if(!unlocked){ toast("🔒 Se desbloquea completando la campaña del continente anterior."); return; }
-      openCity(k);
+      if(!available){ toast("🔒 Próximamente."); return; }
+      enterFactionCampaign(k);
     };
     el.appendChild(d);
   }
 }
-
-// ---- 2. Ciudad Central (una plantilla, 6 variantes) ----
-// ---- Ciudades con identidad (canon: Veyra_Ciudades_y_Arco.md) ----
-// Los seis roles funcionales son la MISMA mecánica/código en las 6 ciudades — lo que cambia por
-// facción es nombre, imagen y voz (sección 1 del documento). El rol de salida al mundo ("mundo")
-// no tiene nombre propio en la tabla de la sección 3 del canon: se mantiene genérico ("Salir al
-// mundo") a propósito, no se inventa uno.
-const CITY_VENUE_NAMES = {
-  social:{alderium:"La Taberna del Juramento", qashir:"La Casa de las Apuestas", brasshaven:"La Cantina del Engranaje", koren:"El Círculo del Fuego", caelum:"El Atrio de las Voces", nomadas:"El Fuego Común"},
-  practica:{alderium:"Patio de Armas", qashir:"La Arena de Polvo", brasshaven:"Taller de Pruebas", koren:"Claro de Piedra", caelum:"El Simulacro", nomadas:"El Ruedo"},
-  duelo:{alderium:"Sala del Desafío", qashir:"El Reto del Bazar", brasshaven:"Piso de Fundición", koren:"Altar del Encuentro", caelum:"Cámara de Convergencia", nomadas:"Duelo ante la Caravana"},
-  cartas:{alderium:"Salón de Estandartes", qashir:"La Bóveda de Sellos", brasshaven:"Registro de Patentes", koren:"Cámara de Ecos", caelum:"Archivo Lumínico", nomadas:"Los Fardos del Andar"},
-  mercado:{alderium:"Mercado del Alba", qashir:"El Gran Bazar", brasshaven:"Casa de Cambio", koren:"Trueque del Valle", caelum:"Intercambio Etéreo", nomadas:"Trato entre Fuegos"},
-};
-// Descripción corta (una frase) en la voz de cada facción — sección 4 del canon.
-const CITY_VENUE_DESC = {
-  social:{alderium:"Rumores y compañía, cuando el turno de guardia lo permita.", qashir:"Rumores, tratos y una mesa siempre abierta a nombre de Zahira.", brasshaven:"Vapor, rumores de taller y una ronda cuando baje la presión.", koren:"Historias alrededor del fuego, cuando haya algo que contar.", caelum:"Ecos y consultas, cuando haya alguno que valga la pena oír.", nomadas:"El punto de encuentro de la caravana, cuando se encienda."},
-  practica:{alderium:"Formación y disciplina, sin gloria ni recompensa todavía.", qashir:"Practicá sin apostar nada — todavía.", brasshaven:"Ensayos sin registro, sin consecuencias.", koren:"Un espacio para ensayar, sin memoria que quede grabada.", caelum:"Un ensayo sin peso real, para afinar el gesto.", nomadas:"Un round sin apuesta, para probar el pulso."},
-  duelo:{alderium:"Donde un Guardián demuestra su temple ante un rival real.", qashir:"Un duelo real, con algo real en juego.", brasshaven:"Donde una estrategia se templa contra un rival de verdad.", koren:"Donde dos caminos se cruzan de verdad.", caelum:"Donde dos leyes se ponen a prueba, una frente a la otra.", nomadas:"Un desafío real, con toda la caravana mirando."},
-  cartas:{alderium:"Tu colección y tu mazo, guardados como se guarda un juramento.", qashir:"Tu colección, guardada bajo llave como cualquier trato que importa.", brasshaven:"Tu colección, catalogada y lista para reconfigurar el mazo.", koren:"Tu colección, guardada como se guarda un recuerdo.", caelum:"Tu colección, ordenada como se ordena una ley.", nomadas:"Tu colección, atada y lista para el próximo camino."},
-  mundo:{alderium:"Las ruinas que Alderium todavía jura vigilar.", qashir:"Riesgo que paga mejor que cualquier apuesta segura.", brasshaven:"Rutas catalogadas hacia lo que la Franja todavía no ha desarmado.", koren:"Los caminos antiguos que Kóren recuerda mejor que nadie.", caelum:"Umbrales hacia lo que las Leyes todavía no terminaron de sellar.", nomadas:"Las rutas que la caravana ya anduvo, y las que todavía no."},
-  mercado:{alderium:"Comercio bajo la primera luz, todavía por abrir.", qashir:"Todo tiene precio, si sabés negociarlo.", brasshaven:"Piezas, patentes y trueques, en cuanto abran los libros.", koren:"Lo viejo por lo necesario, según manda la costumbre.", caelum:"Un trueque que todavía busca su alineación correcta.", nomadas:"Donde una caravana cambia lo que trae por lo que le falta."},
-};
-// Líneas de ficción propias al tocar Social/Mercado (todavía no construidos) — nunca un
-// "próximamente" genérico (sección 4 del canon).
-const CITY_SOON_LINES = {
-  social:{
-    alderium:"Las puertas de La Taberna del Juramento están cerradas hasta el cambio de guardia.",
-    qashir:"La Casa de las Apuestas todavía no reparte cartas — nadie apuesta sin testigos, y hoy no hay ninguno.",
-    brasshaven:"La Cantina del Engranaje está cerrada por mantenimiento — vuelvan cuando el vapor baje de presión.",
-    koren:"El Círculo del Fuego arde solo cuando hay algo que contar — hoy el fuego descansa.",
-    caelum:"El Atrio de las Voces guarda silencio — todavía no hay ecos que valga la pena escuchar.",
-    nomadas:"El Fuego Común todavía no se enciende — faltan manos alrededor para prenderlo.",
-  },
-  mercado:{
-    alderium:"El Mercado del Alba no abre sus puestos hasta la primera luz — todavía es de noche.",
-    qashir:"El Gran Bazar espera a que alguien traiga algo que valga la pena negociar.",
-    brasshaven:"La Casa de Cambio todavía está calibrando sus balanzas.",
-    koren:"El Trueque del Valle espera la próxima luna llena para abrir sus canastas.",
-    caelum:"El Intercambio Etéreo aún no encuentra la alineación correcta para abrirse.",
-    nomadas:"El Trato entre Fuegos espera a que la caravana descargue algo digno de cambiar.",
-  },
-};
-function openCity(fac){
-  currentCity=fac; placeState=null;
-  const f=FACTIONS[fac];
-  document.getElementById("cityScreen").dataset.faction=fac;
-  document.getElementById("cityBg").dataset.slotLabel=`ciudad_${fac}.jpg`;
-  document.getElementById("cityTitle").textContent=f.name.toUpperCase();
-  const frames=document.getElementById("cityFrames"); frames.innerHTML="";
-  // Los seis roles funcionales, mismo orden que la sección 2 del canon.
-  const items=[
-    {role:"social", t:CITY_VENUE_NAMES.social[fac], d:CITY_VENUE_DESC.social[fac], soon:true},
-    {role:"practica", t:CITY_VENUE_NAMES.practica[fac], d:CITY_VENUE_DESC.practica[fac], go:()=>openDuelPicker(fac)},
-    // TODO(autor): Práctica y Duelo abren hoy el mismo selector — diferenciar recompensas cuando exista ese sistema.
-    {role:"duelo", t:CITY_VENUE_NAMES.duelo[fac], d:CITY_VENUE_DESC.duelo[fac], go:()=>openDuelPicker(fac)},
-    {role:"cartas", t:CITY_VENUE_NAMES.cartas[fac], d:CITY_VENUE_DESC.cartas[fac], go:()=>openConstructor(fac,{type:"city"})},
-    {role:"mundo", t:"Salir al mundo", d:CITY_VENUE_DESC.mundo[fac], go:()=>openPlaceMap(fac)},
-    {role:"mercado", t:CITY_VENUE_NAMES.mercado[fac], d:CITY_VENUE_DESC.mercado[fac], soon:true},
-  ];
-  for(const it of items){
-    const b=document.createElement("div"); b.className="cityframe"+(it.soon?" soon":"");
-    const slot=`boton_${it.role}_${fac}.jpg`;
-    b.style.backgroundImage=`url('assets/backgrounds/${slot}')`; // si no existe, cae al fondo semitransparente actual (mismo criterio que el resto del arte)
-    b.innerHTML=`<div><div class="cf-name">${it.t}${it.soon?' <span style="font-size:10px;color:var(--text-dim);font-weight:400">(próximamente)</span>':""}</div>
-      <div class="cf-desc">${it.d}</div></div><div class="cf-slot">${slot}</div>`;
-    b.onclick=()=> it.soon ? toast(CITY_SOON_LINES[it.role][fac]) : it.go();
-    frames.appendChild(b);
-  }
-  showScreen("cityScreen");
-}
-document.getElementById("cityToMap").onclick=()=>showScreen("mapScreen");
-
-function openDuelPicker(fac){
-  chosenFac = isUnlocked(fac) ? fac : CAMPAIGN_ORDER.find(isUnlocked);
-  refreshFacPickSelection();
-  showScreen("menu");
-}
-function backToCityFlow(){
-  document.getElementById("banner").style.display="none";
-  S.phase="menu";
-  showScreen(currentCity ? "cityScreen" : "mapScreen");
-}
-
-// ---- 3. Mapa de lugares del continente — "Salir al mundo" abre SIEMPRE esta pantalla.
-// La campaña (si existe y no está completa) aparece como hotspot destacado; los lugares
-// normales quedan bloqueados (candado) hasta completarla.
-// Hotspot rombo compartido por los lugares normales del continente Y las expediciones de campaña
-// ya completadas (revisitables) — misma pinta, mismo candado si locked, mismo destino (enterPlace).
-// Expedición de campaña todavía no alcanzada: visible pero bloqueada, sin spoilear nombre/ícono
-// (antes eran invisibles hasta llegar — pedido explícito del autor: "raro comparado a lo
-// tradicional", prefiere ver el camino que falta aunque esté bloqueado, como en otros juegos
-// de campaña con mapa). Mismo lenguaje visual que placeHotspotEl (rombo+candado), sin llamar a
-// enterPlace nunca — no tiene número de nodo real que abrir todavía.
-function futureExpeditionHotspotEl(dg, stepNumber){
-  const d=document.createElement("div");
-  d.className="hotspot place-hotspot locked";
-  d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
-  d.innerHTML=`<div class="hs-diamond"><span class="hs-lock">🔒</span><span>❔</span></div><div class="hs-label">Expedición ${stepNumber}</div>`;
-  d.onclick=()=>toast("🔒 Completá la expedición actual para desbloquear esta.");
-  return d;
-}
-function placeHotspotEl(id, dg, locked){
-  const d=document.createElement("div");
-  d.className="hotspot place-hotspot"+(locked?" locked":"");
-  d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
-  d.innerHTML=`<div class="hs-diamond" data-img-slot="assets/icons/lugar/icono_lugar_${id}.png">${locked?'<span class="hs-lock">🔒</span>':""}<span>${dg.icon}</span></div><div class="hs-label">${dg.name}</div>`;
-  d.onclick=()=>{
-    if(locked){ toast("🔒 Completá la campaña de "+FACTIONS[dg.faction].name+" para desbloquear sus lugares."); return; }
-    enterPlace(id);
-  };
-  return d;
-}
-function openPlaceMap(fac){
-  currentCity=fac;
-  document.getElementById("placeMapScreen").dataset.faction=fac;
-  document.getElementById("placeMapBg").dataset.slotLabel=`mapa_${fac}.jpg`;
-  document.getElementById("placeMapTitle").textContent="LUGARES";
-  const el=document.getElementById("placeHotspots"); el.innerHTML="";
-  let any=false;
-
-  // Cadena de expediciones (sección "Campañas multi-expedición"): la ACTUAL (primera no completada)
-  // es el hotspot dorado pulsante; las YA COMPLETADAS quedan como hotspots normales revisitables
-  // (mismo mecanismo de jefe evadible que un lugar normal); las futuras todavía no se muestran.
-  const chain=CAMPAIGN_CHAINS[fac]||[];
-  const currentId=currentExpeditionId(fac);
-  for(const id of chain){
-    const dg=PLACES[id];
-    if(id===currentId){
-      any=true;
-      const st=campaignExpeditionState(fac,id);
-      const step = st ? (dg.nodes[st.nodeId]||{}).step||1 : 1;
-      const totalSteps=(CAMPAIGN_STEP_NAMES[id]||[]).length||6;
-      const d=document.createElement("div");
-      d.className="hotspot campaign-hotspot";
-      d.style.left=dg.mapPos.left+"%"; d.style.top=dg.mapPos.top+"%";
-      d.innerHTML=`<div class="hs-circle" data-img-slot="assets/icons/faccion/icono_campana_${fac}.png"><span class="hs-init">⚜️</span></div>
-        <div class="hs-label">${dg.name} — ${step}/${totalSteps}</div>`;
-      d.onclick=()=>enterPlace(id);
-      el.appendChild(d);
-    } else {
-      const st=campaignExpeditionState(fac,id);
-      if(st && st.done){ any=true; el.appendChild(placeHotspotEl(id, dg, false)); }
-      else { any=true; el.appendChild(futureExpeditionHotspotEl(dg, chain.indexOf(id)+1)); }
-    }
-  }
-
-  const list=CONTINENT_PLACES[fac]||[];
-  const placesLocked = chain.length ? !isCampaignComplete(fac) : false;
-  if(list.length){
-    any=true;
-    for(const id of list) el.appendChild(placeHotspotEl(id, PLACES[id], placesLocked));
-    const total=PLACE_TOTALS[fac];
-    if(total && total>list.length){
-      const more=document.createElement("div"); more.className="dg-more";
-      more.textContent=`${list.length} de ${total} lugares construidos — el resto llega más adelante.`;
-      el.appendChild(more);
-    }
-  }
-  if(!any){ el.innerHTML=`<div class="dg-empty">Sin lugares todavía en ${FACTIONS[fac].name}.</div>`; }
-  showScreen("placeMapScreen");
-}
-document.getElementById("placeMapBack").onclick=()=>showScreen("cityScreen");
+document.getElementById("factionPickBack").onclick=()=>showScreen("cityScreen");
 
 // ============================================================
 //  Colección y Constructor de Mazos
 //  Colección: {clave_de_carta: copias poseídas} (S.collection, inicializada
-//  más arriba junto a S.unlocked). El constructor SOLO muestra cartas que
-//  el jugador posee (no todo el pool).
+//  más arriba). El constructor SOLO muestra cartas que el jugador posee
+//  (no todo el pool).
 // ============================================================
 function grantCollection(key, n){ S.collection[key]=(S.collection[key]||0)+n; saveGame(); }
 function ownedCount(key){ return S.collection[key]||0; }
@@ -1897,681 +1736,247 @@ document.getElementById("ctorSaveBtn").onclick=()=>{
   else showScreen("cityScreen");
 };
 
-// ---- 4. Interior de lugar: grafo de nodos con swipe (estilo Reigns) ----
-// Lugar piloto (sección 11 + grafo en Veyra_Grafo_Lugares.mermaid + jefe de sección 8).
-
-// ---- Plantillas de topología reutilizables (sección "Sistemas de Lugares Profundos" #1) ----
-// Cada plantilla es solo DATOS: un mapa id -> [ids de destino] que describe la FORMA del grafo,
-// sin contenido. buildPlaceGraph(shape, content) la combina con el contenido real (texto, tipo,
-// enemigos, recompensas...) que da cada autor vía content:{id:{...}} y arma el objeto `nodes` final:
-//  - un id con 1 solo destino queda como nodo de paso (combat/quiz/bridge/place/decision-continua):
-//    se le agrega `next` con ese destino.
-//  - un id con 2+ destinos se resuelve como `type:"decision"` con `exits:[{dest,hint,reward}]`,
-//    tomando `content[id].hints`/`content[id].rewards` (alineados por índice con los destinos).
-// `shape` puede ser la clave de una plantilla de abajo, o un objeto de aristas ya armado a mano
-// (por ejemplo clonando una plantilla y agregándole un desvío propio) — así un lugar puede
-// "usar" una forma base y todavía sumarle un callejón sin salida puntual.
-const PLACE_TOPOLOGIES = {
-  // (a) Lineal con un desvío: cadena principal con un tramo que se bifurca y reconecta antes del jefe.
-  linear_detour: {n1:["n2"], n2:["n3a","n3b"], n3a:["n4"], n3b:["n4"], n4:["n5"], n5:["n6a","n6b"],
-    n6a:["n7"], n6b:["n7"], n7:["n8"], n8:["boss"], boss:["exit"]},
-  // (b) Bifurcación temprana que NO reconecta hasta el jefe: dos ramas totalmente separadas (8-10 nodos c/u en uso real).
-  early_fork_no_reconnect: {n1:["a1","b1"],
-    a1:["a2"], a2:["a3"], a3:["a4"], a4:["boss"],
-    b1:["b2"], b2:["b3"], b3:["b4"], b4:["boss"],
-    boss:["exit"]},
-  // (c) Dos anillos unidos: dos bifurcaciones-que-reconectan encadenadas una tras otra.
-  double_ring: {n1:["r1a","r1b"], r1a:["join1"], r1b:["join1"],
-    join1:["r2a","r2b"], r2a:["join2"], r2b:["join2"], join2:["boss"], boss:["exit"]},
-  // (d) Árbol con 2 callejones sin salida premiados: dos ramas, cada una con un desvío que TERMINA
-  //     el lugar con recompensa (sin jefe) en vez de reconectar.
-  tree_two_deadends: {n1:["a1","b1"],
-    a1:["a2","deadendA"], a2:["join"], deadendA:["exit"],
-    b1:["b2","deadendB"], b2:["join"], deadendB:["exit"],
-    join:["boss"], boss:["exit"]},
-  // (e) Laberinto con atajo oculto: recorrido largo con un atajo que se salta varios nodos.
-  maze_shortcut: {n1:["n2"], n2:["n3"], n3:["n4","shortcut"], n4:["n5"], n5:["n6"], n6:["n7"],
-    n7:["boss"], shortcut:["boss"], boss:["exit"]},
-};
-function buildPlaceGraph(shape, content){
-  const edges = typeof shape==="string" ? PLACE_TOPOLOGIES[shape] : shape;
-  const nodes={};
-  for(const id in edges){
-    const dests=edges[id]; const base=content[id]||{};
-    if(dests.length<=1){ nodes[id]=Object.assign({}, base, {next: dests[0]}); }
-    else {
-      const hints=base.hints||[], rewards=base.rewards||[];
-      nodes[id]=Object.assign({type:"decision"}, base, {
-        exits: dests.map((d,i)=>({dest:d, hint:hints[i]||"Avanzar", reward:rewards[i]||null}))
-      });
-    }
-  }
-  return nodes;
-}
-
-// ---- Conversor del formato "game-graph-map" del editor externo del autor ----
-// El autor diseña expediciones visualmente en una herramienta aparte que exporta un grafo genérico
-// {format:"game-graph-map", nodes:[{id,label,type,description,tags,position}], edges:[{source,target,
-// label,direction,cost,description}]} con type de nodo ∈ {"spawn","location","objective"}. El grafo
-// es solo FORMA (como PLACE_TOPOLOGIES); `content` (mismo tipo de objeto id->{...} que recibe
-// buildPlaceGraph) le da la carne jugable — si a un nodo le falta content, se genera un placeholder
-// tipo "decision" con su label/description, para que el autor pueda iterar el mapa sin escribir texto
-// todavía. Devuelve {startNode, nodes} — se combina a mano con faction/name/icon/mapPos/level para
-// completar una entrada de PLACES (esos datos no viven en el grafo del editor).
-function convertGraphMap(graph, content){
-  content = content || {};
-  if(!graph || graph.format!=="game-graph-map" || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges))
-    throw new Error('convertGraphMap: se esperaba {format:"game-graph-map", nodes:[...], edges:[...]}.');
-
-  const byId={};
-  for(const n of graph.nodes){
-    if(byId[n.id]) throw new Error(`convertGraphMap: id de nodo duplicado "${n.id}".`);
-    byId[n.id]=n;
-  }
-  const spawns=graph.nodes.filter(n=>n.type==="spawn");
-  if(spawns.length!==1) throw new Error(`convertGraphMap: se esperaba exactamente 1 nodo spawn, hay ${spawns.length}.`);
-  const objectives=graph.nodes.filter(n=>n.type==="objective");
-  if(!objectives.length) throw new Error("convertGraphMap: se necesita al menos 1 nodo objective.");
-
-  // Adyacencia dirigida: source->target siempre, aunque la arista venga marcada "bidirectional"
-  // (el swipe/tap del motor solo avanza — nunca hay vuelta atrás real). Se avisa por consola, no falla.
-  const adj={}; for(const n of graph.nodes) adj[n.id]=[];
-  for(const e of graph.edges){
-    if(!byId[e.source]) throw new Error(`convertGraphMap: arista con source desconocido "${e.source}".`);
-    if(!byId[e.target]) throw new Error(`convertGraphMap: arista con target desconocido "${e.target}".`);
-    if(e.direction==="bidirectional") console.warn(`convertGraphMap: arista bidireccional "${e.source}" -> "${e.target}" (${e.label||"sin label"}) tratada como dirigida — el swipe solo avanza.`);
-    adj[e.source].push({to:e.target, label:e.label});
-  }
-  for(const id in adj) if(adj[id].length>2) throw new Error(`convertGraphMap: el nodo "${id}" tiene ${adj[id].length} aristas salientes (máximo 2 — el motor solo swipea izquierda/derecha).`);
-
-  // BFS desde el spawn: distancia mínima = step-1 (usado por la barra de progreso existente).
-  const spawnId=spawns[0].id;
-  const dist={[spawnId]:0};
-  const order=[spawnId];
-  for(let i=0;i<order.length;i++){
-    const cur=order[i];
-    for(const {to} of adj[cur]) if(dist[to]===undefined){ dist[to]=dist[cur]+1; order.push(to); }
-  }
-  for(const o of objectives) if(dist[o.id]===undefined)
-    throw new Error(`convertGraphMap: el objective "${o.id}" (${o.label}) no es alcanzable desde el spawn.`);
-
-  // Ciclos alcanzables: DFS con pila de recursión (blanco/gris/negro) partiendo del spawn — el swipe
-  // es estrictamente hacia adelante, así que cualquier back-edge dentro de lo alcanzable es un error
-  // de diseño del mapa, no algo que el motor pueda resolver solo.
-  const state={}; let cyclePath=null;
-  (function dfs(id, path){
-    if(cyclePath) return;
-    state[id]=1; path.push(id);
-    for(const {to} of adj[id]){
-      if(cyclePath) return;
-      if(state[to]===1){ cyclePath=path.concat(to); return; }
-      if(state[to]===2) continue;
-      dfs(to, path);
-    }
-    path.pop(); state[id]=2;
-  })(spawnId, []);
-  if(cyclePath) throw new Error(`convertGraphMap: ciclo alcanzable detectado: ${cyclePath.join(" -> ")}.`);
-
-  const nodes={};
-  for(const n of graph.nodes){
-    const outs=adj[n.id];
-    const own=content[n.id];
-    const node = own ? Object.assign({}, own) : {type:"decision", text:n.description||`TODO(autor): contenido para "${n.label}".`};
-    if(node.name===undefined) node.name=n.label;
-    if(dist[n.id]!==undefined) node.step=dist[n.id]+1;
-    if(node.next===undefined && node.exits===undefined){
-      if(outs.length===2) node.exits=outs.map(o=>({dest:o.to, hint:o.label||byId[o.to].label||"Avanzar"}));
-      else node.next = outs.length===1 ? outs[0].to : "exit";
-    }
-    nodes[n.id]=node;
-  }
-  return {startNode:spawnId, nodes};
-}
-
-// Autotest del conversor (no se llama solo — es una herramienta de regresión para correr a mano
-// desde la consola de devtools, `runConvertGraphMapSelfTest()`, cada vez que se toque convertGraphMap
-// o llegue un mapa nuevo del editor externo). Cubre el mapa de ejemplo pedido: 16 nodos, 19 aristas,
-// 1 bidireccional, labels duplicados "Ruinas" — y una tanda de mapas inválidos que deben fallar.
-function runConvertGraphMapSelfTest(){
-  const results=[];
-  function ok(name,cond,detail){ results.push({name, pass:!!cond, detail: cond? "" : (detail||"")}); }
-
-  // ---- Mapa de ejemplo: dos ramas (a*/b*) con un desvío a un nodo "Ruinas" en cada una que
-  // reconectan en join1, un segundo par de ramas (c1/c2) que reconecta en join2, y de ahí dos
-  // caminos (d1/d2, unidos por la única arista bidireccional) hasta el objective. 16 nodos, 19 aristas.
-  const graph = {format:"game-graph-map",
-    nodes:[
-      {id:"spawn", label:"La Entrada", type:"spawn", description:"Entrada a la expedición.", position:{x:0,y:0}},
-      {id:"a1", label:"Sendero Alto", type:"location", position:{x:1,y:-1}},
-      {id:"a2", label:"Paso Alto", type:"location", position:{x:2,y:-1}},
-      {id:"a3", label:"Cresta Alta", type:"location", position:{x:3,y:-1}},
-      {id:"ruinas_a", label:"Ruinas", type:"location", position:{x:2,y:-2}},
-      {id:"b1", label:"Sendero Bajo", type:"location", position:{x:1,y:1}},
-      {id:"b2", label:"Paso Bajo", type:"location", position:{x:2,y:1}},
-      {id:"b3", label:"Cauce Bajo", type:"location", position:{x:3,y:1}},
-      {id:"ruinas_b", label:"Ruinas", type:"location", position:{x:4,y:1}},
-      {id:"join1", label:"El Cruce", type:"location", position:{x:5,y:0}},
-      {id:"c1", label:"Galería Este", type:"location", position:{x:6,y:-1}},
-      {id:"c2", label:"Galería Oeste", type:"location", position:{x:6,y:1}},
-      {id:"join2", label:"El Umbral", type:"location", position:{x:7,y:0}},
-      {id:"d1", label:"Escalinata", type:"location", position:{x:8,y:-1}},
-      {id:"d2", label:"Rampa", type:"location", position:{x:8,y:1}},
-      {id:"objective", label:"El Corazón de las Ruinas", type:"objective", position:{x:9,y:0}},
-    ],
-    edges:[
-      {source:"spawn", target:"a1", label:"El sendero alto"},
-      {source:"spawn", target:"b1", label:"El sendero bajo"},
-      {source:"a1", target:"a2"},
-      {source:"a1", target:"ruinas_a", label:"Un desvío"},
-      {source:"a2", target:"a3"},
-      {source:"a3", target:"ruinas_a"},
-      {source:"b1", target:"b2"},
-      {source:"b2", target:"b3"},
-      {source:"b3", target:"ruinas_b"},
-      {source:"ruinas_b", target:"join1"},
-      {source:"ruinas_a", target:"join1"},
-      {source:"join1", target:"c1", label:"Galería este"},
-      {source:"join1", target:"c2", label:"Galería oeste"},
-      {source:"c1", target:"join2"},
-      {source:"c2", target:"join2"},
-      {source:"join2", target:"d1", label:"La escalinata"},
-      {source:"join2", target:"d2", label:"La rampa", direction:"bidirectional"},
-      {source:"d1", target:"objective"},
-      {source:"d2", target:"objective"},
-    ]};
-  ok("mapa de ejemplo: 16 nodos", graph.nodes.length===16, `tiene ${graph.nodes.length}`);
-  ok("mapa de ejemplo: 19 aristas", graph.edges.length===19, `tiene ${graph.edges.length}`);
-
-  const content = {
-    ruinas_a:{name:"Las Ruinas Antiguas (Sendero Alto)", type:"quiz", subtitle:"Recuerdo",
-      text:"Símbolos gastados cubren la piedra.",
-      quiz:{q:"¿Qué eran estas ruinas?", opts:[["Un templo",true],["Una prisión",false]]},
-      reward:{type:"collection",key:"aprendiz",n:1,fac:"qashir"}},
-    objective:{name:"El Corazón de las Ruinas", type:"combat", subtitle:"Final",
-      text:"El guardián final aguarda.", enemyFac:"qashir",
-      reward:{type:"collection",key:"aprendiz",n:1,fac:"qashir"}},
-  };
-
-  const warns=[]; const origWarn=console.warn;
-  console.warn=(...a)=>{ warns.push(a.join(" ")); };
-  let res=null, threw=null;
-  try{ res=convertGraphMap(graph, content); } catch(e){ threw=e; } finally{ console.warn=origWarn; }
-
-  ok("convierte sin excepción", !threw, threw && threw.message);
-  if(res){
-    ok("startNode = spawn", res.startNode==="spawn");
-    ok("16 nodos en el resultado", Object.keys(res.nodes).length===16, `hay ${Object.keys(res.nodes).length}`);
-    ok("avisa por la arista bidireccional", warns.some(w=>w.includes("bidireccional")), warns.join(" | "));
-    ok("spawn.step = 1", res.nodes.spawn.step===1, `step=${res.nodes.spawn.step}`);
-    ok("ruinas_a.step = 3 (vía a1, más corto que vía a3)", res.nodes.ruinas_a.step===3, `step=${res.nodes.ruinas_a.step}`);
-    ok("join1.step = 4", res.nodes.join1.step===4, `step=${res.nodes.join1.step}`);
-    ok("join2.step = 6", res.nodes.join2.step===6, `step=${res.nodes.join2.step}`);
-    ok("objective.step = 8", res.nodes.objective.step===8, `step=${res.nodes.objective.step}`);
-    ok("ruinas_a usa el content (nombre propio, no el label)", res.nodes.ruinas_a.name==="Las Ruinas Antiguas (Sendero Alto)");
-    ok("ruinas_a con 1 sola salida -> next, no exits", res.nodes.ruinas_a.next==="join1" && !res.nodes.ruinas_a.exits);
-    ok("ruinas_b sin content -> placeholder con el label duplicado \"Ruinas\"", res.nodes.ruinas_b.name==="Ruinas" && res.nodes.ruinas_b.type==="decision");
-    ok("join1 con 2 salidas -> exits con hints de las aristas", Array.isArray(res.nodes.join1.exits) && res.nodes.join1.exits.length===2
-      && res.nodes.join1.exits[0].dest==="c1" && res.nodes.join1.exits[0].hint==="Galería este"
-      && res.nodes.join1.exits[1].dest==="c2" && res.nodes.join1.exits[1].hint==="Galería oeste");
-    ok("objective (0 salidas, sin next propio) -> next:\"exit\"", res.nodes.objective.next==="exit");
-  }
-
-  // ---- Mapas inválidos: cada uno debe tirar con mensaje claro ----
-  function mustThrow(name, badGraph){
-    let threw2=null;
-    try{ convertGraphMap(badGraph, {}); } catch(e){ threw2=e; }
-    ok(name, !!threw2, "no tiró excepción");
-  }
-  const g=graph;
-  mustThrow("sin spawn -> falla", {format:"game-graph-map", nodes:g.nodes.filter(n=>n.type!=="spawn"), edges:g.edges});
-  mustThrow("2 spawns -> falla", {format:"game-graph-map",
-    nodes:g.nodes.concat([{id:"spawn2", label:"Otra entrada", type:"spawn"}]), edges:g.edges});
-  mustThrow("sin objective -> falla", {format:"game-graph-map", nodes:g.nodes.filter(n=>n.type!=="objective"), edges:g.edges});
-  mustThrow("objective inalcanzable -> falla", {format:"game-graph-map",
-    nodes:g.nodes.concat([{id:"isla", label:"Isla perdida", type:"objective"}]), edges:g.edges});
-  mustThrow("nodo con 3 salidas -> falla (máximo 2)", {format:"game-graph-map", nodes:g.nodes,
-    edges:g.edges.concat([{source:"join1", target:"d1"}])});
-  mustThrow("ciclo alcanzable -> falla", {format:"game-graph-map", nodes:g.nodes,
-    edges:g.edges.concat([{source:"join2", target:"a1"}])});
-  mustThrow("arista con source desconocido -> falla", {format:"game-graph-map", nodes:g.nodes,
-    edges:g.edges.concat([{source:"fantasma", target:"a1"}])});
-
-  const failed=results.filter(r=>!r.pass);
-  console.log(`convertGraphMap self-test: ${results.length-failed.length}/${results.length} OK`+(failed.length?` — FALLÓ: ${failed.map(f=>f.name+" ("+f.detail+")").join("; ")}`:""));
-  return {passed:results.length-failed.length, total:results.length, results};
-}
-
-// ---- Registro de rivales nombrados (jefes evadibles en revisita) ----
-const OPPONENTS = {
-  juez_silente:{name:"El Juez Silente",
-    avoidLine:"La armadura vacía gira despacio, como si te reconociera, y no se mueve del centro de la cámara: te deja pasar sin una palabra."},
-  rhaen_coliseo:{name:"Rhaen Iveros",
-    avoidLine:"Rhaen te reconoce desde el otro extremo del Coliseo y solo asiente — ya no tiene nada que probarte."},
-  cassia_patrulla:{name:"Cassia, Capitana de la Ronda",
-    avoidLine:"Cassia te ve pasar y solo te guiña un ojo — la ronda de hoy ya tiene bastante con lo suyo."},
-  guardian_ciego:{name:"El Guardián Ciego del Templo",
-    avoidLine:"La figura de piedra no se mueve esta vez: quizás ya sabe que no vas a tocar el símbolo partido."},
-  jefa_asaltantes:{name:"La Jefa de los Asaltantes",
-    avoidLine:"Te ve pasar con las manos vacías y no se levanta del fuego: sabe que no venís a terminar lo de la última vez."},
-  veterana_norte:{name:"La Veterana Renegada del Norte",
-    avoidLine:"Te mira desde la muralla exterior y no baja: un gesto seco, casi un saludo, es todo lo que va a darte esta vez."},
-  madre_distritos:{name:"La Madre de los Distritos Bajos",
-    avoidLine:"No te mira a los ojos, pero tampoco te cierra el paso: hoy nadie tiene ánimo para pelear otra vez lo mismo."},
-  serena_koren:{name:"Serena, Tejedora de Leyes",
-    avoidLine:"Te saluda con la misma cortesía exacta de siempre y no se levanta de la mesa: el protocolo ya se cumplió una vez, dice, no hace falta repetirlo."},
-  instructora_pretoriana:{name:"La Instructora Pretoriana",
-    avoidLine:"Te mide con la mirada un segundo y asiente, seco: ya sabe de lo que sos capaz, no hace falta la prueba otra vez."},
-  desertores_columna:{name:"Los Desertores de la Columna",
-    avoidLine:"Te ven pasar por el paso de piedra suelta y no se mueven de donde están escondidos: esta vez no hay columna que emboscar."},
-};
-
-// ---- El Palacio en Ruinas, reconstruida sobre la plantilla (b): bifurcación temprana sin
-// reconexión hasta el jefe. 2 nodos "lugar" de ejemplo (uno por rama) + 1 quiz que referencia un
-// fact del propio palacio (los quiz cross-lugar reales llegan con el contenido nuevo).
-const _piloteEdges = Object.assign({}, PLACE_TOPOLOGIES.early_fork_no_reconnect, {
-  b3:["b4","corredor"], corredor:["exit"], // desvío de tesoro sin salida — no forma parte de la plantilla base
-});
-const _piloteContent = {
-  n1:{name:"Entrada al Palacio en Ruinas", type:"decision",
-    text:"Las puertas de bronce yacen entreabiertas. El viento trae olor a polvo y a algo más viejo. Dos caminos se abren ante vos.",
-    hints:["El Jardín Oscuro","Los Pasos Quebrados"]},
-  a1:{name:"El Jardín Oscuro", type:"place", subtitle:"Lugar",
-    text:"Estatuas cubiertas de enredaderas observan en silencio. Entre las sombras, algo se mueve.",
-    placeId:"palacio_jardin", placeIcon:"🌿",
-    loreFacts:[{id:"palacio_jardin_estatuas", texto:"TODO(autor): qué son en verdad estas estatuas y qué presenciaron."}]},
-  a2:{name:"Emboscada de Ladrones", type:"combat", subtitle:"Encuentro",
-    text:"Mercenarios sin bandera saltan de entre los escombros.", enemyFac:"qashir"},
-  a3:{name:"Recuerdo del Jardín", type:"quiz", subtitle:"Recuerdo",
-    text:"Con la luz justa, los símbolos tallados en la base de las estatuas vuelven a tener sentido.",
-    quiz:{requires:["palacio_jardin_estatuas"],
-      pendingText:"Los símbolos en la base de las estatuas te resultan ilegibles todavía — algo en este mundo debe explicarlos primero.",
-      q:"TODO(autor): pregunta real sobre las estatuas del Jardín Oscuro.",
-      opts:[["TODO(autor) opción correcta",true],["TODO(autor) opción incorrecta",false],["TODO(autor) opción incorrecta",false]]},
-    reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}},
-  a4:{name:"Los Pasadizos del Ala Oeste", type:"decision",
-    text:"TODO(autor): tramo final antes de llegar a la Cámara Sellada por el ala del jardín."},
-  b1:{name:"Los Pasos Quebrados", type:"place", subtitle:"Lugar",
-    text:"Escalones rotos suben hacia una galería derrumbada. El camino es más largo, pero más tranquilo.",
-    placeId:"palacio_pasos", placeIcon:"🪨",
-    loreFacts:[{id:"palacio_pasos_historia", texto:"TODO(autor): qué ocurrió realmente en estos pasos quebrados."}]},
-  b2:{name:"Bestias Salvajes", type:"combat", subtitle:"Encuentro",
-    text:"Algo enorme y hambriento bloquea el corredor hundido.", enemyFac:"nomadas"},
-  b3:{name:"El Cruce Bajo", type:"decision",
-    text:"Ambos caminos posibles se separan aquí: uno sigue de frente hacia la Cámara Sellada, el otro se hunde hacia un corredor olvidado.",
-    hints:["Ir a la Cámara Sellada","El Corredor Hundido"]},
-  b4:{name:"Los Túneles Bajos", type:"decision",
-    text:"TODO(autor): tramo final antes de llegar a la Cámara Sellada por los pasos."},
-  corredor:{name:"El Corredor Hundido", type:"decision", subtitle:"Final B — Tesoro Oculto",
-    text:"Más allá de las bestias, un cofre cubierto de óxido descansa intacto.",
-    reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
-  boss:{name:"La Cámara Sellada", type:"combat", subtitle:"Final A — Jefe de facción",
-    text:"Una armadura vacía se yergue en el centro. El Juez Silente todavía ejecuta justicia, sin nadie dentro.",
-    enemyFac:"alderium", boss:true, bossId:"juez_silente",
-    reward:{type:"collection",key:"sold_alderium_6",n:2,fac:"alderium"},
-    repeatReward:{type:"collection",key:"sold_alderium_0",n:1,fac:"alderium"}},
-};
-
-const PLACES = {
-  alderium_piloto: {
-    faction:"alderium", name:"El Palacio en Ruinas", icon:"🏛️", mapPos:{left:50,top:45}, startNode:"n1", level:2,
-    nodes: buildPlaceGraph(_piloteEdges, _piloteContent),
-  },
-  // ---- Campaña "El Juramento de Alderium" (sección 6.1 del diseño) ----
-  // Reusa el mismo motor de nodos con swipe/tap; isCampaign:true activa recompensas y progreso persistente.
-  // Nota: el nodo 1 originalmente pedía dar "Eco del Primer Templo" como recompensa, pero esa carta es de
-  // Kóren (rompería la regla mono-facción). Se sustituyó por una copia de Decreto de Contención; lo mismo
-  // para la Reliquia del nodo 3 (Alderium todavía no tiene Reliquia diseñada) — queda avisado en el chat.
-  alderium_juramento: {
-    faction:"alderium", name:"El Juramento de Alderium", icon:"⚜️", isCampaign:true, startNode:"n1a", level:1,
-    mapPos:{left:50,top:28}, // posición del hotspot dorado en el mapa de continente mientras es la expedición actual
-    nodes:{
-      n1a:{name:"El Juramento del Guardián", type:"decision", step:1,
-        text:"La catedral de Alderium huele a piedra fría y cera quemada. Hileras de armaduras vacías flanquean el altar donde generaciones de Guardianes hicieron su promesa antes que vos.",
-        exits:[{dest:"n1b", hint:"Seguir leyendo"}]},
-      n1b:{name:"El Juramento del Guardián", type:"decision", step:1,
-        text:"«No juro servir a un trono» — dicen las palabras talladas — «juro interponerme entre el filo y quien no puede defenderse.» Es la misma fórmula desde la fundación del reino.",
-        exits:[{dest:"n1q", hint:"Continuar"}]},
-      n1q:{name:"El Juramento del Guardián", type:"quiz", step:1, subtitle:"Recuerdo",
-        text:"¿Qué jura proteger un Guardián de Alderium, según el texto tallado en el altar?",
-        quiz:{q:"¿Qué jura proteger un Guardián de Alderium?",
-          opts:[["El trono y solo al trono",false],["A quienes no pueden defenderse",true],["Nada: es una ceremonia vacía",false]]},
-        reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}, next:"n2a"},
-      n2a:{name:"Lecciones de Guardia", type:"decision", step:2,
-        text:"Un instructor veterano te lleva aparte. «Tu maná sube solo, +1 cada turno que empieza. No hace falta invocarlo — así funciona en Alderium.»",
-        exits:[{dest:"n2b", hint:"Seguir"}]},
-      n2b:{name:"Lecciones de Guardia", type:"decision", step:2,
-        text:"«Atacá directo al rival si no hay Guardianes en tu camino. Ganás cuando su vida llega a 0. Ahora probalo — tenés un rival a tu altura.»",
-        exits:[{dest:"n2duel", hint:"Al duelo"}]},
-      n2duel:{name:"Recluta rival", type:"combat", step:2, subtitle:"Duelo tutorial",
+// ---- 4. Campaña: secuencia lineal de duelos con hitos narrativos (imagen+texto, estilo Reigns) ----
+// Reemplaza el viejo mapa/grafo de lugares: ya no hay bifurcaciones reales ni revisita de jefes,
+// solo una lista ordenada de "pasos" que se recorre de punta a punta. Ver CAMPAIGN más abajo.
+// CAMPAIGN[fac] = {intro:{name,text}, steps:[...], outro:{name,text}} | null (sin campaña todavía).
+// steps[i].type:
+//  "milestone" — pantalla de imagen+texto; exits:[{hint,reward?}] (1 o 2). Con 1 sola, cualquier
+//     lado del swipe avanza igual; con 2, cada lado da un reward de sabor distinto — nunca cambia
+//     A DÓNDE se va, la secuencia es lineal (a diferencia del viejo grafo de lugares).
+//  "bridge" — abre el constructor de mazos (hace falta un mazo de 40 guardado para seguir).
+//  "duel" — combate contra enemyFac (con enemyDeckBuilder si el rival tiene mazo propio, si no
+//     buildLeveledDeck al nivel indicado). boss:true SOLO en el duelo #20 (el último de cada facción).
+// Contenido de Alderium: los 12 combates ya escritos (9 expediciones viejas, Tanda A-D) se
+// conservan tal cual — texto, enemyFac, enemyDeckBuilder y reward — en su mismo orden narrativo;
+// sus nodos de decisión/quiz se comprimen en los milestones de alrededor. Duelos #13-19: TBD,
+// para que Juan los complete. Duelo #20: Corvan Ashe, Vocero del Alba — jefe final.
+const CAMPAIGN = {
+  alderium: {
+    intro:{name:"Alderium",
+      text:"Alderium no busca gloria: busca orden. Sus Guardianes juran interponerse entre el filo y quien no puede defenderse, generación tras generación, desde los cimientos del trono. Vos sos el próximo en jurar. Lo que sigue es tu camino desde el juramento hasta el Juicio del Alba — veinte pruebas, cada una una elección real."},
+    steps:[
+      // ---- Tanda A: "El Juramento de Alderium" (duelos #1-3) ----
+      {type:"milestone", name:"El Juramento del Guardián",
+        text:"La catedral de Alderium huele a piedra fría y cera quemada. Hileras de armaduras vacías flanquean el altar donde generaciones de Guardianes hicieron su promesa antes que vos.\n\n«No juro servir a un trono» — dicen las palabras talladas — «juro interponerme entre el filo y quien no puede defenderse.» Es la misma fórmula desde la fundación del reino.",
+        exits:[{hint:"Jurar", reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}}]},
+      {type:"milestone", name:"Lecciones de Guardia",
+        text:"Un instructor veterano te lleva aparte. «Tu maná sube solo, +1 cada turno que empieza. No hace falta invocarlo — así funciona en Alderium.»\n\n«Atacá directo al rival si no hay Guardianes en tu camino. Ganás cuando su vida llega a 0. Ahora probalo — tenés un rival a tu altura.»",
+        exits:[{hint:"Al duelo"}]},
+      {type:"duel", name:"Recluta rival", subtitle:"Duelo tutorial",
         text:"Un recluta tan nuevo como vos te espera en el patio de entrenamiento, con un mazo tan básico como el tuyo.",
-        enemyFac:"alderium", enemyDeckBuilder:buildVanillaOnlyDeck,
-        reward:{type:"collection",key:"muralla",n:1,fac:"alderium"}, next:"n3"},
-      n3:{name:"La Encrucijada", type:"decision", step:3,
+        enemyFac:"alderium", enemyDeckBuilder:buildVanillaOnlyDeck, level:1,
+        reward:{type:"collection",key:"muralla",n:1,fac:"alderium"}},
+      {type:"milestone", name:"La Encrucijada",
         text:"En el camino de vuelta al cuartel, un mercader con la carreta atascada te pide una mano — pero la guardia también te espera para entrenar antes del anochecer.",
         exits:[
-          {dest:"n4a", hint:"Ayudar al mercader", reward:{type:"collection",key:"isolde",n:1,fac:"alderium"}},
-          {dest:"n4a", hint:"Entrenar con la guardia", reward:[{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"},{type:"collection",key:"sold_alderium_6",n:1,fac:"alderium"}]},
+          {hint:"Ayudar al mercader", reward:{type:"collection",key:"isolde",n:1,fac:"alderium"}},
+          {hint:"Entrenar con la guardia", reward:[{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"},{type:"collection",key:"sold_alderium_6",n:1,fac:"alderium"}]},
         ]},
-      n4a:{name:"La Prueba del Escudo", type:"decision", step:4,
+      {type:"milestone", name:"La Prueba del Escudo",
         text:"«Guardián» es la palabra clave que define a Alderium: mientras el rival tenga uno en juego, tus ataques deben dirigirse a él primero. Rompelos o quedate atascado.",
-        exits:[{dest:"n4duel", hint:"Al duelo"}]},
-      n4duel:{name:"La Prueba del Escudo", type:"combat", step:4, subtitle:"Duelo",
+        exits:[{hint:"Al duelo"}]},
+      {type:"duel", name:"La Prueba del Escudo", subtitle:"Duelo",
         text:"Un caballero de la guardia forma su línea de Guardianes frente a vos. No vas a poder ir directo a su vida.",
-        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
-        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"}, next:"n5bridge"},
-      n5bridge:{name:"El Arsenal", type:"bridge", step:5,
-        text:"«Un Guardián arma su propio arsenal» — te dice tu mentor, señalando el registro de cartas. «Armá tu mazo antes del Juicio.»",
-        bridgeFac:"alderium", next:"n6a"},
-      n6a:{name:"El Juicio del Alba", type:"decision", step:6,
+        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck, level:1,
+        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"}},
+      {type:"bridge", name:"El Arsenal",
+        text:"«Un Guardián arma su propio arsenal» — te dice tu mentor, señalando el registro de cartas. «Armá tu mazo antes del Juicio.»"},
+      {type:"milestone", name:"El Juicio del Alba",
         text:"Las gradas del Coliseo de Juramento son anillos de metal blanco, filamentos de plasma como venas bajo la piedra. En el palco, el Soberano Arcthur Valerius observa en silencio. «Darian Voln» — te llama el Anunciante.",
-        exits:[{dest:"n6duel", hint:"Al duelo final"}]},
-      n6duel:{name:"El Juicio del Alba", type:"combat", step:6, subtitle:"Final — Coliseo de Juramento",
+        exits:[{hint:"Al duelo"}]},
+      {type:"duel", name:"El Juicio del Alba", subtitle:"Coliseo de Juramento",
+        // Rhaen Iveros ya no es el jefe final de la campaña (eso pasa a ser Corvan Ashe, duelo #20):
+        // Darian reemplazó a Rhaen como héroe inicial de Alderium, y Rhaen se fue a fac:"qashir" en su
+        // arco — buildRhaenColiseoDeck sigue instanciando a "rhaen" para el rival sin problema, es un
+        // NPC puntual, no un mazo constructible. Reward reasignado: pretoriano_alba (el reward original
+        // de este duelo) se mueve al jefe final; este duelo toma el que antes era su repeatReward.
         text:"Tu rival es Rhaen Iveros, de la tercera cohorte, Portador de Filo Común: no tiene tu equipamiento, pero no retrocede.",
-        enemyFac:"alderium", enemyDeckBuilder:buildRhaenColiseoDeck,
-        // Rhaen Iveros es el jefe final de esta campaña (ver Veyra_Lore_Notas.md): Darian ya reemplazó
-        // a Rhaen como héroe inicial de Alderium. Rhaen ahora es fac:"qashir" (se fue a Qashir en su
-        // arco) así que ya no puede ser la recompensa de una campaña mono-facción de Alderium — la
-        // recompensa pasa a ser Pretoriano del Alba, la vieja élite de Alderium. buildRhaenColiseoDeck
-        // sigue instanciando a "rhaen" para el rival sin problema: es un NPC puntual, no un mazo constructible.
-        reward:{type:"collection",key:"pretoriano_alba",n:1,fac:"alderium"},
-        // boss:true+bossId habilita el mismo mecanismo de "jefe evadible" que ya usan los lugares
-        // normales (synthesizeBossRevisit): al revisitar esta expedición ya completa (mapa de
-        // continente → hotspot normal, ver openPlaceMap), entrar reinicia en startNode como cualquier
-        // lugar limpiado, y al llegar de nuevo a este nodo se ofrece reenfrentar a Rhaen o rodearlo.
-        boss:true, bossId:"rhaen_coliseo",
-        repeatReward:{type:"collection",key:"sold_alderium_2",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // ---- Tanda B (Veyra_Campania_Alderium.md sección 2, expediciones 2-3) ----
-  // "La Patrulla de los Distritos": la ciudad por dentro, el incidente de Lior, primer gesto humano
-  // de Darian. El "duelo de honor" contra Cassia no es un enfrentamiento hostil — el texto lo deja
-  // claro antes del combate — por eso usa el mismo mecanismo de jefe evadible que el resto.
-  alderium_patrulla: {
-    faction:"alderium", name:"La Patrulla de los Distritos", icon:"🛡️", isCampaign:true, startNode:"p1a", level:2,
-    mapPos:{left:30,top:42},
-    nodes:{
-      p1a:{name:"La Ronda de la Mañana", type:"decision", step:1,
-        text:"La ronda de la mañana empieza antes de que el sol toque los tejados: Alderium se despierta al ritmo de las botas de la guardia. Cassia, capitana de esta patrulla, marca el paso sin mirar atrás — sabe que la seguís.",
-        exits:[{dest:"p1b", hint:"Seguir la ronda"}]},
-      p1b:{name:"La Ronda de la Mañana", type:"decision", step:1,
-        text:"«Acá no perseguimos gloria» — te dice Cassia, sin girar la cabeza — «perseguimos que nadie tenga que perseguir nada. Un distrito tranquilo es un distrito que funciona.»",
-        exits:[{dest:"p2a", hint:"Continuar"}]},
-      p2a:{name:"El Incidente de Lior", type:"decision", step:2,
-        text:"Un grito corta la calle del mercado: un puestero señala a un chico flaco que corre entre los toldos con una hogaza bajo el brazo. Dos guardias ya le cierran el paso.",
-        exits:[{dest:"p2b", hint:"Acercarse"}]},
-      p2b:{name:"El Incidente de Lior", type:"decision", step:2,
-        text:"El chico —no tiene más de diez años— no suelta el pan. Cassia te mira: la decisión, por una vez, es tuya, no de ella.",
+        enemyFac:"alderium", enemyDeckBuilder:buildRhaenColiseoDeck, level:1,
+        reward:{type:"collection",key:"sold_alderium_2",n:1,fac:"alderium"}},
+      // ---- Tanda B: "La Patrulla de los Distritos" (duelo #4) ----
+      {type:"milestone", name:"La Ronda de la Mañana",
+        text:"La ronda de la mañana empieza antes de que el sol toque los tejados: Alderium se despierta al ritmo de las botas de la guardia. Cassia, capitana de esta patrulla, marca el paso sin mirar atrás — sabe que la seguís.\n\n«Acá no perseguimos gloria» — te dice Cassia, sin girar la cabeza — «perseguimos que nadie tenga que perseguir nada. Un distrito tranquilo es un distrito que funciona.»",
+        exits:[{hint:"Seguir la ronda"}]},
+      {type:"milestone", name:"El Incidente de Lior",
+        text:"Un grito corta la calle del mercado: un puestero señala a un chico flaco que corre entre los toldos con una hogaza bajo el brazo. Dos guardias ya le cierran el paso.\n\nEl chico —no tiene más de diez años— no suelta el pan. Cassia te mira: la decisión, por una vez, es tuya, no de ella.",
         exits:[
-          {dest:"p3a", hint:"Dejarlo ir con una advertencia", reward:{type:"collection",key:"medica",n:1,fac:"alderium"}},
-          {dest:"p3a", hint:"Aplicar el reglamento", reward:{type:"collection",key:"arquera",n:2,fac:"alderium"}},
+          {hint:"Dejarlo ir con una advertencia", reward:{type:"collection",key:"medica",n:1,fac:"alderium"}},
+          {hint:"Aplicar el reglamento", reward:{type:"collection",key:"arquera",n:2,fac:"alderium"}},
         ]},
-      p3a:{name:"El Mercado de los Distritos Bajos", type:"decision", step:3,
-        text:"Sea cual sea tu decisión, Cassia no dice nada — hasta que llegan al puesto de guardia. «La ley y la piedad no siempre pelean» — dice al fin — «pero cuando pelean, alguien tiene que elegir. Hoy elegiste vos.»",
-        exits:[{dest:"p3b", hint:"Seguir"}]},
-      p3b:{name:"El Mercado de los Distritos Bajos", type:"decision", step:3,
-        text:"«Se dice que servís bien en el Coliseo» — sonríe Cassia, aflojando el guante — «yo también serví ahí. ¿Qué tal una ronda de práctica, capitán contra lo que seas vos todavía?»",
-        exits:[{dest:"p3duel", hint:"Aceptar el desafío"}]},
-      p3duel:{name:"La Prueba de Honor", type:"combat", step:4, subtitle:"Duelo de honor",
+      {type:"milestone", name:"El Mercado de los Distritos Bajos",
+        text:"Sea cual sea tu decisión, Cassia no dice nada — hasta que llegan al puesto de guardia. «La ley y la piedad no siempre pelean» — dice al fin — «pero cuando pelean, alguien tiene que elegir. Hoy elegiste vos.»\n\n«Se dice que servís bien en el Coliseo» — sonríe Cassia, aflojando el guante — «yo también serví ahí. ¿Qué tal una ronda de práctica, capitán contra lo que seas vos todavía?»",
+        exits:[{hint:"Aceptar el desafío"}]},
+      {type:"duel", name:"La Prueba de Honor", subtitle:"Duelo de honor",
         text:"No hay premio de guerra en esto — solo el orgullo de la patrulla y el respeto de tu capitana. Cassia forma su línea de Filo sin apuro: sabe exactamente lo que hace.",
-        enemyFac:"alderium", enemyDeckBuilder:buildCassiaPatrolDeck,
-        reward:{type:"collection",key:"isolde",n:1,fac:"alderium"},
-        boss:true, bossId:"cassia_patrulla",
-        repeatReward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // "El Templo del Distrito Bajo": ruinas anteriores al trono, atmósfera y no revelación —
-  // el símbolo partido por siete líneas es la única referencia oblicua permitida en esta expedición
-  // (regla de lore sensible, ver Veyra_Campania_Alderium.md sección 1: nunca se nombra lo que evoca).
-  // Por eso mismo esta expedición no lleva quiz: no hay una respuesta correcta que dar todavía.
-  alderium_templo: {
-    faction:"alderium", name:"El Templo del Distrito Bajo", icon:"🗿", isCampaign:true, startNode:"t1a", level:2,
-    mapPos:{left:68,top:55},
-    nodes:{
-      t1a:{name:"Las Ruinas Bajo el Distrito", type:"decision", step:1,
-        text:"Bajo los cimientos del Distrito Bajo hay una escalera que nadie recuerda haber construido. La patrulla la señala en los mapas simplemente como «lo viejo».",
-        exits:[{dest:"t1b", hint:"Bajar"}]},
-      t1b:{name:"Las Ruinas Bajo el Distrito", type:"decision", step:1,
-        text:"El aire ahí abajo es más frío de lo que debería, y las paredes están cubiertas de símbolos que ningún erudito de Alderium ha logrado traducir — más viejos, dicen, que el trono mismo.",
-        exits:[{dest:"t2a", hint:"Seguir bajando"}]},
-      t2a:{name:"Los Símbolos sin Nombre", type:"decision", step:2,
-        text:"Un símbolo se repite más que los otros: un círculo partido por siete líneas que no llegan al centro. Nadie sabe qué significa. Nadie, en Alderium, parece querer preguntar.",
-        exits:[{dest:"t2b", hint:"Continuar"}]},
-      t2b:{name:"Los Símbolos sin Nombre", type:"decision", step:2,
-        text:"Podés detenerte a copiar los símbolos en tu cuaderno, o seguir de largo — la ronda no tiene tiempo para historia.",
+        enemyFac:"alderium", enemyDeckBuilder:buildCassiaPatrolDeck, level:2,
+        reward:{type:"collection",key:"isolde",n:1,fac:"alderium"}},
+      // ---- "El Templo del Distrito Bajo" (duelo #5) — el símbolo partido por siete líneas es la
+      // única referencia oblicua permitida acá (regla de lore sensible): nunca se nombra lo que evoca.
+      {type:"milestone", name:"Las Ruinas Bajo el Distrito",
+        text:"Bajo los cimientos del Distrito Bajo hay una escalera que nadie recuerda haber construido. La patrulla la señala en los mapas simplemente como «lo viejo».\n\nEl aire ahí abajo es más frío de lo que debería, y las paredes están cubiertas de símbolos que ningún erudito de Alderium ha logrado traducir — más viejos, dicen, que el trono mismo.",
+        exits:[{hint:"Bajar"}]},
+      {type:"milestone", name:"Los Símbolos sin Nombre",
+        text:"Un símbolo se repite más que los otros: un círculo partido por siete líneas que no llegan al centro. Nadie sabe qué significa. Nadie, en Alderium, parece querer preguntar.\n\nPodés detenerte a copiar los símbolos en tu cuaderno, o seguir de largo — la ronda no tiene tiempo para historia.",
         exits:[
-          {dest:"t3a", hint:"Copiar los símbolos", reward:{type:"collection",key:"cierre_filas",n:1,fac:"alderium"}},
-          {dest:"t3a", hint:"Seguir de largo", reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
+          {hint:"Copiar los símbolos", reward:{type:"collection",key:"cierre_filas",n:1,fac:"alderium"}},
+          {hint:"Seguir de largo", reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
         ]},
-      t3a:{name:"El Corredor del Guardián", type:"decision", step:3,
+      {type:"milestone", name:"El Corredor del Guardián",
         text:"Al final del corredor, una figura de piedra del tamaño de dos hombres bloquea el paso: una armadura antigua, sin ojos tallados en el yelmo, que no se ha movido en —a juzgar por el polvo— generaciones.",
-        exits:[{dest:"t3duel", hint:"Acercarse al símbolo partido"}]},
-      t3duel:{name:"El Guardián Ciego", type:"combat", step:4, subtitle:"El Guardián Ciego del Templo",
+        exits:[{hint:"Acercarse al símbolo partido"}]},
+      {type:"duel", name:"El Guardián Ciego", subtitle:"El Guardián Ciego del Templo",
         text:"No ataca primero. No parece ver. Pero cuando das un paso hacia el símbolo partido, se mueve — despacio, seguro, como si hubiera hecho esto un millón de veces antes que vos.",
-        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
-        reward:{type:"collection",key:"estandarte_alba",n:1,fac:"alderium"},
-        boss:true, bossId:"guardian_ciego",
-        repeatReward:{type:"collection",key:"sold_alderium_5",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // ---- Tanda C (Veyra_Campania_Alderium.md sección 2, expediciones 4-6) ----
-  // "La Ruta de Caravanas": primera orden incómoda («sin prisioneros») contra gente desesperada,
-  // no malvada — Darian puede matizarla. Los asaltantes son alderianos empobrecidos (enemyFac
-  // "alderium", mismo criterio ya usado con Cassia/Guardián Ciego), sin mazo especial: la dureza
-  // no viene de la mecánica sino de la orden que el jugador elige cómo cumplir.
-  alderium_ruta_caravanas: {
-    faction:"alderium", name:"La Ruta de Caravanas", icon:"🐎", isCampaign:true, startNode:"r1a", level:3,
-    mapPos:{left:50,top:70},
-    nodes:{
-      r1a:{name:"La Escolta", type:"decision", step:1,
-        text:"El camino al norte serpentea entre colinas peladas: una hilera de carretas cargadas de grano y barriles de plasma cruza territorio que ya no se siente del todo seguro. A vos te tocó la escolta.",
-        exits:[{dest:"r1b", hint:"Seguir la marcha"}]},
-      r1b:{name:"La Escolta", type:"decision", step:1,
-        text:"El capitán de la caravana no deja de mirar hacia atrás. «Hace dos semanas perdimos media carga en una emboscada» — dice, sin que nadie le pregunte — «los que la robaron no eran soldados de nadie.»",
-        exits:[{dest:"r2combat", hint:"Continuar"}]},
-      r2combat:{name:"Los Roba-Grano", type:"combat", step:2, subtitle:"Encuentro",
+        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck, level:2,
+        reward:{type:"collection",key:"estandarte_alba",n:1,fac:"alderium"}},
+      // ---- Tanda C: "La Ruta de Caravanas" (duelos #6-7) — los asaltantes son alderianos
+      // empobrecidos (enemyFac "alderium"), sin mazo especial: la dureza no viene de la mecánica
+      // sino de la orden que el jugador elige cómo cumplir.
+      {type:"milestone", name:"La Escolta",
+        text:"El camino al norte serpentea entre colinas peladas: una hilera de carretas cargadas de grano y barriles de plasma cruza territorio que ya no se siente del todo seguro. A vos te tocó la escolta.\n\nEl capitán de la caravana no deja de mirar hacia atrás. «Hace dos semanas perdimos media carga en una emboscada» — dice, sin que nadie le pregunte — «los que la robaron no eran soldados de nadie.»",
+        exits:[{hint:"Seguir la marcha"}]},
+      {type:"duel", name:"Los Roba-Grano", subtitle:"Encuentro",
         text:"Salen de entre las rocas antes de que anochezca del todo: no llevan armadura, ni bandera, ni formación — solo hambre y sacos vacíos.",
-        enemyFac:"alderium", next:"r2b"},
-      r2b:{name:"El Reparto", type:"decision", step:2,
+        enemyFac:"alderium", level:3},
+      {type:"milestone", name:"El Reparto",
         text:"Los que quedan no corren: se quedan mirando el grano que no alcanzaron a robar. Uno, apenas mayor que Lior, tiembla sin soltar un saco vacío.",
         exits:[
-          {dest:"r3a", hint:"Aplicar el reglamento y reportarlos", reward:{type:"collection",key:"sold_alderium_7",n:1,fac:"alderium"}},
-          {dest:"r3a", hint:"Dejarles un saco y mirar para otro lado", reward:{type:"collection",key:"sold_alderium_9",n:1,fac:"alderium"}},
+          {hint:"Aplicar el reglamento y reportarlos", reward:{type:"collection",key:"sold_alderium_7",n:1,fac:"alderium"}},
+          {hint:"Dejarles un saco y mirar para otro lado", reward:{type:"collection",key:"sold_alderium_9",n:1,fac:"alderium"}},
         ]},
-      r3a:{name:"La Orden sin Prisioneros", type:"decision", step:3,
-        text:"En el fuerte de paso, el oficial al mando te entrega la orden por escrito antes de que puedas sentarte: «Sin prisioneros. La próxima partida que intercepten se resuelve en el lugar.» No es una sugerencia.",
-        exits:[{dest:"r3b", hint:"Leer la orden completa"}]},
-      r3b:{name:"La Orden sin Prisioneros", type:"decision", step:3,
-        text:"La firma queda a tu nombre. Vos decidís cómo se cumple.",
+      {type:"milestone", name:"La Orden sin Prisioneros",
+        text:"En el fuerte de paso, el oficial al mando te entrega la orden por escrito antes de que puedas sentarte: «Sin prisioneros. La próxima partida que intercepten se resuelve en el lugar.» No es una sugerencia.\n\nLa firma queda a tu nombre. Vos decidís cómo se cumple.",
         exits:[
-          {dest:"r4duel", hint:"Cumplirla al pie de la letra", reward:{type:"collection",key:"sold_alderium_10",n:1,fac:"alderium"}},
-          {dest:"r4duel", hint:"Dejar que algunos escapen, en secreto", reward:{type:"collection",key:"arquera",n:1,fac:"alderium"}},
+          {hint:"Cumplirla al pie de la letra", reward:{type:"collection",key:"sold_alderium_10",n:1,fac:"alderium"}},
+          {hint:"Dejar que algunos escapen, en secreto", reward:{type:"collection",key:"arquera",n:1,fac:"alderium"}},
         ]},
-      r4duel:{name:"La Jefa de los Asaltantes", type:"combat", step:4, subtitle:"Duelo",
+      {type:"duel", name:"La Jefa de los Asaltantes", subtitle:"Duelo",
         text:"La encontrás al final del desfiladero, plantada frente a los que le quedan — no hay retirada posible, ni para ella ni para vos. No pide piedad. No la va a dar tampoco.",
-        enemyFac:"alderium",
-        reward:{type:"collection",key:"primera_linea",n:1,fac:"alderium"},
-        boss:true, bossId:"jefa_asaltantes",
-        repeatReward:{type:"collection",key:"sold_alderium_1",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // "La Frontera Norte": la única referencia oblicua permitida en toda la campaña (sección 1 del
-  // doc de diseño) vive en el nodo f3 — una frase, sin contexto, y la orden explícita de no
-  // preguntar. Nada más en esta expedición vuelve a tocar el tema.
-  alderium_frontera_norte: {
-    faction:"alderium", name:"La Frontera Norte", icon:"❄️", isCampaign:true, startNode:"f1a", level:3,
-    mapPos:{left:20,top:78},
-    nodes:{
-      f1a:{name:"El Fuerte del Norte", type:"decision", step:1,
-        text:"El viento acá corta distinto. El fuerte que te toca guarnecer es la mitad de lo que fue: la otra mitad quedó marcada apenas en los cimientos, como si algo la hubiera vaciado hace años.",
-        exits:[{dest:"f1b", hint:"Entrar al fuerte"}]},
-      f1b:{name:"El Fuerte del Norte", type:"decision", step:1,
-        text:"Los braseros de plasma arden bajos, racionados. Un puñado de veteranos bebe alrededor del único fuego real, en silencio — el tipo de silencio que no se rompe preguntando.",
-        exits:[{dest:"f2a", hint:"Acercarse"}]},
-      f2a:{name:"Los Veteranos que Callan", type:"decision", step:2,
+        enemyFac:"alderium", level:3,
+        reward:{type:"collection",key:"primera_linea",n:1,fac:"alderium"}},
+      // ---- "La Frontera Norte" (duelo #8) — f3/"Lo que Alderium Hizo" es la única referencia
+      // oblicua permitida en toda la campaña: una frase, sin contexto, sin volver a tocar el tema.
+      {type:"milestone", name:"El Fuerte del Norte",
+        text:"El viento acá corta distinto. El fuerte que te toca guarnecer es la mitad de lo que fue: la otra mitad quedó marcada apenas en los cimientos, como si algo la hubiera vaciado hace años.\n\nLos braseros de plasma arden bajos, racionados. Un puñado de veteranos bebe alrededor del único fuego real, en silencio — el tipo de silencio que no se rompe preguntando.",
+        exits:[{hint:"Entrar al fuerte"}]},
+      {type:"milestone", name:"Los Veteranos que Callan",
         text:"Nadie te invita a sentarte, pero tampoco te corren. Podés intentar sacarles algo de conversación, o ir directo a reportarte con el oficial al mando y dejarlos en paz.",
         exits:[
-          {dest:"f3", hint:"Sentarte con los veteranos", reward:{type:"collection",key:"medica",n:1,fac:"alderium"}},
-          {dest:"f3", hint:"Reportarte directo con el oficial", reward:{type:"collection",key:"sold_alderium_11",n:1,fac:"alderium"}},
+          {hint:"Sentarte con los veteranos", reward:{type:"collection",key:"medica",n:1,fac:"alderium"}},
+          {hint:"Reportarte directo con el oficial", reward:{type:"collection",key:"sold_alderium_11",n:1,fac:"alderium"}},
         ]},
-      f3:{name:"Lo que Alderium Hizo", type:"decision", step:3,
+      {type:"milestone", name:"Lo que Alderium Hizo",
         text:"El oficial al mando es mayor de lo que debería estar todavía en la frontera. Te mira antes de firmar tu ingreso. «Lo que Alderium hizo en el norte no se pregunta, Voln» — dice, sin levantar la vista — «se hereda. Y no vuelvas a preguntarlo delante de los veteranos.»",
-        exits:[{dest:"f4duel", hint:"Aceptar la orden"}]},
-      f4duel:{name:"La Veterana Renegada del Norte", type:"combat", step:4, subtitle:"Duelo",
+        exits:[{hint:"Aceptar la orden"}]},
+      {type:"duel", name:"La Veterana Renegada del Norte", subtitle:"Duelo",
         text:"La encontrás en la muralla exterior, donde se supone que no debería haber nadie de guardia: rompió filas hace semanas y nadie en el fuerte movió un dedo para detenerla. Ahora sos vos quien tiene que hacerlo.",
-        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck,
-        reward:{type:"collection",key:"muralla",n:1,fac:"alderium"},
-        boss:true, bossId:"veterana_norte",
-        repeatReward:{type:"collection",key:"sold_alderium_3",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // "La Escasez": el duelo que nadie quiere ganar. La rival no tiene nombre propio a propósito
-  // (ver Veyra_Campania_Alderium.md: "una madre de los distritos bajos") — mismo criterio de
-  // anonimato deliberado que ya se usó con el Juez Silente/Guardián Ciego, acá por peso emocional
-  // en vez de atmósfera. Sin mazo especial: es gente común, no una elite.
-  alderium_escasez: {
-    faction:"alderium", name:"La Escasez", icon:"⚖️", isCampaign:true, startNode:"e1a", level:3,
-    mapPos:{left:75,top:80},
-    nodes:{
-      e1a:{name:"El Racionamiento", type:"decision", step:1,
-        text:"Las colas para el plasma empiezan antes del amanecer y no siempre terminan con barriles para todos. En los Distritos Bajos, la guardia ya no solo vigila: ahora también reparte, o niega.",
-        exits:[{dest:"e1b", hint:"Recorrer la fila"}]},
-      e1b:{name:"El Racionamiento", type:"decision", step:1,
-        text:"Cassia camina la ronda con vos, más callada que de costumbre. «Antes contábamos ladrones» — dice — «ahora contamos barriles. No sé cuál trabajo es peor.»",
-        exits:[{dest:"e2a", hint:"Continuar"}]},
-      e2a:{name:"Los Disturbios", type:"decision", step:2,
+        enemyFac:"alderium", enemyDeckBuilder:buildGuardianHeavyDeck, level:3,
+        reward:{type:"collection",key:"muralla",n:1,fac:"alderium"}},
+      // ---- "La Escasez" (duelo #9) — la rival no tiene nombre propio a propósito, mismo criterio
+      // de anonimato deliberado que el Guardián Ciego, acá por peso emocional. Sin mazo especial.
+      {type:"milestone", name:"El Racionamiento",
+        text:"Las colas para el plasma empiezan antes del amanecer y no siempre terminan con barriles para todos. En los Distritos Bajos, la guardia ya no solo vigila: ahora también reparte, o niega.\n\nCassia camina la ronda con vos, más callada que de costumbre. «Antes contábamos ladrones» — dice — «ahora contamos barriles. No sé cuál trabajo es peor.»",
+        exits:[{hint:"Recorrer la fila"}]},
+      {type:"milestone", name:"Los Disturbios",
         text:"Un barril declarado vacío antes de tiempo enciende la mecha: gritos, empujones, alguien tira una piedra que no le da a nadie pero rompe algo en el ambiente. La orden llega rápido: contener.",
         exits:[
-          {dest:"e3a", hint:"Contener con la fuerza mínima posible", reward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"}},
-          {dest:"e3a", hint:"Seguir el protocolo de dispersión al pie de la letra", reward:{type:"collection",key:"sold_alderium_1",n:1,fac:"alderium"}},
+          {hint:"Contener con la fuerza mínima posible", reward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"}},
+          {hint:"Seguir el protocolo de dispersión al pie de la letra", reward:{type:"collection",key:"sold_alderium_1",n:1,fac:"alderium"}},
         ]},
-      e3a:{name:"La Guardia Contra su Propia Gente", type:"decision", step:3,
+      {type:"milestone", name:"La Guardia Contra su Propia Gente",
         text:"Cassia no te mira a los ojos cuando te señala a la que está al frente de los disturbios. «No es una criminal» — dice, bajo, para que solo vos la oigas — «es una madre que hizo la fila tres días seguidos. Y aun así, tenés que ir.»",
-        exits:[{dest:"e4duel", hint:"Ir"}]},
-      e4duel:{name:"La Madre de los Distritos Bajos", type:"combat", step:4, subtitle:"Duelo que nadie quiere ganar",
+        exits:[{hint:"Ir"}]},
+      {type:"duel", name:"La Madre de los Distritos Bajos", subtitle:"Duelo que nadie quiere ganar",
         text:"No lleva armadura ni entrenamiento — lleva a su gente detrás y nada que perder. No hay honor en esto, para ningún lado. Vos también lo sabés.",
-        enemyFac:"alderium",
-        reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"},
-        boss:true, bossId:"madre_distritos",
-        repeatReward:{type:"collection",key:"sold_alderium_7",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // ---- Tanda D (Veyra_Campania_Alderium.md sección 2, expediciones 7-9, Acto II "La Grieta") ----
-  // "La Diplomacia de Kóren": la única expedición de Alderium que cruza a otra facción. Serena
-  // NO se agrega a LIB como carta jugable — es un NPC de protocolo, mismo criterio que el Juez
-  // Silente/Guardián Ciego (si Kóren llega a tener su propia campaña con Serena de protagonista,
-  // esa es una decisión de esa tanda, no de esta). La recompensa (`anciana`, ya existente en el
-  // pool base de Kóren) es a propósito "inutilizable aún": S.collection no distingue facción activa,
-  // así que queda guardada para cuando el jugador abra el constructor de Kóren.
-  alderium_diplomacia_koren: {
-    faction:"alderium", name:"La Diplomacia de Kóren", icon:"🕊️", isCampaign:true, startNode:"d1a", level:4,
-    mapPos:{left:85,top:60},
-    nodes:{
-      d1a:{name:"El Camino a Kóren", type:"decision", step:1,
-        text:"La frontera con Kóren se anuncia antes de cruzarla: el aire se vuelve húmedo, la piedra gris de Alderium cede paso a musgo y madera tallada. Vas de escolta de la comitiva, no como soldado — como testigo.",
-        exits:[{dest:"d1b", hint:"Cruzar la frontera"}]},
-      d1b:{name:"El Camino a Kóren", type:"decision", step:1,
-        text:"La embajada de Kóren recibe con cortesía exacta, ni un gramo más: te hacen esperar el tiempo justo para que entiendas que acá tu rango no apura a nadie.",
-        exits:[{dest:"d2a", hint:"Entrar al salón de protocolo"}]},
-      d2a:{name:"El Salón de Protocolo", type:"decision", step:2,
+        enemyFac:"alderium", level:3,
+        reward:{type:"collection",key:"decreto_cont",n:1,fac:"alderium"}},
+      // ---- Tanda D, Acto II "La Grieta": "La Diplomacia de Kóren" (duelo #10) — la única
+      // expedición que cruza a otra facción. Serena no se agrega a LIB como carta jugable: es un
+      // NPC de protocolo. La recompensa (`anciana`, del pool base de Kóren) queda guardada hasta
+      // que el jugador abra el constructor de Kóren.
+      {type:"milestone", name:"El Camino a Kóren",
+        text:"La frontera con Kóren se anuncia antes de cruzarla: el aire se vuelve húmedo, la piedra gris de Alderium cede paso a musgo y madera tallada. Vas de escolta de la comitiva, no como soldado — como testigo.\n\nLa embajada de Kóren recibe con cortesía exacta, ni un gramo más: te hacen esperar el tiempo justo para que entiendas que acá tu rango no apura a nadie.",
+        exits:[{hint:"Cruzar la frontera"}]},
+      {type:"milestone", name:"El Salón de Protocolo",
         text:"El embajador de Kóren escucha el pedido de Alderium sin mover un músculo. Te toca hablar primero, o dejar que hable el canciller que viajó con vos.",
         exits:[
-          {dest:"d3a", hint:"Hablar vos, con firmeza", reward:{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"}},
-          {dest:"d3a", hint:"Ceder la palabra al canciller", reward:{type:"collection",key:"sold_alderium_2",n:1,fac:"alderium"}},
+          {hint:"Hablar vos, con firmeza", reward:{type:"collection",key:"sold_alderium_4",n:1,fac:"alderium"}},
+          {hint:"Ceder la palabra al canciller", reward:{type:"collection",key:"sold_alderium_2",n:1,fac:"alderium"}},
         ]},
-      d3a:{name:"La Tejedora de Leyes", type:"decision", step:3,
+      {type:"milestone", name:"La Tejedora de Leyes",
         text:"Serena, Tejedora de Leyes, preside la mesa como si el tiempo no la apurara. Escucha completo el pedido de Alderium y niega apenas con la cabeza. «Antes de darles una respuesta» — dice — «Kóren quiere ver con qué clase de soldado está hablando.»",
-        exits:[{dest:"d4duel", hint:"Aceptar el duelo ceremonial"}]},
-      d4duel:{name:"El Duelo Ceremonial", type:"combat", step:4, subtitle:"Duelo ceremonial",
+        exits:[{hint:"Aceptar el duelo ceremonial"}]},
+      {type:"duel", name:"El Duelo Ceremonial", subtitle:"Duelo ceremonial",
         text:"No hay maná real en juego, ni sangre: es protocolo, un duelo de cartas que Kóren usa desde antes de que existiera el trono de Alderium para medir a un enviado. Ganar esto es una formalidad — la respuesta de Kóren ya está decidida, y no te la va a dar ella.",
-        enemyFac:"koren",
-        reward:{type:"collection",key:"anciana",n:1,fac:"koren"},
-        boss:true, bossId:"serena_koren",
-        repeatReward:{type:"collection",key:"sold_alderium_9",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // "Los Arsenales": última expedición "en casa" del Acto I/II — ascenso de Darian a Primera Línea.
-  alderium_arsenales: {
-    faction:"alderium", name:"Los Arsenales", icon:"⚒️", isCampaign:true, startNode:"g1a", level:4,
-    mapPos:{left:45,top:90},
-    nodes:{
-      g1a:{name:"Los Arsenales", type:"decision", step:1,
-        text:"Las forjas de Alderium no descansan: día y noche, el golpe del martillo contra el metal se escucha desde los tejados vecinos. Ascendiste — te toca supervisar, no fabricar.",
-        exits:[{dest:"g1b", hint:"Recorrer las forjas"}]},
-      g1b:{name:"Los Arsenales", type:"decision", step:1,
-        text:"El Magíster de armas te ve pasar sin saludar. «¿Para qué tanto acero?» — pregunta, a nadie en particular, con la vista fija en un lote de espadas nuevas. Nadie le contesta. Vos tampoco.",
-        exits:[{dest:"g2a", hint:"Continuar"}]},
-      g2a:{name:"El Inventario", type:"decision", step:2,
+        enemyFac:"koren", level:4,
+        reward:{type:"collection",key:"anciana",n:1,fac:"koren"}},
+      // ---- "Los Arsenales" (duelo #11) — última expedición "en casa": ascenso de Darian a Primera Línea.
+      {type:"milestone", name:"Los Arsenales",
+        text:"Las forjas de Alderium no descansan: día y noche, el golpe del martillo contra el metal se escucha desde los tejados vecinos. Ascendiste — te toca supervisar, no fabricar.\n\nEl Magíster de armas te ve pasar sin saludar. «¿Para qué tanto acero?» — pregunta, a nadie en particular, con la vista fija en un lote de espadas nuevas. Nadie le contesta. Vos tampoco.",
+        exits:[{hint:"Recorrer las forjas"}]},
+      {type:"milestone", name:"El Inventario",
         text:"Un escriba te ofrece revisar el inventario antes de la prueba de rango: podés detenerte a mirar el equipo disponible, o presentarte directo.",
         exits:[
-          {dest:"g3a", hint:"Revisar el inventario", reward:{type:"collection",key:"estandarte_alba",n:1,fac:"alderium"}},
-          {dest:"g3a", hint:"Presentarte directo a la prueba", reward:{type:"collection",key:"sold_alderium_5",n:1,fac:"alderium"}},
+          {hint:"Revisar el inventario", reward:{type:"collection",key:"estandarte_alba",n:1,fac:"alderium"}},
+          {hint:"Presentarte directo a la prueba", reward:{type:"collection",key:"sold_alderium_5",n:1,fac:"alderium"}},
         ]},
-      g3a:{name:"La Prueba de Rango", type:"decision", step:3,
+      {type:"milestone", name:"La Prueba de Rango",
         text:"La Instructora Pretoriana te espera en el patio de armas, con la misma mirada que usó con cada recluta antes que vos. «Primera Línea no es un título que se entrega» — dice — «es uno que se cobra.»",
-        exits:[{dest:"g4duel", hint:"Aceptar la prueba"}]},
-      g4duel:{name:"La Instructora Pretoriana", type:"combat", step:4, subtitle:"Prueba de rango",
+        exits:[{hint:"Aceptar la prueba"}]},
+      {type:"duel", name:"La Instructora Pretoriana", subtitle:"Prueba de rango",
         text:"No es una enemiga: es la última prueba antes del ascenso. Se mueve como si llevara toda la vida haciendo exactamente esto.",
-        enemyFac:"alderium",
-        reward:{type:"collection",key:"darian",n:1,fac:"alderium"},
-        boss:true, bossId:"instructora_pretoriana",
-        repeatReward:{type:"collection",key:"sold_alderium_10",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
-  },
-  // "Las Caravanas de Guerra": arranca el Acto III. Le hace eco a "La Ruta de Caravanas" (exp. 4)
-  // a propósito — mismo dilema de mirar para otro lado, ahora con la guerra ya en marcha.
-  alderium_caravanas_guerra: {
-    faction:"alderium", name:"Las Caravanas de Guerra", icon:"🗡️", isCampaign:true, startNode:"m1a", level:4,
-    mapPos:{left:10,top:55},
-    nodes:{
-      m1a:{name:"La Marcha", type:"decision", step:1,
-        text:"La columna sale de Alderium al amanecer: carretas, soldados, el peso entero de una guerra que todavía nadie llama por su nombre. Kilómetros de polvo por delante.",
-        exits:[{dest:"m1b", hint:"Marchar"}]},
-      m1b:{name:"La Marcha", type:"decision", step:1,
-        text:"A la tercera noche faltan dos nombres en la lista de guardia. Nadie los menciona en voz alta, pero todos los cuentan.",
-        exits:[{dest:"m2a", hint:"Continuar"}]},
-      m2a:{name:"Las Deserciones", type:"decision", step:2,
+        enemyFac:"alderium", level:4,
+        reward:{type:"collection",key:"darian",n:1,fac:"alderium"}},
+      // ---- Acto III: "Las Caravanas de Guerra" (duelo #12) — le hace eco a "La Ruta de
+      // Caravanas" (duelos #6-7) a propósito: mismo dilema, ahora con la guerra ya en marcha.
+      {type:"milestone", name:"La Marcha",
+        text:"La columna sale de Alderium al amanecer: carretas, soldados, el peso entero de una guerra que todavía nadie llama por su nombre. Kilómetros de polvo por delante.\n\nA la tercera noche faltan dos nombres en la lista de guardia. Nadie los menciona en voz alta, pero todos los cuentan.",
+        exits:[{hint:"Marchar"}]},
+      {type:"milestone", name:"Las Deserciones",
         text:"Un oficial te pide autorización para reportar a los que faltan como desertores — sabe lo que eso significa para ellos. Sos vos quien firma.",
         exits:[
-          {dest:"m3a", hint:"Reportarlos, como marca el reglamento", reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
-          {dest:"m3a", hint:"Dejar la lista incompleta, como en la ruta de caravanas", reward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"}},
+          {hint:"Reportarlos, como marca el reglamento", reward:{type:"collection",key:"sold_alderium_8",n:1,fac:"alderium"}},
+          {hint:"Dejar la lista incompleta, como en la ruta de caravanas", reward:{type:"collection",key:"portadora_comun",n:1,fac:"alderium"}},
         ]},
-      m3a:{name:"La Emboscada", type:"decision", step:3,
+      {type:"milestone", name:"La Emboscada",
         text:"El paso se estrecha entre dos laderas de piedra suelta — el lugar exacto que elegiría alguien que conoce el camino de memoria. Los que faltaban en la lista de guardia no se habían ido muy lejos.",
-        exits:[{dest:"m4duel", hint:"Formar filas"}]},
-      m4duel:{name:"Los Desertores de la Columna", type:"combat", step:4, subtitle:"Emboscada",
+        exits:[{hint:"Formar filas"}]},
+      {type:"duel", name:"Los Desertores de la Columna", subtitle:"Emboscada",
         text:"No pelean por una causa — pelean por no volver a marchar. Eso los hace más peligrosos, no menos.",
-        enemyFac:"alderium",
-        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"},
-        boss:true, bossId:"desertores_columna",
-        repeatReward:{type:"collection",key:"sold_alderium_11",n:1,fac:"alderium"},
-        campaignDone:true, next:"exit"},
-    }
+        enemyFac:"alderium", level:4,
+        reward:{type:"collection",key:"tiberon",n:1,fac:"alderium"}},
+      // ---- Duelos #13-19: TBD — PENDIENTE: Juan define nombre, texto y mazo de cada rival.
+      // No inventar lore: enemyFac/enemyDeckBuilder por ahora caen al nivel genérico (buildLeveledDeck).
+      {type:"duel", name:"TBD_1", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:4},
+      {type:"duel", name:"TBD_2", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:4},
+      {type:"duel", name:"TBD_3", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:4},
+      {type:"duel", name:"TBD_4", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:4},
+      {type:"duel", name:"TBD_5", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:5},
+      {type:"duel", name:"TBD_6", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:5},
+      {type:"duel", name:"TBD_7", subtitle:"Rival por definir", // PENDIENTE: Juan define contenido.
+        text:"// PENDIENTE: Juan define contenido.", enemyFac:"alderium", level:5},
+      // ---- Duelo #20: jefe final de la campaña de Alderium. Mazo más difícil de los 20 (buildLeveledDeck
+      // al tope, sin keyword nueva). Restricción dura: ninguna mención/símbolo/pista adicional sobre "lo
+      // que Alderium hizo en el norte" más allá de lo que ya existe en f3 más arriba — la ambigüedad
+      // queda intacta, no se explica acá ni en ningún otro lado de este duelo.
+      {type:"milestone", name:"El Vocero del Alba", subtitle:"Antes del Juicio final",
+        text:"No hay pregunta que el Vocero no haya escuchado ya. Y para cada una tiene la misma respuesta: el Alba no se explica. El Alba se sirve.",
+        exits:[{hint:"Entrar al Juicio final"}]},
+      {type:"duel", name:"Corvan Ashe, Vocero del Alba", subtitle:"Juicio final — Coliseo de Juramento",
+        text:"Corvan Ashe no necesita levantar la voz para que el Coliseo entero se quede en silencio. No hay Juicio después de este.",
+        enemyFac:"alderium", enemyDeckBuilder:fac=>buildLeveledDeck(fac,5), level:5, boss:true,
+        reward:{type:"collection",key:"pretoriano_alba",n:1,fac:"alderium"}},
+    ],
+    outro:{name:"El Alba Jurada",
+      text:"Corvan Ashe cae — o cede, según cómo se mida un Juicio. El Coliseo de Juramento queda en silencio. Alderium ya sabe qué clase de Guardián sos. Tu camino en Alderium, por ahora, está completo."},
   },
-};
-const CONTINENT_PLACES = {alderium:["alderium_piloto"]};
-// Cadena de expediciones por facción, en orden (sección "Campañas multi-expedición"): cada entrada
-// es un placeId de PLACES con isCampaign:true. Pensada para crecer a 10-15 expediciones por facción.
-const CAMPAIGN_CHAINS = {alderium:["alderium_juramento","alderium_patrulla","alderium_templo","alderium_ruta_caravanas","alderium_frontera_norte","alderium_escasez","alderium_diplomacia_koren","alderium_arsenales","alderium_caravanas_guerra"]};
-// Indexado por placeId de expedición (antes era por facción: con varias expediciones en cadena,
-// cada una necesita su propia lista de nombres de paso).
-const CAMPAIGN_STEP_NAMES = {
-  alderium_juramento:["El Juramento","La Prueba del Recluta","La Encrucijada","La Prueba del Escudo","El Arsenal","El Juicio del Alba"],
-  alderium_patrulla:["La Ronda de la Mañana","El Incidente de Lior","El Mercado de los Distritos Bajos","La Prueba de Honor"],
-  alderium_templo:["Las Ruinas Bajo el Distrito","Los Símbolos sin Nombre","El Corredor del Guardián","El Guardián Ciego"],
-  alderium_ruta_caravanas:["La Escolta","Los Roba-Grano","La Orden sin Prisioneros","La Jefa de los Asaltantes"],
-  alderium_frontera_norte:["El Fuerte del Norte","Los Veteranos que Callan","Lo que Alderium Hizo","La Veterana Renegada del Norte"],
-  alderium_escasez:["El Racionamiento","Los Disturbios","La Guardia Contra su Propia Gente","La Madre de los Distritos Bajos"],
-  alderium_diplomacia_koren:["El Camino a Kóren","El Salón de Protocolo","La Tejedora de Leyes","El Duelo Ceremonial"],
-  alderium_arsenales:["Los Arsenales","El Inventario","La Prueba de Rango","La Instructora Pretoriana"],
-  alderium_caravanas_guerra:["La Marcha","Las Deserciones","La Emboscada","Los Desertores de la Columna"],
+  qashir:null, brasshaven:null, koren:null, caelum:null, nomadas:null, // sin campaña todavía
 };
 function buildVanillaOnlyDeck(fac){
   const deck=[]; const pool=soldierPool(fac); let vi=0;
@@ -2652,174 +2057,115 @@ function buildLeveledDeck(fac, level){
   return shuffle(deck);
 }
 
-// ---- Boss evadible en revisita (sección "JEFE OPCIONAL EN REVISITA"): si el lugar ya fue
-// vencida una vez, el nodo de jefe se resuelve como una decisión swipeable en vez de combate directo.
-function synthesizeBossRevisit(raw){
-  const opp = OPPONENTS[raw.bossId] || {name:"El rival", avoidLine:"Te deja pasar sin decir palabra."};
-  return Object.assign({}, raw, {
-    type:"decision", subtitle:"Revisita",
-    text:`${opp.name} está aquí otra vez. ¿Qué hacés?`,
-    exits:[
-      {dest:"__fight__", hint:"Enfrentarlo de nuevo"},
-      {dest:raw.next, hint:"Rodearlo", avoidLine:true},
-    ],
-    _raw: raw, _opp: opp,
-  });
+// ---- Motor de la secuencia lineal: campaignState={fac, stepIndex} — stepIndex:
+// -1 = intro, 0..steps.length-1 = pasos normales, steps.length = outro (campaña completa).
+let campaignState=null;
+let activeCampaignFac=null; // solo para música (setScreenMusic) mientras placeInterior está en pantalla
+function campaignDuelTotal(fac){ return (CAMPAIGN[fac]?.steps||[]).filter(s=>s.type==="duel").length; }
+// Índice (en `steps`) del N-ésimo duelo (0-based) de una facción — usado para retomar directo en
+// el próximo duelo pendiente al reentrar a una campaña ya empezada (ver enterFactionCampaign).
+function campaignStepIndexForDuel(fac, duelIndex){
+  const steps=CAMPAIGN[fac].steps; let seen=0;
+  for(let i=0;i<steps.length;i++){ if(steps[i].type==="duel"){ if(seen===duelIndex) return i; seen++; } }
+  return steps.length;
 }
-// Cualquier nodo con un solo destino (que no exija tap para "enganchar" — combate/quiz/puente) se
-// resuelve con un `exits` de una sola entrada: ambos lados del swipe llevan al mismo próximo nodo
-// (mismo comportamiento que ya tenían los nodos "lugar"/de paso antes de generalizar el motor).
-function resolvePlaceNode(raw){
-  if(raw.type==="combat" && raw.boss && placeState && S.placeCleared[placeState.placeId]){
-    return synthesizeBossRevisit(raw);
-  }
-  if(!raw.exits && raw.next && !PLACE_TAP_HANDLERS[raw.type]){
-    return Object.assign({}, raw, {exits:[{dest:raw.next, reward:raw.reward||null}]});
-  }
-  return raw;
+// Posición 1-based del duelo en stepIndex dentro del total de la facción — para el "Duelo X/20".
+function campaignDuelPositionOf(fac, stepIndex){
+  const steps=CAMPAIGN[fac].steps; let n=0;
+  for(let i=0;i<=stepIndex;i++){ if(steps[i].type==="duel") n++; }
+  return n;
 }
-function currentPlaceNode(){ return resolvePlaceNode(PLACES[placeState.placeId].nodes[placeState.nodeId]); }
-
-function enterPlace(placeId){
+function currentCampaignStep(){
+  const {fac, stepIndex}=campaignState;
+  const camp=CAMPAIGN[fac];
+  if(stepIndex===-1) return Object.assign({type:"intro"}, camp.intro);
+  if(stepIndex>=camp.steps.length) return Object.assign({type:"outro"}, camp.outro);
+  return camp.steps[stepIndex];
+}
+function enterFactionCampaign(fac){
   playSfx("lugar_entrar");
-  const dg=PLACES[placeId];
-  // Una expedición de campaña solo retoma su nodeId a medias camino; si ya está "done" (revisita
-  // desde un hotspot normal en el mapa) arranca de nuevo en startNode, igual que cualquier lugar
-  // ya limpiado — el jefe evadible se resuelve solo al volver a llegar a su nodo (ver resolvePlaceNode).
-  const st = dg.isCampaign ? campaignExpeditionState(dg.faction, placeId) : null;
-  const resume = st && !st.done;
-  placeState={placeId, nodeId: (resume && st.nodeId) || dg.startNode};
-  document.getElementById("placeInterior").dataset.faction=dg.faction;
-  document.getElementById("placeBg").dataset.slotLabel = dg.isCampaign ? `campana_${dg.faction}.jpg` : `lugar_${placeId}.jpg`;
+  activeCampaignFac=fac;
+  const prog=campaignProgress(fac);
+  campaignState={fac, stepIndex: prog.duelIndex>0 ? campaignStepIndexForDuel(fac, prog.duelIndex) : -1};
+  document.getElementById("placeInterior").dataset.faction=fac;
+  document.getElementById("placeBg").dataset.slotLabel=`campana_${fac}.jpg`;
   showScreen("placeInterior");
-  renderPlaceNode();
+  renderCampaignStep();
+}
+function exitCampaignToFactionPick(){
+  S.phase="menu";
+  showScreen("mapScreen");
+  renderCampaignFactionPick();
 }
 
-function registerLoreFacts(node){
-  if(!node.loreFacts) return;
-  let changed=false;
-  for(const f of node.loreFacts){ if(!S.loreSeen[f.id]){ S.loreSeen[f.id]=true; changed=true; } }
-  if(changed) saveGame();
-}
-
-function renderPlaceNode(){
-  const node=currentPlaceNode();
+function renderCampaignStep(){
+  const step=currentCampaignStep();
   const card=document.getElementById("dgCard");
   card.style.transition="none"; card.style.transform=""; card.style.opacity="1";
   void card.offsetWidth; card.style.transition="";
-  document.getElementById("dgName").textContent=node.name;
-  document.getElementById("dgSub").textContent=node.subtitle||"";
-  document.getElementById("dgText").textContent=node.text;
+  document.getElementById("dgName").textContent=step.name;
+  let sub=step.subtitle||"";
+  if(step.type==="duel") sub = (sub?sub+" · ":"")+`Duelo ${campaignDuelPositionOf(campaignState.fac, campaignState.stepIndex)}/${campaignDuelTotal(campaignState.fac)}`;
+  document.getElementById("dgSub").textContent=sub;
+  document.getElementById("dgText").textContent=step.text;
   document.getElementById("dgHint").textContent =
-    node.type==="combat" ? "Tocá para enfrentarlo" :
-    node.type==="quiz" ? "Tocá para responder" :
-    node.type==="bridge" ? "Tocá para abrir el constructor de mazos" :
-    (node.exits && node.exits.length>2) ? "Elegí tu camino" :
-    (node.exits && node.exits.length===1) ? "Deslizá para continuar" :
+    step.type==="duel" ? "Tocá para enfrentarlo" :
+    step.type==="bridge" ? "Tocá para abrir el constructor de mazos" :
+    step.type==="intro" ? "Tocá para empezar" :
+    step.type==="outro" ? "Tocá para volver" :
+    (step.exits && step.exits.length===1) ? "Deslizá para continuar" :
     "Deslizá para elegir tu camino";
-  const placeImg=document.getElementById("dgPlaceImg");
-  if(node.type==="place"){
-    placeImg.style.display="block";
-    document.getElementById("dgPlaceFallback").textContent = node.placeIcon||"📍";
-    document.getElementById("dgPlaceReal").style.backgroundImage = `url('assets/places/${node.placeId}.jpg')`;
-    registerLoreFacts(node);
-  } else { placeImg.style.display="none"; }
-  const exitsBox=document.getElementById("dgExits");
-  exitsBox.innerHTML=""; exitsBox.style.display="none";
-  if(node.exits && node.exits.length>2){
-    exitsBox.style.display="flex";
-    node.exits.forEach((ex,i)=>{
-      const b=document.createElement("button"); b.className="dg-exit-btn";
-      b.textContent = ex.hint || ("Camino "+(i+1));
-      b.onclick=()=>commitChoiceButton(i);
-      exitsBox.appendChild(b);
-    });
-  }
+  document.getElementById("dgExits").style.display="none"; // la campaña lineal nunca pasa de 2 salidas
   clearSwipeHints();
 }
 
-function placeAdvance(nextId){
-  if(nextId==="exit"){ exitPlaceToMap(); return; }
-  placeState.nodeId=nextId;
-  const dg=PLACES[placeState.placeId];
-  if(dg.isCampaign) setExpeditionProgress(dg.faction, placeState.placeId, {nodeId:nextId});
-  renderPlaceNode();
-}
-function exitPlaceToMap(){
-  const dg = placeState && PLACES[placeState.placeId];
-  if(dg) openPlaceMap(dg.faction); // re-renderiza hotspots (progreso de campaña, desbloqueos) y muestra la pantalla
-  else showScreen("placeMapScreen");
+function campaignAdvance(){
+  campaignState.stepIndex++;
+  renderCampaignStep();
 }
 
-// commitExit(): resuelve UNA salida concreta de node.exits[idx] — otorga su recompensa (si tiene),
-// dispara la línea de ficción de "Rodearlo" (si aplica), anima la carta deslizándose fuera y
-// finalmente avanza al destino (o reengancha el combate si dest es el sentinel "__fight__", usado
-// por la decisión de revisita de jefe — ver synthesizeBossRevisit).
-function commitExit(idx, dirSign){
-  const node=currentPlaceNode();
-  const exit=(node.exits||[])[idx]; if(!exit) return;
+// commitCampaignExit(): resuelve UNA salida de un milestone (idx 0 o 1) — otorga su recompensa (si
+// tiene), anima la carta deslizándose fuera y avanza al siguiente paso. A diferencia del viejo grafo
+// de lugares, ambas salidas de un milestone llevan siempre al MISMO próximo paso: solo cambia el
+// reward de sabor, nunca el destino (la secuencia es estrictamente lineal).
+function commitCampaignExit(idx, dirSign){
+  const step=currentCampaignStep();
+  const exit=(step.exits||[])[idx]; if(!exit) return;
   playSfx("swipe");
   if(exit.reward){ grantReward(exit.reward); toast("Recompensa: "+rewardLabel(exit.reward)); showRewardCardPopup(exit.reward); }
-  if(exit.avoidLine && node._opp && node._opp.avoidLine){ toast(node._opp.avoidLine); }
   const card=document.getElementById("dgCard");
   card.style.transition="transform .26s ease-in, opacity .26s ease-in";
   card.style.transform=`translateX(${dirSign*620}px) rotate(${dirSign*28}deg)`;
   card.style.opacity="0";
-  setTimeout(()=>{
-    if(exit.dest==="__fight__"){ engagePlaceCombat(node._raw); }
-    else { placeAdvance(exit.dest); }
-  }, 220);
+  setTimeout(campaignAdvance, 220);
 }
-function commitSwipe(dir){
-  const node=currentPlaceNode();
-  const exits=node.exits||[];
+function commitCampaignSwipe(dir){
+  const step=currentCampaignStep();
+  const exits=step.exits||[];
   const idx = exits.length===1 ? 0 : (dir==="left"?0:1);
-  commitExit(idx, dir==="left"?-1:1);
+  commitCampaignExit(idx, dir==="left"?-1:1);
 }
-function commitChoiceButton(idx){ commitExit(idx, idx%2===0?-1:1); }
 
-function engagePlaceCombat(node){
-  const dg=PLACES[placeState.placeId];
-  const alreadyCleared = !!S.placeCleared[placeState.placeId];
-  const reward = (node.boss && alreadyCleared) ? (node.repeatReward||null) : node.reward;
-  beginDuel(dg.faction, node.enemyFac, {
-    type:"place", next:node.next, reward, campaignDone:node.campaignDone,
-    boss: !!node.boss, placeId: placeState.placeId,
-    // Derrota que avanza (motor, sección "Parte C"): nodos combat con loseAdvances:true no repiten
-    // al perder, avanzan igual que al ganar pero sin recompensa y mostrando loseText si lo tienen.
-    loseAdvances: !!node.loseAdvances, loseText: node.loseText,
-  }, {enemyDeckBuilder: node.enemyDeckBuilder || (fac=>buildLeveledDeck(fac, dg.level||1)), difficulty: dg.level||1});
+function engageCampaignDuel(step){
+  const fac=campaignState.fac, stepIndex=campaignState.stepIndex;
+  beginDuel(fac, step.enemyFac, {
+    type:"campaign", fac, stepIndex,
+    duelIndexAfter: campaignDuelPositionOf(fac, stepIndex), // duelIndex guardado si gana: el próximo a jugar
+    reward: step.reward, boss: !!step.boss,
+    // Derrota que avanza (mismo mecanismo que antes, ahora sobre la secuencia lineal en vez de nodos
+    // de mapa): duelos con loseAdvances:true no repiten al perder, avanzan igual pero sin recompensa.
+    loseAdvances: !!step.loseAdvances, loseText: step.loseText,
+  }, {enemyDeckBuilder: step.enemyDeckBuilder || (f=>buildLeveledDeck(f, step.level||1)), difficulty: step.level||1});
 }
-let quizModalOpen=false;
-async function engagePlaceQuiz(node){
-  if(quizModalOpen) return; // evita apilar modales si se toca la carta varias veces
-  const required=(node.quiz.requires)||[];
-  const known = required.every(fid=>S.loreSeen[fid]);
-  if(required.length && !known){
-    // quiz cross-lugar (sección "Sistemas de Lugares Profundos" #3): el fact todavía no se vio en
-    // ningún lugar — no falla, queda pendiente en ficción y el jugador sigue de todos modos.
-    toast(node.quiz.pendingText || "Los símbolos te resultan ilegibles todavía — algo en este mundo debe explicarlos.");
-    placeAdvance(node.next);
-    return;
-  }
-  quizModalOpen=true;
-  const ok = await askQuizModal(node.quiz);
-  quizModalOpen=false;
-  if(ok){ playSfx("quiz_correcto"); grantReward(node.reward); toast("¡Correcto! Recompensa: "+rewardLabel(node.reward)); showRewardCardPopup(node.reward); }
-  else { playSfx("quiz_incorrecto"); toast("No era así — seguís de todos modos."); }
-  placeAdvance(node.next);
-}
-function engagePlaceBridge(node){
-  const dg=PLACES[placeState.placeId];
-  openConstructor(node.bridgeFac||dg.faction, {type:"campaign"});
+function engageCampaignBridge(step){
+  openConstructor(campaignState.fac, {type:"campaign"});
 }
 function returnToCampaignFromConstructor(){
-  const dg=PLACES[placeState.placeId];
-  const node=currentPlaceNode();
+  const fac=campaignState.fac;
   showScreen("placeInterior");
-  const savedOk = S.savedDecks[dg.faction] && deckCount(S.savedDecks[dg.faction])===40;
-  if(savedOk){ toast("Mazo válido: continuá tu camino."); placeAdvance(node.next); }
-  else { renderPlaceNode(); toast("Necesitás un mazo de 40 cartas guardado para continuar."); }
+  const savedOk = S.savedDecks[fac] && deckCount(S.savedDecks[fac])===40;
+  if(savedOk){ toast("Mazo válido: continuá tu camino."); campaignAdvance(); }
+  else { renderCampaignStep(); toast("Necesitás un mazo de 40 cartas guardado para continuar."); }
 }
 function grantReward(reward){
   if(!reward) return;
@@ -2831,26 +2177,12 @@ function rewardLabel(reward){
     const e=poolEntry(r.fac||"alderium", r.key); return e ? `+${r.n||1} ${e.def.name}` : "";
   }).filter(Boolean).join(", ");
 }
-function askQuizModal(quiz){
-  return new Promise(res=>{
-    const box=document.getElementById("mbox");
-    box.innerHTML=`<h3>✦ Recuerdo</h3><div class="mq">${quiz.q}</div>`;
-    const opts=quiz.opts.slice(); shuffle(opts);
-    for(const [txt,ok] of opts){
-      const b=document.createElement("button"); b.className="mopt"; b.textContent=txt;
-      b.onclick=()=>{closeModal();res(ok)}; box.appendChild(b);
-    }
-    openModal();
-  });
-}
-
-const PLACE_TAP_HANDLERS = {combat:engagePlaceCombat, quiz:engagePlaceQuiz, bridge:engagePlaceBridge};
 
 function updateSwipeHints(dx){
-  const node=currentPlaceNode();
+  const step=currentCampaignStep();
   const l=document.getElementById("dgHintL"), r=document.getElementById("dgHintR");
-  const exits=node.exits;
-  if(!exits || exits.length>2){ l.classList.remove("show"); r.classList.remove("show"); return; }
+  const exits=step.exits;
+  if(!exits){ l.classList.remove("show"); r.classList.remove("show"); return; }
   const leftHint = (exits[0]&&exits[0].hint)||"";
   const rightHint = exits.length>1 ? ((exits[1]&&exits[1].hint)||"") : leftHint;
   l.textContent=leftHint; r.textContent=rightHint;
@@ -2861,11 +2193,13 @@ function clearSwipeHints(){
   document.getElementById("dgHintL").classList.remove("show");
   document.getElementById("dgHintR").classList.remove("show");
 }
-function initPlaceCardDrag(){
+const CAMPAIGN_TAP_HANDLERS = {duel:engageCampaignDuel, bridge:engageCampaignBridge,
+  intro:campaignAdvance, outro:exitCampaignToFactionPick};
+function initCampaignCardDrag(){
   const card=document.getElementById("dgCard");
   let drag=null;
   card.addEventListener("pointerdown", e=>{
-    if(!placeState) return;
+    if(!campaignState) return;
     drag={x0:e.clientX, dx:0, id:e.pointerId};
     card.setPointerCapture(e.pointerId);
     card.style.transition="none";
@@ -2880,22 +2214,22 @@ function initPlaceCardDrag(){
     if(!drag) return;
     const dx=drag.dx; drag=null;
     card.style.transition="transform .22s ease-out";
-    const node=currentPlaceNode();
+    const step=currentCampaignStep();
     clearSwipeHints();
-    if(PLACE_TAP_HANDLERS[node.type]){
+    if(CAMPAIGN_TAP_HANDLERS[step.type]){
       card.style.transform="";
-      if(Math.abs(dx)<10){ PLACE_TAP_HANDLERS[node.type](node); }
+      if(Math.abs(dx)<10){ CAMPAIGN_TAP_HANDLERS[step.type](step); }
       return;
     }
-    if(!node.exits || node.exits.length>2){ card.style.transform=""; return; } // navegación por botones (dgExits), no por swipe
+    if(!step.exits){ card.style.transform=""; return; }
     const TH=80;
-    if(Math.abs(dx)>TH){ commitSwipe(dx>0?"right":"left"); }
+    if(Math.abs(dx)>TH){ commitCampaignSwipe(dx>0?"right":"left"); }
     else { card.style.transform=""; }
   }
   card.addEventListener("pointerup", release);
   card.addEventListener("pointercancel", release);
 }
-document.getElementById("placeExitBtn").onclick=()=>exitPlaceToMap();
+document.getElementById("placeExitBtn").onclick=()=>exitCampaignToFactionPick();
 
 // ============================================================
 //  Selección de facción/rival para un duelo puntual (menú de tarjetas —
@@ -2911,7 +2245,7 @@ function initMenu(){
   const pick=document.getElementById("facPick");
   for(const k in FACTIONS){
     const f=FACTIONS[k];
-    const unlocked=isUnlocked(k);
+    const unlocked=factionCampaignUnlocked(k);
     const d=document.createElement("div");
     d.className="fac"+(unlocked?"":" locked"); d.style.setProperty("--fc",f.color);
     d.innerHTML=`<div class="bar"></div>${unlocked?"":'<div class="clock">🔒</div>'}<div class="fn">${f.name}</div><div class="fd">${f.desc}</div>`;
@@ -2930,7 +2264,7 @@ function initMenu(){
     rb.textContent = "Rival: " + (rivalFac==="random"?"aleatorio":FACTIONS[rivalFac].name);
   };
   document.getElementById("startBtn").onclick=start;
-  document.getElementById("menuBack").onclick=()=>showScreen(currentCity?"cityScreen":"mapScreen");
+  document.getElementById("menuBack").onclick=()=>showScreen("cityScreen");
 }
 
 // ---- 5. Duelo: motor existente, ahora con contexto de retorno (ciudad o nodo de lugar) ----
@@ -4241,36 +3575,37 @@ function checkWin(){
     b.querySelector(".sub").textContent = win? "El rival cae. Veyrá recuerda tu nombre." : "Tu trono se quiebra. Volvé a intentarlo.";
     playMusic(win?"stinger_victoria":"stinger_derrota"); playBassThump(win?0.8:0.6); // la próxima showScreen() retoma el tema normal
 
-    // Contexto de retorno: duelo de lugar vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
+    // Contexto de retorno: duelo de campaña vs duelo puntual desde el menú (sección 5 del rediseño de navegación)
     const contBtn=document.getElementById("bannerContinue"), replayBtn=document.getElementById("bannerReplay"), backBtn=document.getElementById("bannerBack");
-    if(duelReturn && duelReturn.type==="place" && win){
+    contBtn.textContent="Continuar";
+    if(duelReturn && duelReturn.type==="campaign" && win){
       if(duelReturn.reward){ grantReward(duelReturn.reward); b.querySelector(".sub").textContent += " Recompensa: "+rewardLabel(duelReturn.reward)+"."; showRewardCardPopup(duelReturn.reward); }
-      if(duelReturn.boss && duelReturn.placeId){ S.placeCleared[duelReturn.placeId]=true; saveGame(); } // jefe vencido al menos una vez
-      if(duelReturn.campaignDone && placeState){
-        const dg=PLACES[placeState.placeId];
-        setExpeditionProgress(dg.faction, placeState.placeId, {done:true}); // esta expedición: siempre
-        if(isCampaignComplete(dg.faction)){ // la cadena ENTERA: recién ahí desbloquean los lugares normales
-          S.placesUnlocked[dg.faction]=true;
-          saveGame();
-          b.querySelector(".sub").textContent += " ¡Lugares de "+FACTIONS[dg.faction].name+" desbloqueados!";
-        } else saveGame();
+      const prog=campaignProgress(duelReturn.fac);
+      prog.duelIndex=duelReturn.duelIndexAfter;
+      if(duelReturn.boss){
+        prog.bossDefeated=true;
+        b.querySelector(".sub").textContent += ` ¡Campaña de ${FACTIONS[duelReturn.fac].name} completada!`;
       }
-      contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); placeAdvance(duelReturn.next); };
+      saveGame();
+      contBtn.style.display="block"; contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); campaignAdvance(); };
       replayBtn.style.display="none";
-      backBtn.textContent="Abandonar lugar"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
-    } else if(duelReturn && duelReturn.type==="place" && !win && duelReturn.loseAdvances){
-      // Derrota que avanza (Parte C): sin recompensa, muestra loseText (si hay) al llegar al siguiente nodo.
+      backBtn.textContent="Abandonar campaña"; backBtn.onclick=()=>{ b.style.display="none"; exitCampaignToFactionPick(); };
+    } else if(duelReturn && duelReturn.type==="campaign" && !win && duelReturn.loseAdvances){
+      // Derrota que avanza (Parte C): sin recompensa, muestra loseText (si hay) al llegar al siguiente paso.
       contBtn.style.display="block";
-      contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); if(duelReturn.loseText) toast(duelReturn.loseText); placeAdvance(duelReturn.next); };
+      contBtn.onclick=()=>{ b.style.display="none"; showScreen("placeInterior"); if(duelReturn.loseText) toast(duelReturn.loseText); campaignAdvance(); };
       replayBtn.style.display="none";
-      backBtn.textContent="Abandonar lugar"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
-    } else if(duelReturn && duelReturn.type==="place" && !win){
-      contBtn.style.display="none"; replayBtn.style.display="none";
-      backBtn.textContent="Volver al mapa de lugares"; backBtn.onclick=()=>{ b.style.display="none"; exitPlaceToMap(); };
+      backBtn.textContent="Abandonar campaña"; backBtn.onclick=()=>{ b.style.display="none"; exitCampaignToFactionPick(); };
+    } else if(duelReturn && duelReturn.type==="campaign" && !win){
+      // Derrota simple: no avanza, se puede reintentar el mismo duelo o abandonar sin perder progreso.
+      contBtn.style.display="block"; contBtn.textContent="Reintentar";
+      contBtn.onclick=()=>{ b.style.display="none"; engageCampaignDuel(currentCampaignStep()); };
+      replayBtn.style.display="none";
+      backBtn.textContent="Abandonar campaña"; backBtn.onclick=()=>{ b.style.display="none"; exitCampaignToFactionPick(); };
     } else {
       contBtn.style.display="none";
       replayBtn.style.display="block"; replayBtn.onclick=()=>location.reload();
-      backBtn.textContent="Volver a la ciudad"; backBtn.onclick=()=>{ b.style.display="none"; backToCityFlow(); };
+      backBtn.textContent="Volver al menú"; backBtn.onclick=()=>{ b.style.display="none"; S.phase="menu"; showScreen("cityScreen"); };
     }
     b.style.display="flex";
   }
@@ -4316,7 +3651,7 @@ function initAudioUI(){
 initAudioUI();
 
 initMenu();
-renderMap();
-initPlaceCardDrag();
-showScreen("mapScreen");
+renderHome();
+initCampaignCardDrag();
+showScreen("cityScreen");
 </script>
