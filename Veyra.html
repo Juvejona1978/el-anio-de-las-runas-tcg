@@ -559,20 +559,25 @@
     #playerHero{grid-row:4;grid-column:1;align-self:center}
     .hand{grid-row:5;grid-column:1;padding:10px 14px 32px}
 
-    /* herobar a todo el ancho de la fila (fondo/borde ya no quedan recortados a una píldora
-       angosta) pero el contenido (retrato+nombre+vida+maná+mazo) se mantiene agrupado y
-       centrado — separar el nombre del conteo de mazo dejaba ese número flotando solo en
-       medio de la pantalla, ilegible, así que se descartó esa variante */
-    .herobar{justify-content:center;padding:10px 26px}
-    .hblock{flex:0 0 auto}
+    /* herobar a todo el ancho de la fila: retrato+nombre+vida+maná quedan agrupados junto al
+       borde izquierdo (como ya vive el DOM) y el conteo de mazo/mano (.deckn, que YA usa
+       margin-left:auto en la hoja base) se estira hasta el borde derecho real de la pantalla
+       en vez de quedar pegado al lado del nombre — mismo mecanismo que portrait, solo que acá
+       hay ancho real de sobra para separarlos en vez de apretarlos */
+    .herobar{padding:10px 26px}
+    /* espacio reservado para que el conteo de mazo/mano no quede tapado por los botones
+       fijos que comparten esa misma esquina derecha (audio arriba, fin de turno abajo) */
+    .herobar.enemy{padding-right:60px}
+    .herobar.player{padding-right:150px}
 
-    /* el botón de fin de turno queda pegado al extremo derecho de TODA la fila (no solo de la píldora) */
+    /* el botón de fin de turno queda pegado al extremo derecho de TODA la fila */
     #endturn{right:18px}
 
-    /* log = mismos anuncios efímeros que ya existían, reubicados arriba y centrados,
-       ya no apilados sobre el divisor entre campos (que en este layout ya no existe como tal) */
-    #midcenter{position:fixed;left:50%;right:auto;top:calc(env(safe-area-inset-top) + 10px);
-      transform:translateX(-50%);z-index:22}
+    /* log = mismos anuncios efímeros que ya existían. Centrados en medio de la pantalla
+       (mismo lugar conceptual que en portrait, el divisor entre ambos campos) en vez de
+       arriba, donde tapaban la barra del rival */
+    #midcenter{position:fixed;left:50%;top:50%;right:auto;
+      transform:translate(-50%,-50%);z-index:22}
 
     /* el botón cancelar sigue las cartas de la mano más grandes en vez de un offset fijo pensado para móvil */
     #cancel{bottom:calc(var(--handW) * 1.4 + 26px)}
